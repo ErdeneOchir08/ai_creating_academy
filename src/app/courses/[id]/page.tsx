@@ -143,80 +143,12 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
 
             {/* Main Content Area (Video Player) */}
             <div className="flex-1 overflow-y-auto w-full relative z-10">
-                {/* Mobile Header (since sidebars are hidden) */}
-                <div className="lg:hidden p-4 flex items-center justify-between border-b border-white/5 shrink-0 bg-zinc-950/80 backdrop-blur-md">
-                    <div className="flex items-center gap-2">
-                        <Sheet>
-                            <SheetTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-9 w-9 text-zinc-400 lg:hidden">
-                                    <Menu className="h-5 w-5" />
-                                </Button>
-                            </SheetTrigger>
-                            <SheetContent side="left" className="p-0 w-[300px] border-zinc-800 bg-zinc-950 flex flex-col">
-                                <VisuallyHidden.Root>
-                                    <SheetTitle>Course Lessons</SheetTitle>
-                                    <SheetDescription>List of lessons available in this course.</SheetDescription>
-                                </VisuallyHidden.Root>
-                                <div className="p-4 border-b border-zinc-800 flex items-center gap-2 shrink-0">
-                                    <h2 className="font-bold text-sm truncate">{course.title}</h2>
-                                </div>
-                                <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                                    <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-4">Course Content</h3>
-                                    {lessons.length > 0 ? (
-                                        lessons.map((lesson: any, index: number) => {
-                                            const isActive = lesson.id === currentLesson?.id
-                                            const isCompleted = completedLessonIds.has(lesson.id)
-                                            return (
-                                                <Link key={lesson.id} href={`/courses/${course.id}?lesson=${lesson.id}`}>
-                                                    <div className={`flex items-start gap-3 p-3 rounded-lg transition-colors cursor-pointer ${isActive ? 'bg-indigo-600/20 border border-indigo-500/30' : 'hover:bg-zinc-900 border border-transparent'}`}>
-                                                        {isCompleted ? (
-                                                            <CheckCircle2 className={`h-5 w-5 shrink-0 mt-0.5 text-emerald-500`} />
-                                                        ) : (
-                                                            <PlayCircle className={`h-5 w-5 shrink-0 mt-0.5 ${isActive ? 'text-indigo-400' : 'text-zinc-500'}`} />
-                                                        )}
-                                                        <div>
-                                                            <p className={`text-sm ${isActive ? 'text-indigo-200 font-medium' : isCompleted ? 'text-emerald-400' : 'text-zinc-300'}`}>
-                                                                {index + 1}. {lesson.title}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </Link>
-                                            )
-                                        })
-                                    ) : (
-                                        <p className="text-sm text-zinc-500 text-center py-4">No lessons added yet.</p>
-                                    )}
-                                </div>
-                            </SheetContent>
-                        </Sheet>
-                    </div>
-
-                    <Link href="/dashboard" className="text-zinc-400 hover:text-white flex items-center text-sm transition-colors text-center font-medium truncate px-4">
-                        Exit
+                {/* Mobile Header (Clean Back Button) */}
+                <div className="lg:hidden p-4 flex items-center gap-3 border-b border-white/5 shrink-0 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-50">
+                    <Link href="/dashboard" className="text-zinc-400 hover:text-white transition-colors bg-white/5 hover:bg-white/10 p-2 rounded-full">
+                        <ArrowLeft className="h-5 w-5" />
                     </Link>
-
-                    {isEnrolled && currentLessonId && (
-                        <div className="flex items-center gap-2">
-                            <Sheet>
-                                <SheetTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-9 w-9 text-zinc-400 xl:hidden">
-                                        <MessageSquare className="h-5 w-5" />
-                                    </Button>
-                                </SheetTrigger>
-                                <SheetContent side="right" className="p-0 w-[85vw] sm:w-[400px] border-zinc-800 bg-zinc-950 flex flex-col">
-                                    <VisuallyHidden.Root>
-                                        <SheetTitle>Lesson Q&A</SheetTitle>
-                                        <SheetDescription>Ask questions and see replies for this lesson.</SheetDescription>
-                                    </VisuallyHidden.Root>
-                                    <QASidebar
-                                        courseId={course.id}
-                                        lessonId={currentLessonId}
-                                        initialData={qaThreads}
-                                    />
-                                </SheetContent>
-                            </Sheet>
-                        </div>
-                    )}
+                    <h2 className="font-bold text-sm truncate text-zinc-200">{course.title}</h2>
                 </div>
 
                 <div className="max-w-[1200px] mx-auto px-4 lg:px-8 py-8 lg:py-12">
@@ -314,6 +246,57 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
                                     </div>
                                 )}
                             </div>
+                        )}
+                    </div>
+
+                    {/* Mobile / Tablet Lessons List Structure */}
+                    <div className="lg:hidden mt-8 pt-8 border-t border-white/5">
+                        <h3 className="text-xl font-bold mb-4 text-white">Course Lessons</h3>
+                        <div className="flex flex-col gap-2">
+                            {lessons.length > 0 ? (
+                                lessons.map((lesson: any, index: number) => {
+                                    const isActive = lesson.id === currentLesson?.id
+                                    const isCompleted = completedLessonIds.has(lesson.id)
+                                    return (
+                                        <Link key={lesson.id} href={`/courses/${course.id}?lesson=${lesson.id}`}>
+                                            <div className={`flex items-start gap-3 p-4 rounded-xl transition-all duration-300 cursor-pointer ${isActive ? 'bg-gradient-to-r from-indigo-600/20 to-purple-600/10 border border-indigo-500/30' : 'bg-zinc-900/50 hover:bg-zinc-800 border border-transparent'}`}>
+                                                {isCompleted ? (
+                                                    <CheckCircle2 className={`h-5 w-5 shrink-0 mt-0.5 text-emerald-400`} />
+                                                ) : (
+                                                    <PlayCircle className={`h-5 w-5 shrink-0 mt-0.5 ${isActive ? 'text-indigo-400' : 'text-zinc-500'}`} />
+                                                )}
+                                                <div>
+                                                    <p className={`text-base tracking-tight ${isActive ? 'text-indigo-200 font-bold' : isCompleted ? 'text-emerald-300 font-medium' : 'text-zinc-300'}`}>
+                                                        {index + 1}. {lesson.title}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    )
+                                })
+                            ) : (
+                                <p className="text-sm text-zinc-500 py-4">No lessons added yet.</p>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Mobile / Tablet Q&A Section */}
+                    <div className="xl:hidden mt-8 pt-8 border-t border-white/5 pb-12">
+                        <h3 className="text-xl font-bold mb-4 text-white">Lesson Q&A</h3>
+                        {!isEnrolled ? (
+                            <div className="bg-zinc-900/50 rounded-xl p-6 text-center border border-white/5">
+                                <p className="text-zinc-400">Enroll in the course to ask the Instructor questions.</p>
+                            </div>
+                        ) : (
+                            currentLessonId && (
+                                <div className="bg-zinc-950 rounded-xl border border-white/5 overflow-hidden h-[600px] flex flex-col">
+                                    <QASidebar
+                                        courseId={course.id}
+                                        lessonId={currentLessonId}
+                                        initialData={qaThreads}
+                                    />
+                                </div>
+                            )
                         )}
                     </div>
                 </div>
