@@ -128,27 +128,31 @@ export default async function ProgressDashboardPage() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                         {courses.map((course) => (
-                            <Link key={course.courseId} href={`/courses/${course.courseId}`} className="block">
-                                <Card className={`bg-zinc-900 border-zinc-800 text-white overflow-hidden hover:border-zinc-600 transition-colors h-full flex flex-col relative ${course.percentage === 100 ? 'border-amber-500/30' : ''}`}>
-                                    {course.percentage === 100 && (
-                                        <div className="absolute top-0 right-0 bg-gradient-to-bl from-amber-500/20 to-transparent p-6 rounded-bl-3xl pointer-events-none">
-                                            <Trophy className="h-6 w-6 text-amber-500" />
-                                        </div>
-                                    )}
-                                    <div className="p-6 flex-1">
-                                        <h3 className="font-bold text-lg mb-2 pr-8 leading-tight line-clamp-2">{course.title}</h3>
-                                        <p className="text-sm text-zinc-400">
-                                            {course.completedLessons} / {course.totalLessons} Lessons
-                                        </p>
+                            <Card key={course.courseId} className={`bg-zinc-900 border-zinc-800 text-white overflow-hidden hover:border-zinc-600 transition-colors h-full flex flex-col relative ${course.percentage === 100 ? 'border-amber-500/30' : ''}`}>
+                                <Link href={`/courses/${course.courseId}`} className="absolute inset-0 z-10">
+                                    <span className="sr-only">Go to course</span>
+                                </Link>
+                                {course.percentage === 100 && (
+                                    <div className="absolute top-0 right-0 bg-gradient-to-bl from-amber-500/20 to-transparent p-6 rounded-bl-3xl pointer-events-none">
+                                        <Trophy className="h-6 w-6 text-amber-500" />
                                     </div>
-                                    <div className="px-6 pb-6 mt-auto">
-                                        <div className="flex items-center gap-4">
-                                            <Progress value={course.percentage} className={`h-1.5 flex-1 bg-zinc-950 ${course.percentage === 100 ? '[&>div]:bg-amber-500' : ''}`} />
-                                            <span className={`text-sm font-bold w-12 text-right ${course.percentage === 100 ? 'text-amber-500' : 'text-zinc-300'}`}>{course.percentage}%</span>
-                                        </div>
+                                )}
+                                <div className="p-6 flex-1">
+                                    <h3 className="font-bold text-lg mb-2 pr-8 leading-tight line-clamp-2">{course.title}</h3>
+                                    <p className="text-sm text-zinc-400">
+                                        {course.completedLessons} / {course.totalLessons} Lessons
+                                    </p>
+                                </div>
+                                <div className="px-6 pb-6 mt-auto flex flex-col gap-4">
+                                    <div className="flex items-center gap-4">
+                                        <Progress value={course.percentage} className={`h-1.5 flex-1 bg-zinc-950 ${course.percentage === 100 ? '[&>div]:bg-amber-500' : ''}`} />
+                                        <span className={`text-sm font-bold w-12 text-right ${course.percentage === 100 ? 'text-amber-500' : 'text-zinc-300'}`}>{course.percentage}%</span>
                                     </div>
-                                </Card>
-                            </Link>
+                                    <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white transition-all duration-300 rounded-xl font-bold h-12 text-md">
+                                        {course.percentage === 100 ? 'Review Course' : 'Continue Learning'}
+                                    </Button>
+                                </div>
+                            </Card>
                         ))}
                     </div>
                 )}
