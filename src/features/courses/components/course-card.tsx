@@ -58,30 +58,32 @@ export function CourseCard({ course }: { course: Course }) {
                         {course.description || "Learn to build amazing AI tools and dive deep into AI engineering with this comprehensive masterclass."}
                     </p>
 
-                    <div className="flex items-center justify-between mt-auto pt-4 border-t border-zinc-800/50 min-h-[56px]">
-                        {course.payment_status === 'enrolled' ? (
-                            <span className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 font-semibold text-emerald-400 text-sm">
-                                Enrolled
-                            </span>
-                        ) : course.payment_status === 'pending' ? (
-                            <span className="inline-flex items-center rounded-full border border-yellow-500/30 bg-yellow-500/10 px-3 py-1 font-semibold text-yellow-500 text-sm">
-                                Pending Approval
-                            </span>
-                        ) : (
-                            <div className="flex flex-col">
-                                {course.original_price_display && (
-                                    <span className="text-zinc-500 line-through decoration-zinc-600 text-xs font-medium mb-0.5">
-                                        {course.original_price_display}
-                                    </span>
-                                )}
-                                <span className="font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 text-lg drop-shadow-sm leading-none">
-                                    {course.price_display}
+                    <div className="flex flex-col mt-auto pt-4 border-t border-zinc-800/50 gap-4">
+                        <div className="flex items-center justify-between">
+                            {course.payment_status === 'enrolled' ? (
+                                <span className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 font-semibold text-emerald-400 text-sm w-fit">
+                                    Enrolled
                                 </span>
-                            </div>
-                        )}
-                        <Link href={course.payment_status === 'enrolled' ? `/courses/${course.id}` : `/course/${course.id}`}>
-                            <Button variant="secondary" size="sm" className="bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/10 rounded-lg whitespace-nowrap">
-                                {course.payment_status === 'enrolled' ? 'Resume Course' : course.payment_status === 'pending' ? 'View Status' : 'View Course'}
+                            ) : course.payment_status === 'pending' ? (
+                                <span className="inline-flex items-center rounded-full border border-yellow-500/30 bg-yellow-500/10 px-3 py-1 font-semibold text-yellow-500 text-sm w-fit">
+                                    Pending Approval
+                                </span>
+                            ) : (
+                                <div className="flex flex-col">
+                                    {course.original_price_display && (
+                                        <span className="text-zinc-500 line-through decoration-zinc-600 text-xs font-medium mb-0.5">
+                                            {course.original_price_display}
+                                        </span>
+                                    )}
+                                    <span className="font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 text-lg drop-shadow-sm leading-none">
+                                        {course.price_display}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                        <Link href={course.payment_status === 'enrolled' ? `/courses/${course.id}` : `/course/${course.id}`} className="w-full">
+                            <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/20 rounded-xl font-bold h-12 text-md">
+                                {course.payment_status === 'enrolled' ? 'Continue Learning' : course.payment_status === 'pending' ? 'View Status' : 'View Course'}
                             </Button>
                         </Link>
                     </div>
