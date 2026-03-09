@@ -18,6 +18,7 @@ export function QASidebar({ courseId, lessonId, initialData }: QAProps) {
     const [isPosting, setIsPosting] = useState(false)
     const [mounted, setMounted] = useState(false)
     const messagesEndRef = useRef<HTMLDivElement>(null)
+    const isFirstRender = useRef(true)
 
     useEffect(() => {
         setMounted(true)
@@ -30,7 +31,11 @@ export function QASidebar({ courseId, lessonId, initialData }: QAProps) {
 
     // Scroll to bottom whenever questions change
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+        if (isFirstRender.current) {
+            isFirstRender.current = false
+            return
+        }
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     }, [questions])
 
     async function handleSubmit(e: React.FormEvent) {
