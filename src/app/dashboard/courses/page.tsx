@@ -27,7 +27,7 @@ export default async function DashboardCoursesPage() {
                         {enrollments.map((enrollment: any) => {
                             const course = enrollment.courses
                             return (
-                                <Card key={enrollment.id} className="bg-zinc-900 border-zinc-800 text-white overflow-hidden group">
+                                <Card key={enrollment.id} className="bg-zinc-900 border-zinc-800 text-white overflow-hidden group flex flex-col">
                                     <div className="aspect-video relative bg-zinc-800">
                                         {course.thumbnail_url ? (
                                             <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover" />
@@ -44,9 +44,16 @@ export default async function DashboardCoursesPage() {
                                             </Link>
                                         </div>
                                     </div>
-                                    <CardContent className="p-4">
+                                    <CardContent className="p-4 flex flex-col flex-1">
                                         <h3 className="font-semibold text-lg line-clamp-1">{course.title}</h3>
-                                        <p className="text-zinc-400 text-sm mt-1">Enrolled: {new Date(enrollment.granted_at).toLocaleDateString()}</p>
+                                        <p className="text-zinc-400 text-sm mt-1 mb-4 flex-1">Enrolled: {new Date(enrollment.granted_at).toLocaleDateString()}</p>
+                                        <div className="mt-auto pt-4 border-t border-zinc-800/50">
+                                            <Link href={`/courses/${course.id}`} className="w-full">
+                                                <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/20 rounded-xl font-bold h-12 text-md">
+                                                    Continue Learning
+                                                </Button>
+                                            </Link>
+                                        </div>
                                     </CardContent>
                                 </Card>
                             )
@@ -65,7 +72,7 @@ export default async function DashboardCoursesPage() {
                         {pendingCourses.map((request: any) => {
                             const course = request.courses
                             return (
-                                <Card key={request.id} className="bg-zinc-950 border-zinc-800 text-white overflow-hidden opacity-75">
+                                <Card key={request.id} className="bg-zinc-950 border-zinc-800 text-white overflow-hidden opacity-75 flex flex-col">
                                     <div className="aspect-video relative bg-zinc-800">
                                         {course.thumbnail_url ? (
                                             <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover grayscale" />
@@ -78,9 +85,16 @@ export default async function DashboardCoursesPage() {
                                             <Clock className="w-3 h-3" /> Under Review
                                         </div>
                                     </div>
-                                    <CardContent className="p-4">
+                                    <CardContent className="p-4 flex flex-col flex-1">
                                         <h3 className="font-semibold text-lg line-clamp-1">{course.title}</h3>
-                                        <p className="text-zinc-400 text-sm mt-1">Requested: {new Date(request.created_at).toLocaleDateString()}</p>
+                                        <p className="text-zinc-400 text-sm mt-1 mb-4 flex-1">Requested: {new Date(request.created_at).toLocaleDateString()}</p>
+                                        <div className="mt-auto pt-4 border-t border-zinc-800/50">
+                                            <Link href={`/course/${course.id}`} className="w-full">
+                                                <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/20 rounded-xl font-bold h-12 text-md">
+                                                    View Status
+                                                </Button>
+                                            </Link>
+                                        </div>
                                     </CardContent>
                                 </Card>
                             )
