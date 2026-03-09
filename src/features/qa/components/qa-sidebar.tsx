@@ -29,14 +29,12 @@ export function QASidebar({ courseId, lessonId, initialData }: QAProps) {
         setQuestions(initialData)
     }, [initialData])
 
-    // Scroll to bottom whenever questions change
-    useEffect(() => {
-        if (isFirstRender.current) {
-            isFirstRender.current = false
-            return
-        }
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-    }, [questions])
+    // Utility to scroll to bottom
+    const scrollToBottom = () => {
+        setTimeout(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+        }, 100)
+    }
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
@@ -56,6 +54,7 @@ export function QASidebar({ courseId, lessonId, initialData }: QAProps) {
             }
             setQuestions(prev => [tempQuestion, ...prev])
             setInputValue('')
+            scrollToBottom()
 
             // Construct FormData and post to server action
             const formData = new FormData()
