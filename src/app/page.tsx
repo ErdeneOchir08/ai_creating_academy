@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { AboutSection } from '@/components/about-section'
 import { createClient } from '@/lib/supabase/server'
 import { ProjectShowcaseSlider } from '@/components/project-showcase-slider'
+import { getAppSettings } from '@/features/admin/actions/settings-actions.admin'
 
 export const metadata = {
   title: 'AI Creator Academy',
@@ -15,6 +16,7 @@ export const metadata = {
 export default async function LandingPage() {
   const courses = await getPublishedCourses()
   const supabase = await createClient()
+  const settings = await getAppSettings() || {}
 
   // Fetch showcase projects
   const { data: projects } = await supabase
@@ -39,18 +41,18 @@ export default async function LandingPage() {
             <div className="inline-flex items-center rounded-full border border-indigo-500/30 bg-indigo-500/10 px-4 py-1.5 text-sm font-medium text-indigo-300 mb-8 backdrop-blur-md shadow-lg shadow-indigo-500/10 hover:bg-indigo-500/20 transition-colors cursor-default">
               <span className="flex h-2 w-2 rounded-full bg-indigo-500 mr-3 animate-ping absolute"></span>
               <span className="flex h-2 w-2 rounded-full bg-indigo-400 mr-3 relative"></span>
-              Empowering the next generation of AI Builders
+              {settings.landing_badge || 'Empowering the next generation of AI Builders'}
             </div>
 
             <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white mb-8 leading-[1.1] drop-shadow-2xl">
-              Build your own <br />
+              {settings.landing_title_main || 'Build your own'} <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 animate-gradient-x">
-                AI Applications
+                {settings.landing_title_highlight || 'AI Applications'}
               </span>
             </h1>
 
-            <p className="text-xl md:text-2xl text-zinc-400 mb-12 max-w-3xl mx-auto leading-relaxed font-light">
-              Join AI Creator Academy. Learn to code, prompt, and deploy real generative AI apps in a meticulously designed, immersive learning environment.
+            <p className="text-xl md:text-2xl text-zinc-400 mb-12 max-w-3xl mx-auto leading-relaxed font-light whitespace-pre-wrap">
+              {settings.landing_subtitle || 'Join AI Creator Academy. Learn to code, prompt, and deploy real generative AI apps in a meticulously designed, immersive learning environment.'}
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">

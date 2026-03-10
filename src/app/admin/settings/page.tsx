@@ -1,5 +1,6 @@
 import { getAppSettings } from '@/features/admin/actions/settings-actions.admin'
 import { SettingsForm } from '@/features/admin/components/settings-form'
+import { BrandSettingsForm } from '@/features/admin/components/brand-settings-form'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
@@ -32,6 +33,7 @@ export default async function AdminSettingsPage() {
             </div>
 
             <div className="grid gap-6">
+                <BrandSettingsForm initialSettings={settings} />
                 <SettingsForm initialSettings={settings} />
             </div>
         </div>
