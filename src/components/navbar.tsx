@@ -15,14 +15,15 @@ export async function Navbar() {
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container mx-auto flex h-16 items-center justify-between px-4">
                 <Link href="/" className="flex items-center gap-2">
-                    {settings.app_logo_url && (
+                    {settings.app_logo_url ? (
                         <div className="h-8 w-8 rounded-md bg-zinc-950 overflow-hidden shrink-0 flex items-center justify-center p-1 border border-zinc-800">
                             <img src={settings.app_logo_url} alt="Logo" className="w-full h-full object-contain" />
                         </div>
+                    ) : (
+                        <span className="text-xl font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent hidden sm:block">
+                            AI Creator Academy
+                        </span>
                     )}
-                    <span className="text-xl font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent hidden sm:block">
-                        AI Creator Academy
-                    </span>
                 </Link>
 
                 {/* Desktop Navigation */}

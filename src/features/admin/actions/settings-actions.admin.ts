@@ -6,17 +6,10 @@ import { revalidatePath } from 'next/cache'
 export async function getAppSettings() {
     const supabase = await createClient()
 
-    // Ensure user is admin
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return null
-
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-
-    if (profile?.role !== 'admin') return null
+    // No admin check here: setting values like 'landing_title_main' and 'app_logo_url' 
+    // must be publicly readable by anyone visiting the site.
+    // Note: If you do not see settings logged out, ensure the 'app_settings' table
+    // in Supabase has a permissive SELECT policy for 'public'.
 
     const { data, error } = await supabase
         .from('app_settings')
