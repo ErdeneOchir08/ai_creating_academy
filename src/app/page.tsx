@@ -60,13 +60,13 @@ export default async function LandingPage() {
                 <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full blur opacity-50 group-hover:opacity-100 transition duration-500 group-hover:duration-200" />
                 <Link href="/#courses" className="relative block">
                   <Button size="lg" className="h-14 px-10 text-lg bg-white text-black hover:bg-zinc-100 w-full sm:w-auto rounded-full font-bold shadow-2xl transition-all duration-300 transform group-hover:scale-105">
-                    Start Learning Now
+                    {settings.landing_cta_primary || 'Start Learning Now'}
                   </Button>
                 </Link>
               </div>
               <Link href="/register" className="w-full sm:w-auto">
                 <Button size="lg" variant="outline" className="h-14 px-10 text-lg border-zinc-700 bg-zinc-900/50 hover:bg-zinc-800 hover:text-white text-zinc-300 w-full rounded-full font-bold backdrop-blur-md transition-all duration-300">
-                  Create Free Account <ArrowRight className="ml-2 h-5 w-5" />
+                  {settings.landing_cta_secondary || 'Create Free Account'} <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
             </div>
@@ -80,8 +80,8 @@ export default async function LandingPage() {
       {/* Netflix-style Course Grid */}
       <section id="courses" className="py-20 container mx-auto px-4">
         <div className="mb-10">
-          <h2 className="text-3xl font-bold text-white mb-2">Featured Masterclasses</h2>
-          <p className="text-zinc-400">Complete paths from beginner to AI expert.</p>
+          <h2 className="text-3xl font-bold text-white mb-2">{settings.landing_course_title || 'Featured Masterclasses'}</h2>
+          <p className="text-zinc-400">{settings.landing_course_subtitle || 'Complete paths from beginner to AI expert.'}</p>
         </div>
 
         {courses.length > 0 ? (
@@ -93,9 +93,9 @@ export default async function LandingPage() {
         ) : (
           <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/50 p-12 text-center flex flex-col items-center">
             <Sparkles className="h-12 w-12 text-zinc-600 mb-4" />
-            <h3 className="text-xl font-semibold text-white mb-2">No courses available yet</h3>
-            <p className="text-zinc-500 max-w-md mx-auto">
-              You haven't added any courses to the database yet. You can add them through the Supabase Dashboard!
+            <h3 className="text-xl font-semibold text-white mb-2">{settings.landing_empty_title || 'No courses available yet'}</h3>
+            <p className="text-zinc-500 max-w-md mx-auto whitespace-pre-wrap">
+              {settings.landing_empty_subtitle || "You haven't added any courses to the database yet. You can add them through the Supabase Dashboard!"}
             </p>
           </div>
         )}

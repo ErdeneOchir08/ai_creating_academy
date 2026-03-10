@@ -21,6 +21,26 @@ export function BrandSettingsForm({ initialSettings }: { initialSettings: Settin
     const [landingTitleHighlight, setLandingTitleHighlight] = useState(initialSettings?.landing_title_highlight || 'AI Applications')
     const [landingSubtitle, setLandingSubtitle] = useState(initialSettings?.landing_subtitle || 'Join AI Creator Academy. Learn to code, prompt, and deploy real generative AI apps in a meticulously designed, immersive learning environment.')
 
+    // CTAs & Courses
+    const [landingCtaPrimary, setLandingCtaPrimary] = useState(initialSettings?.landing_cta_primary || 'Start Learning Now')
+    const [landingCtaSecondary, setLandingCtaSecondary] = useState(initialSettings?.landing_cta_secondary || 'Create Free Account')
+    const [landingCourseTitle, setLandingCourseTitle] = useState(initialSettings?.landing_course_title || 'Featured Masterclasses')
+    const [landingCourseSubtitle, setLandingCourseSubtitle] = useState(initialSettings?.landing_course_subtitle || 'Complete paths from beginner to AI expert.')
+    const [landingEmptyTitle, setLandingEmptyTitle] = useState(initialSettings?.landing_empty_title || 'No courses available yet')
+    const [landingEmptySubtitle, setLandingEmptySubtitle] = useState(initialSettings?.landing_empty_subtitle || 'You haven\'t added any courses to the database yet. You can add them through the Supabase Dashboard!')
+
+    // About Section
+    const [aboutTitleMain, setAboutTitleMain] = useState(initialSettings?.about_title_main || 'About')
+    const [aboutTitleHighlight, setAboutTitleHighlight] = useState(initialSettings?.about_title_highlight || 'AI Creator Academy')
+    const [aboutSubtitle, setAboutSubtitle] = useState(initialSettings?.about_subtitle || 'We are on a mission to democratize artificial intelligence education. Our platform bridges the gap between complex AI concepts and real-world application building.')
+    const [aboutGoalTitle, setAboutGoalTitle] = useState(initialSettings?.about_goal_title || 'Our Goal')
+    const [aboutGoalDesc, setAboutGoalDesc] = useState(initialSettings?.about_goal_desc || 'To equip 10,000 students worldwide with the practical skills needed to build robust, scalable AI applications from scratch. We focus on hands-on learning rather than purely theoretical concepts.')
+    const [aboutVisionTitle, setAboutVisionTitle] = useState(initialSettings?.about_vision_title || 'Our Vision')
+    const [aboutVisionDesc, setAboutVisionDesc] = useState(initialSettings?.about_vision_desc || 'A future where anyone, regardless of their background, can harness the power of AI to solve meaningful problems and create innovative software solutions.')
+    const [aboutStatsStudents, setAboutStatsStudents] = useState(initialSettings?.about_stats_students || '2,500+')
+    const [aboutStatsExperience, setAboutStatsExperience] = useState(initialSettings?.about_stats_experience || '10+')
+    const [aboutStatsFounded, setAboutStatsFounded] = useState(initialSettings?.about_stats_founded || 'Founded 2024')
+
     const [isLoading, setIsLoading] = useState(false)
     const [isUploading, setIsUploading] = useState(false)
     const [successMsg, setSuccessMsg] = useState('')
@@ -71,7 +91,23 @@ export function BrandSettingsForm({ initialSettings }: { initialSettings: Settin
                 updateAppSetting('landing_badge', landingBadge),
                 updateAppSetting('landing_title_main', landingTitleMain),
                 updateAppSetting('landing_title_highlight', landingTitleHighlight),
-                updateAppSetting('landing_subtitle', landingSubtitle)
+                updateAppSetting('landing_subtitle', landingSubtitle),
+                updateAppSetting('landing_cta_primary', landingCtaPrimary),
+                updateAppSetting('landing_cta_secondary', landingCtaSecondary),
+                updateAppSetting('landing_course_title', landingCourseTitle),
+                updateAppSetting('landing_course_subtitle', landingCourseSubtitle),
+                updateAppSetting('landing_empty_title', landingEmptyTitle),
+                updateAppSetting('landing_empty_subtitle', landingEmptySubtitle),
+                updateAppSetting('about_title_main', aboutTitleMain),
+                updateAppSetting('about_title_highlight', aboutTitleHighlight),
+                updateAppSetting('about_subtitle', aboutSubtitle),
+                updateAppSetting('about_goal_title', aboutGoalTitle),
+                updateAppSetting('about_goal_desc', aboutGoalDesc),
+                updateAppSetting('about_vision_title', aboutVisionTitle),
+                updateAppSetting('about_vision_desc', aboutVisionDesc),
+                updateAppSetting('about_stats_students', aboutStatsStudents),
+                updateAppSetting('about_stats_experience', aboutStatsExperience),
+                updateAppSetting('about_stats_founded', aboutStatsFounded)
             ]
 
             const results = await Promise.all(updates)
@@ -192,6 +228,114 @@ export function BrandSettingsForm({ initialSettings }: { initialSettings: Settin
                         </div>
                     </div>
 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="landingCtaPrimary" className="text-zinc-300">Primary CTA Button</Label>
+                            <Input
+                                id="landingCtaPrimary"
+                                value={landingCtaPrimary}
+                                onChange={(e) => setLandingCtaPrimary(e.target.value)}
+                                className="bg-zinc-950/50 border-zinc-800 text-white placeholder:text-zinc-700"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="landingCtaSecondary" className="text-zinc-300">Secondary CTA Button</Label>
+                            <Input
+                                id="landingCtaSecondary"
+                                value={landingCtaSecondary}
+                                onChange={(e) => setLandingCtaSecondary(e.target.value)}
+                                className="bg-zinc-950/50 border-zinc-800 text-white placeholder:text-zinc-700"
+                            />
+                        </div>
+                    </div>
+
+                    {/* About Section */}
+                    <div className="space-y-4 pt-6 border-t border-zinc-800">
+                        <Label className="text-zinc-300 text-lg font-semibold block">About Section Copy</Label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="aboutTitleMain" className="text-zinc-300">Section Title (White)</Label>
+                                <Input
+                                    id="aboutTitleMain"
+                                    value={aboutTitleMain}
+                                    onChange={(e) => setAboutTitleMain(e.target.value)}
+                                    className="bg-zinc-950/50 border-zinc-800 text-white placeholder:text-zinc-700"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="aboutTitleHighlight" className="text-zinc-300">Section Title (Gradient)</Label>
+                                <Input
+                                    id="aboutTitleHighlight"
+                                    value={aboutTitleHighlight}
+                                    onChange={(e) => setAboutTitleHighlight(e.target.value)}
+                                    className="bg-zinc-950/50 border-zinc-800 text-white placeholder:text-zinc-700"
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="aboutSubtitle" className="text-zinc-300">About Subtitle</Label>
+                            <Textarea
+                                id="aboutSubtitle"
+                                value={aboutSubtitle}
+                                onChange={(e) => setAboutSubtitle(e.target.value)}
+                                className="bg-zinc-950/50 border-zinc-800 text-white placeholder:text-zinc-700 min-h-[80px]"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="aboutGoalTitle" className="text-zinc-300">Goal Title</Label>
+                                <Input id="aboutGoalTitle" value={aboutGoalTitle} onChange={(e) => setAboutGoalTitle(e.target.value)} className="bg-zinc-950/50 border-zinc-800 text-white" />
+                                <Textarea id="aboutGoalDesc" value={aboutGoalDesc} onChange={(e) => setAboutGoalDesc(e.target.value)} className="bg-zinc-950/50 border-zinc-800 text-white mt-2 min-h-[80px]" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="aboutVisionTitle" className="text-zinc-300">Vision Title</Label>
+                                <Input id="aboutVisionTitle" value={aboutVisionTitle} onChange={(e) => setAboutVisionTitle(e.target.value)} className="bg-zinc-950/50 border-zinc-800 text-white" />
+                                <Textarea id="aboutVisionDesc" value={aboutVisionDesc} onChange={(e) => setAboutVisionDesc(e.target.value)} className="bg-zinc-950/50 border-zinc-800 text-white mt-2 min-h-[80px]" />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-4 border-t border-zinc-800 pt-4 mt-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="aboutStatsStudents" className="text-zinc-300">Stat 1 (Students)</Label>
+                                <Input id="aboutStatsStudents" value={aboutStatsStudents} onChange={(e) => setAboutStatsStudents(e.target.value)} className="bg-zinc-950/50 border-zinc-800 text-white" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="aboutStatsExperience" className="text-zinc-300">Stat 2 (Experience)</Label>
+                                <Input id="aboutStatsExperience" value={aboutStatsExperience} onChange={(e) => setAboutStatsExperience(e.target.value)} className="bg-zinc-950/50 border-zinc-800 text-white" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="aboutStatsFounded" className="text-zinc-300">Stat 3 (Founded)</Label>
+                                <Input id="aboutStatsFounded" value={aboutStatsFounded} onChange={(e) => setAboutStatsFounded(e.target.value)} className="bg-zinc-950/50 border-zinc-800 text-white" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Courses Copy */}
+                    <div className="space-y-4 pt-6 border-t border-zinc-800">
+                        <Label className="text-zinc-300 text-lg font-semibold block">Courses List Copy</Label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="landingCourseTitle" className="text-zinc-300">Course Section Title</Label>
+                                <Input id="landingCourseTitle" value={landingCourseTitle} onChange={(e) => setLandingCourseTitle(e.target.value)} className="bg-zinc-950/50 border-zinc-800 text-white" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="landingCourseSubtitle" className="text-zinc-300">Course Section Subtitle</Label>
+                                <Input id="landingCourseSubtitle" value={landingCourseSubtitle} onChange={(e) => setLandingCourseSubtitle(e.target.value)} className="bg-zinc-950/50 border-zinc-800 text-white" />
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="landingEmptyTitle" className="text-zinc-300">No Courses Title</Label>
+                                <Input id="landingEmptyTitle" value={landingEmptyTitle} onChange={(e) => setLandingEmptyTitle(e.target.value)} className="bg-zinc-950/50 border-zinc-800 text-white" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="landingEmptySubtitle" className="text-zinc-300">No Courses Subtitle</Label>
+                                <Input id="landingEmptySubtitle" value={landingEmptySubtitle} onChange={(e) => setLandingEmptySubtitle(e.target.value)} className="bg-zinc-950/50 border-zinc-800 text-white" />
+                            </div>
+                        </div>
+                    </div>
+
                     <Button
                         type="submit"
                         disabled={isLoading || isUploading}
@@ -208,6 +352,6 @@ export function BrandSettingsForm({ initialSettings }: { initialSettings: Settin
                     </Button>
                 </form>
             </CardContent>
-        </Card>
+        </Card >
     )
 }
