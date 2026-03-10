@@ -53,5 +53,6 @@ export async function updateAppSetting(id: string, value: string) {
     }
 
     revalidatePath('/admin/settings')
+    revalidatePath('/', 'layout') // Revalidate entire app so Navbar and Home page see the new settings
     return { success: true }
 }
