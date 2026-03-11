@@ -20,7 +20,7 @@ export async function Navbar() {
                             <img src={settings.app_logo_url} alt="Logo" className="w-full h-full object-contain" />
                         </div>
                     ) : (
-                        <span className="text-xl font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent hidden sm:block">
+                        <span className="text-xl font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
                             Mind Academy
                         </span>
                     )}
