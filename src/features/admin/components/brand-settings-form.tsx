@@ -72,7 +72,7 @@ export function BrandSettingsForm({ initialSettings }: { initialSettings: Settin
 
             setLogoUrl(publicUrl)
         } catch (err: any) {
-            setErrorMsg(err.message || 'Failed to upload logo')
+            setErrorMsg(err.message || 'Лого хуулахад алдаа гарлаа')
         } finally {
             setIsUploading(false)
             if (e.target) e.target.value = '' // reset input
@@ -117,9 +117,9 @@ export function BrandSettingsForm({ initialSettings }: { initialSettings: Settin
                 throw new Error(failures[0].error || 'Failed to update one or more settings')
             }
 
-            setSuccessMsg('Brand settings saved successfully!')
+            setSuccessMsg('Брэндийн тохиргоо амжилттай хадгалагдлаа!')
         } catch (err: any) {
-            setErrorMsg(err.message || 'Failed to save brand settings')
+            setErrorMsg(err.message || 'Брэндийн тохиргоо хадгалахад алдаа гарлаа')
         } finally {
             setIsLoading(false)
         }
@@ -129,10 +129,10 @@ export function BrandSettingsForm({ initialSettings }: { initialSettings: Settin
         <Card className="bg-zinc-900/50 border-zinc-800 backdrop-blur-sm">
             <CardHeader>
                 <CardTitle className="text-xl text-white flex items-center gap-2">
-                    Brand & Landing Page
+                    Брэнд & Нүүр хуудас
                 </CardTitle>
                 <CardDescription className="text-zinc-400">
-                    Customize your platform's logo and the primary copy displayed on the landing page hero section.
+                    Платформын лого болон нүүр хуудсан дээрх үндсэн бичвэрийг өөрчлөх.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -153,7 +153,7 @@ export function BrandSettingsForm({ initialSettings }: { initialSettings: Settin
 
                     {/* Logo Section */}
                     <div className="space-y-3 pb-6 border-b border-zinc-800">
-                        <Label className="text-zinc-300">Global Navbar Logo</Label>
+                        <Label className="text-zinc-300">Цэсийн лого</Label>
                         <div className="flex items-center gap-6">
                             <div className="w-24 h-24 rounded-xl bg-zinc-950/50 border border-zinc-800 flex items-center justify-center overflow-hidden shrink-0">
                                 {logoUrl ? (
@@ -165,7 +165,7 @@ export function BrandSettingsForm({ initialSettings }: { initialSettings: Settin
                             <div className="flex-1 space-y-2">
                                 <Label htmlFor="logo-upload" className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white">
                                     {isUploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
-                                    Upload New Logo
+                                    Шинэ лого хуулах
                                 </Label>
                                 <Input
                                     id="logo-upload"
@@ -175,7 +175,7 @@ export function BrandSettingsForm({ initialSettings }: { initialSettings: Settin
                                     onChange={handleImageUpload}
                                     disabled={isUploading || isLoading}
                                 />
-                                <p className="text-xs text-zinc-500">Recommended: Square or horizontal PNG/SVG with transparent background.</p>
+                                <p className="text-xs text-zinc-500">Зөвлөмж: Дөрвөлжин эсвэл хэвтээ PNG/SVG, тунгалаг дэвсгэртэй.</p>
                             </div>
                         </div>
                     </div>
@@ -183,46 +183,46 @@ export function BrandSettingsForm({ initialSettings }: { initialSettings: Settin
                     {/* Landing Page Copy */}
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="landingBadge" className="text-zinc-300">Hero Pill Badge</Label>
+                            <Label htmlFor="landingBadge" className="text-zinc-300">Толгой хэсгийн танилцуулга</Label>
                             <Input
                                 id="landingBadge"
                                 value={landingBadge}
                                 onChange={(e) => setLandingBadge(e.target.value)}
-                                placeholder="e.g. Empowering the next generation..."
+                                placeholder="ж.нь: Шинэ үеийн..."
                                 className="bg-zinc-950/50 border-zinc-800 text-white placeholder:text-zinc-700"
                             />
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="landingTitleMain" className="text-zinc-300">Main Title (White Text)</Label>
+                                <Label htmlFor="landingTitleMain" className="text-zinc-300">Үндсэн гарчиг (Цагаан бичвэр)</Label>
                                 <Input
                                     id="landingTitleMain"
                                     value={landingTitleMain}
                                     onChange={(e) => setLandingTitleMain(e.target.value)}
-                                    placeholder="e.g. Build your own"
+                                    placeholder="ж.нь: Өөрийн..."
                                     className="bg-zinc-950/50 border-zinc-800 text-white placeholder:text-zinc-700"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="landingTitleHighlight" className="text-zinc-300">Highlighted Title (Gradient)</Label>
+                                <Label htmlFor="landingTitleHighlight" className="text-zinc-300">Онцлох гарчиг (Ууссан өнгөтэй)</Label>
                                 <Input
                                     id="landingTitleHighlight"
                                     value={landingTitleHighlight}
                                     onChange={(e) => setLandingTitleHighlight(e.target.value)}
-                                    placeholder="e.g. AI Applications"
+                                    placeholder="ж.нь: AI аппликейшн"
                                     className="bg-zinc-950/50 border-zinc-800 text-white placeholder:text-zinc-700"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="landingSubtitle" className="text-zinc-300">Hero Subtitle</Label>
+                            <Label htmlFor="landingSubtitle" className="text-zinc-300">Толгой хэсгийн дэд гарчиг</Label>
                             <Textarea
                                 id="landingSubtitle"
                                 value={landingSubtitle}
                                 onChange={(e) => setLandingSubtitle(e.target.value)}
-                                placeholder="Describe your academy..."
+                                placeholder="Академиа дүрсэлнэ үү..."
                                 className="bg-zinc-950/50 border-zinc-800 text-white placeholder:text-zinc-700 min-h-[100px]"
                             />
                         </div>
@@ -230,7 +230,7 @@ export function BrandSettingsForm({ initialSettings }: { initialSettings: Settin
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="landingCtaPrimary" className="text-zinc-300">Primary CTA Button</Label>
+                            <Label htmlFor="landingCtaPrimary" className="text-zinc-300">Үндсэн үйлдэл (Товч)</Label>
                             <Input
                                 id="landingCtaPrimary"
                                 value={landingCtaPrimary}
@@ -239,7 +239,7 @@ export function BrandSettingsForm({ initialSettings }: { initialSettings: Settin
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="landingCtaSecondary" className="text-zinc-300">Secondary CTA Button</Label>
+                            <Label htmlFor="landingCtaSecondary" className="text-zinc-300">Хоёрдогч үйлдэл (Товч)</Label>
                             <Input
                                 id="landingCtaSecondary"
                                 value={landingCtaSecondary}
@@ -251,10 +251,10 @@ export function BrandSettingsForm({ initialSettings }: { initialSettings: Settin
 
                     {/* About Section */}
                     <div className="space-y-4 pt-6 border-t border-zinc-800">
-                        <Label className="text-zinc-300 text-lg font-semibold block">About Section Copy</Label>
+                        <Label className="text-zinc-300 text-lg font-semibold block">Бидний тухай хэсгийн бичвэр</Label>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="aboutTitleMain" className="text-zinc-300">Section Title (White)</Label>
+                                <Label htmlFor="aboutTitleMain" className="text-zinc-300">Хэсгийн гарчиг (Цагаан)</Label>
                                 <Input
                                     id="aboutTitleMain"
                                     value={aboutTitleMain}
@@ -263,7 +263,7 @@ export function BrandSettingsForm({ initialSettings }: { initialSettings: Settin
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="aboutTitleHighlight" className="text-zinc-300">Section Title (Gradient)</Label>
+                                <Label htmlFor="aboutTitleHighlight" className="text-zinc-300">Хэсгийн гарчиг (Ууссан өнгө)</Label>
                                 <Input
                                     id="aboutTitleHighlight"
                                     value={aboutTitleHighlight}
@@ -273,7 +273,7 @@ export function BrandSettingsForm({ initialSettings }: { initialSettings: Settin
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="aboutSubtitle" className="text-zinc-300">About Subtitle</Label>
+                            <Label htmlFor="aboutSubtitle" className="text-zinc-300">Бидний тухай дэд гарчиг</Label>
                             <Textarea
                                 id="aboutSubtitle"
                                 value={aboutSubtitle}
@@ -284,12 +284,12 @@ export function BrandSettingsForm({ initialSettings }: { initialSettings: Settin
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="aboutGoalTitle" className="text-zinc-300">Goal Title</Label>
+                                <Label htmlFor="aboutGoalTitle" className="text-zinc-300">Зорилгын гарчиг</Label>
                                 <Input id="aboutGoalTitle" value={aboutGoalTitle} onChange={(e) => setAboutGoalTitle(e.target.value)} className="bg-zinc-950/50 border-zinc-800 text-white" />
                                 <Textarea id="aboutGoalDesc" value={aboutGoalDesc} onChange={(e) => setAboutGoalDesc(e.target.value)} className="bg-zinc-950/50 border-zinc-800 text-white mt-2 min-h-[80px]" />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="aboutVisionTitle" className="text-zinc-300">Vision Title</Label>
+                                <Label htmlFor="aboutVisionTitle" className="text-zinc-300">Алсын харааны гарчиг</Label>
                                 <Input id="aboutVisionTitle" value={aboutVisionTitle} onChange={(e) => setAboutVisionTitle(e.target.value)} className="bg-zinc-950/50 border-zinc-800 text-white" />
                                 <Textarea id="aboutVisionDesc" value={aboutVisionDesc} onChange={(e) => setAboutVisionDesc(e.target.value)} className="bg-zinc-950/50 border-zinc-800 text-white mt-2 min-h-[80px]" />
                             </div>
@@ -297,15 +297,15 @@ export function BrandSettingsForm({ initialSettings }: { initialSettings: Settin
 
                         <div className="grid grid-cols-3 gap-4 border-t border-zinc-800 pt-4 mt-6">
                             <div className="space-y-2">
-                                <Label htmlFor="aboutStatsStudents" className="text-zinc-300">Stat 1 (Students)</Label>
+                                <Label htmlFor="aboutStatsStudents" className="text-zinc-300">Үзүүлэлт 1 (Оюутнууд)</Label>
                                 <Input id="aboutStatsStudents" value={aboutStatsStudents} onChange={(e) => setAboutStatsStudents(e.target.value)} className="bg-zinc-950/50 border-zinc-800 text-white" />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="aboutStatsExperience" className="text-zinc-300">Stat 2 (Experience)</Label>
+                                <Label htmlFor="aboutStatsExperience" className="text-zinc-300">Үзүүлэлт 2 (Туршлага)</Label>
                                 <Input id="aboutStatsExperience" value={aboutStatsExperience} onChange={(e) => setAboutStatsExperience(e.target.value)} className="bg-zinc-950/50 border-zinc-800 text-white" />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="aboutStatsFounded" className="text-zinc-300">Stat 3 (Founded)</Label>
+                                <Label htmlFor="aboutStatsFounded" className="text-zinc-300">Үзүүлэлт 3 (Байгуулагдсан)</Label>
                                 <Input id="aboutStatsFounded" value={aboutStatsFounded} onChange={(e) => setAboutStatsFounded(e.target.value)} className="bg-zinc-950/50 border-zinc-800 text-white" />
                             </div>
                         </div>
@@ -313,24 +313,24 @@ export function BrandSettingsForm({ initialSettings }: { initialSettings: Settin
 
                     {/* Courses Copy */}
                     <div className="space-y-4 pt-6 border-t border-zinc-800">
-                        <Label className="text-zinc-300 text-lg font-semibold block">Courses List Copy</Label>
+                        <Label className="text-zinc-300 text-lg font-semibold block">Хичээлийн жагсаалтын бичвэр</Label>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="landingCourseTitle" className="text-zinc-300">Course Section Title</Label>
+                                <Label htmlFor="landingCourseTitle" className="text-zinc-300">Хичээлийн хэсгийн гарчиг</Label>
                                 <Input id="landingCourseTitle" value={landingCourseTitle} onChange={(e) => setLandingCourseTitle(e.target.value)} className="bg-zinc-950/50 border-zinc-800 text-white" />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="landingCourseSubtitle" className="text-zinc-300">Course Section Subtitle</Label>
+                                <Label htmlFor="landingCourseSubtitle" className="text-zinc-300">Хичээлийн хэсгийн дэд гарчиг</Label>
                                 <Input id="landingCourseSubtitle" value={landingCourseSubtitle} onChange={(e) => setLandingCourseSubtitle(e.target.value)} className="bg-zinc-950/50 border-zinc-800 text-white" />
                             </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="landingEmptyTitle" className="text-zinc-300">No Courses Title</Label>
+                                <Label htmlFor="landingEmptyTitle" className="text-zinc-300">Хичээлгүй үеийн гарчиг</Label>
                                 <Input id="landingEmptyTitle" value={landingEmptyTitle} onChange={(e) => setLandingEmptyTitle(e.target.value)} className="bg-zinc-950/50 border-zinc-800 text-white" />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="landingEmptySubtitle" className="text-zinc-300">No Courses Subtitle</Label>
+                                <Label htmlFor="landingEmptySubtitle" className="text-zinc-300">Хичээлгүй үеийн дэд гарчиг</Label>
                                 <Input id="landingEmptySubtitle" value={landingEmptySubtitle} onChange={(e) => setLandingEmptySubtitle(e.target.value)} className="bg-zinc-950/50 border-zinc-800 text-white" />
                             </div>
                         </div>
@@ -344,10 +344,10 @@ export function BrandSettingsForm({ initialSettings }: { initialSettings: Settin
                         {isLoading ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Saving...
+                                Хадгалж байна...
                             </>
                         ) : (
-                            'Save Brand Settings'
+                            'Брэндийн тохиргоог хадгалах'
                         )}
                     </Button>
                 </form>

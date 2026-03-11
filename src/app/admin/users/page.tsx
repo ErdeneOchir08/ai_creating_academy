@@ -19,15 +19,15 @@ export default async function AdminUsersPage() {
     return (
         <div className="p-8">
             <header className="mb-8">
-                <h1 className="text-3xl font-bold text-white mb-2">Users</h1>
-                <p className="text-zinc-400">Manage all registered students and administrators.</p>
+                <h1 className="text-3xl font-bold text-white mb-2">Хэрэглэгчид</h1>
+                <p className="text-zinc-400">Бүх бүртгэлтэй оюутнууд болон админуудыг удирдах.</p>
             </header>
 
             <Card className="bg-zinc-950 border-zinc-800 text-white">
                 <CardHeader>
-                    <CardTitle>All Users</CardTitle>
+                    <CardTitle>Бүх хэрэглэгчид</CardTitle>
                     <CardDescription className="text-zinc-500">
-                        A list of all users on the platform.
+                        Платформ дээрх бүх хэрэглэгчдийн жагсаалт.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -35,18 +35,18 @@ export default async function AdminUsersPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow className="border-zinc-800 hover:bg-zinc-900/50">
-                                    <TableHead className="text-zinc-400">Name / Email</TableHead>
-                                    <TableHead className="text-zinc-400">Role</TableHead>
-                                    <TableHead className="text-zinc-400 text-center">Enrollments</TableHead>
-                                    <TableHead className="text-zinc-400 text-right">Joined On</TableHead>
-                                    <TableHead className="text-zinc-400 text-right">Actions</TableHead>
+                                    <TableHead className="text-zinc-400">Нэр / И-мэйл</TableHead>
+                                    <TableHead className="text-zinc-400">Эрх</TableHead>
+                                    <TableHead className="text-zinc-400 text-center">Элссэн байдал</TableHead>
+                                    <TableHead className="text-zinc-400 text-right">Нэгдсэн огноо</TableHead>
+                                    <TableHead className="text-zinc-400 text-right">Үйлдэл</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {users.length === 0 ? (
                                     <TableRow className="border-0 hover:bg-transparent">
                                         <TableCell colSpan={5} className="h-24 text-center text-zinc-500">
-                                            No users found.
+                                            Хэрэглэгч олдсонгүй.
                                         </TableCell>
                                     </TableRow>
                                 ) : (

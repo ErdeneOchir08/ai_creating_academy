@@ -13,10 +13,10 @@ export async function AboutSection() {
             <div className="container mx-auto px-4 relative z-10">
                 <div className="text-center max-w-3xl mx-auto mb-20">
                     <h2 className="text-4xl md:text-5xl font-black text-white mb-6 tracking-tight">
-                        {settings.about_title_main || 'About'} <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">{settings.about_title_highlight || 'AI Creator Academy'}</span>
+                        {settings.about_title_main || 'Бидний'} <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">{settings.about_title_highlight || 'тухай'}</span>
                     </h2>
                     <p className="text-xl text-zinc-400 leading-relaxed whitespace-pre-wrap">
-                        {settings.about_subtitle || 'We are on a mission to democratize artificial intelligence education. Our platform bridges the gap between complex AI concepts and real-world application building.'}
+                        {settings.about_subtitle || 'Бид хиймэл оюун ухааны боловсролыг хүн бүрт хүртээмжтэй болгох зорилготой. Бидний платформ нарийн төвөгтэй AI ойлголтуудыг бодит аппликейшн хөгжүүлэлттэй холбож өгдөг.'}
                     </p>
                 </div>
 
@@ -29,10 +29,10 @@ export async function AboutSection() {
                                 <div className="p-3 bg-indigo-500/20 text-indigo-400 rounded-2xl">
                                     <Target className="w-8 h-8" />
                                 </div>
-                                <h3 className="text-2xl font-bold text-white">{settings.about_goal_title || 'Our Goal'}</h3>
+                                <h3 className="text-2xl font-bold text-white">{settings.about_goal_title || 'Бидний зорилго'}</h3>
                             </div>
                             <p className="text-zinc-300 leading-relaxed text-lg relative whitespace-pre-wrap">
-                                {settings.about_goal_desc || 'To equip 10,000 students worldwide with the practical skills needed to build robust, scalable AI applications from scratch. We focus on hands-on learning rather than purely theoretical concepts.'}
+                                {settings.about_goal_desc || 'Дэлхий даяар 10,000 гаруй оюутнуудад хүчирхэг, өргөжүүлэх боломжтой AI аппликейшнийг эхнээс нь бичих практик ур чадварыг эзэмшүүлэх. Бид зөвхөн онолын ойлголтоос илүүтэйгээр практик сургалтанд төвлөрдөг.'}
                             </p>
                         </div>
 
@@ -42,10 +42,10 @@ export async function AboutSection() {
                                 <div className="p-3 bg-purple-500/20 text-purple-400 rounded-2xl">
                                     <Lightbulb className="w-8 h-8" />
                                 </div>
-                                <h3 className="text-2xl font-bold text-white">{settings.about_vision_title || 'Our Vision'}</h3>
+                                <h3 className="text-2xl font-bold text-white">{settings.about_vision_title || 'Бидний алсын хараа'}</h3>
                             </div>
                             <p className="text-zinc-300 leading-relaxed text-lg relative whitespace-pre-wrap">
-                                {settings.about_vision_desc || 'A future where anyone, regardless of their background, can harness the power of AI to solve meaningful problems and create innovative software solutions.'}
+                                {settings.about_vision_desc || 'Аливаа хүн өмнөх туршлага, суурь мэдлэгээс үл хамааран хиймэл оюун ухааны хүчийг ашиглан утга учиртай асуудлуудыг шийдвэрлэж, шинэлэг програм хангамжийн шийдлүүдийг бүтээж чадах ирээдүйг цогцлоох.'}
                             </p>
                         </div>
                     </div>
@@ -55,19 +55,19 @@ export async function AboutSection() {
                         <div className="bg-gradient-to-br from-indigo-500/10 to-transparent border border-indigo-500/20 p-8 rounded-3xl flex flex-col items-center justify-center text-center">
                             <Users className="w-10 h-10 text-indigo-400 mb-4" />
                             <h4 className="text-4xl font-black text-white mb-2">{settings.about_stats_students || '2,500+'}</h4>
-                            <p className="text-zinc-400 font-medium">Students Graduated</p>
+                            <p className="text-zinc-400 font-medium">Төгссөн суралцагч</p>
                         </div>
 
                         <div className="bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20 p-8 rounded-3xl flex flex-col items-center justify-center text-center">
                             <Trophy className="w-10 h-10 text-purple-400 mb-4" />
                             <h4 className="text-4xl font-black text-white mb-2">{settings.about_stats_experience || '10+'}</h4>
-                            <p className="text-zinc-400 font-medium">Years Experience</p>
+                            <p className="text-zinc-400 font-medium">Жилийн туршлага</p>
                         </div>
 
                         <div className="bg-gradient-to-br from-pink-500/10 to-transparent border border-pink-500/20 p-8 rounded-3xl flex flex-col items-center justify-center text-center sm:col-span-2">
                             <Calendar className="w-10 h-10 text-pink-400 mb-4" />
-                            <h4 className="text-4xl font-black text-white mb-2">{settings.about_stats_founded || 'Founded 2024'}</h4>
-                            <p className="text-zinc-400 font-medium">Pioneering modern AI curriculum</p>
+                            <h4 className="text-4xl font-black text-white mb-2">{settings.about_stats_founded || '2024 онд үүсгэн байгуулагдсан'}</h4>
+                            <p className="text-zinc-400 font-medium">Орчин үеийн AI сургалтын хөтөлбөрийг эхлүүлэгч</p>
                         </div>
                     </div>
                 </div>

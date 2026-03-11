@@ -17,7 +17,7 @@ function SubmitButton() {
             type="submit"
             disabled={pending}
         >
-            {pending ? 'Creating account...' : 'Create Account'}
+            {pending ? 'Бүртгэл үүсгэж байна...' : 'Бүртгүүлэх'}
         </Button>
     )
 }
@@ -35,13 +35,13 @@ export function RegisterForm() {
     return (
         <Card className="w-full max-w-md mx-auto bg-zinc-950/40 border-zinc-800/50 backdrop-blur-xl shadow-2xl rounded-2xl overflow-hidden">
             <CardHeader className="space-y-2 pb-6">
-                <CardTitle className="text-2xl font-bold text-white">Create an account</CardTitle>
-                <CardDescription className="text-zinc-400">Join the academy to start your AI learning journey.</CardDescription>
+                <CardTitle className="text-2xl font-bold text-white">Бүртгэл үүсгэх</CardTitle>
+                <CardDescription className="text-zinc-400">Академид нэгдэн AI сурах аяллаа эхлүүлээрэй.</CardDescription>
             </CardHeader>
             <form action={clientAction}>
                 <CardContent className="space-y-5">
                     <div className="space-y-2">
-                        <Label htmlFor="full_name" className="text-zinc-300">Full Name</Label>
+                        <Label htmlFor="full_name" className="text-zinc-300">Овог нэр</Label>
                         <Input
                             id="full_name"
                             name="full_name"
@@ -51,7 +51,7 @@ export function RegisterForm() {
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="email" className="text-zinc-300">Email address</Label>
+                        <Label htmlFor="email" className="text-zinc-300">И-мэйл хаяг</Label>
                         <Input
                             id="email"
                             name="email"
@@ -62,7 +62,7 @@ export function RegisterForm() {
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="password" className="text-zinc-300">Password</Label>
+                        <Label htmlFor="password" className="text-zinc-300">Нууц үг</Label>
                         <Input
                             id="password"
                             name="password"
@@ -81,9 +81,9 @@ export function RegisterForm() {
                 <CardFooter className="flex flex-col space-y-5 pt-2">
                     <SubmitButton />
                     <div className="text-sm text-center text-zinc-400 w-full">
-                        Already have an account?{' '}
+                        Бүртгэлтэй юу?{' '}
                         <Link href="/login" className="text-indigo-400 hover:text-indigo-300 hover:underline font-medium transition-colors">
-                            Log in instead
+                            Нэвтрэх
                         </Link>
                     </div>
                 </CardFooter>

@@ -40,7 +40,7 @@ export function EditCourseDialog({ course }: { course: CourseProps }) {
             setOpen(false)
         } catch (error) {
             console.error(error)
-            alert('Failed to update course. Please try again.')
+            alert('Хичээл шинэчлэхэд алдаа гарлаа. Дахин оролдоно уу.')
         } finally {
             setIsLoading(false)
         }
@@ -51,57 +51,57 @@ export function EditCourseDialog({ course }: { course: CourseProps }) {
             <DialogTrigger asChild>
                 <Button variant="outline" className="text-zinc-400 border-zinc-700 bg-transparent hover:bg-zinc-800 hover:text-white mt-4 w-full">
                     <Settings2 className="mr-2 h-4 w-4" />
-                    Edit Details
+                    Дэлгэрэнгүйг засах
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px] bg-zinc-950 border-zinc-800 text-white">
                 <DialogHeader>
-                    <DialogTitle>Edit Course</DialogTitle>
+                    <DialogTitle>Хичээл засах</DialogTitle>
                     <DialogDescription className="text-zinc-400">
-                        Update the course metadata and pricing.
+                        Хичээлийн мэдээлэл болон үнийг шинэчлэх.
                     </DialogDescription>
                 </DialogHeader>
 
                 <form action={onSubmit} className="space-y-4 py-4">
                     <div className="space-y-2">
-                        <Label htmlFor="title">Course Title <span className="text-red-500">*</span></Label>
+                        <Label htmlFor="title">Хичээлийн гарчиг <span className="text-red-500">*</span></Label>
                         <Input id="title" name="title" required defaultValue={course.title} className="bg-zinc-900 border-zinc-800" />
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="description">Description <span className="text-red-500">*</span></Label>
+                        <Label htmlFor="description">Тайлбар <span className="text-red-500">*</span></Label>
                         <Textarea id="description" name="description" required defaultValue={course.description} className="bg-zinc-900 border-zinc-800 min-h-[100px]" />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="price_display" className="text-emerald-400">Current Price</Label>
+                            <Label htmlFor="price_display" className="text-emerald-400">Одоогийн үнэ</Label>
                             <Input id="price_display" name="price_display" defaultValue={course.price_display} className="bg-zinc-900 border-emerald-900/50 focus-visible:ring-emerald-500/50" />
-                            <p className="text-[10px] text-zinc-500">The selling price.</p>
+                            <p className="text-[10px] text-zinc-500">Борлуулах үнэ.</p>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="original_price_display" className="text-zinc-400">Original Price <span className="text-[10px]">(Optional)</span></Label>
+                            <Label htmlFor="original_price_display" className="text-zinc-400">Үндсэн үнэ <span className="text-[10px]">(Заавал биш)</span></Label>
                             <Input id="original_price_display" name="original_price_display" defaultValue={course.original_price_display || ''} className="bg-zinc-900 border-zinc-800 text-zinc-400 line-through decoration-zinc-500" />
-                            <p className="text-[10px] text-zinc-500">For discounts.</p>
+                            <p className="text-[10px] text-zinc-500">Хямдралыг харуулахад.</p>
                         </div>
                     </div>
 
                     <div className="space-y-2 pt-2">
-                        <Label>Course Image</Label>
+                        <Label>Хичээлийн зураг</Label>
                         <ImageUpload name="thumbnail_image" defaultValue={course.thumbnail_url || undefined} />
                     </div>
 
                     <div className="flex items-center space-x-2 pt-2">
                         <input type="checkbox" id="published" name="published" value="true" defaultChecked={course.published} className="rounded border-zinc-800 bg-zinc-900" />
-                        <Label htmlFor="published">Published</Label>
+                        <Label htmlFor="published">Нийтлэгдсэн</Label>
                     </div>
 
                     <DialogFooter className="pt-4">
                         <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="text-zinc-400 hover:text-white">
-                            Cancel
+                            Болих
                         </Button>
                         <Button type="submit" disabled={isLoading} className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                            {isLoading ? 'Saving...' : 'Save Changes'}
+                            {isLoading ? 'Хадгалж байна...' : 'Өөрчлөлтийг хадгалах'}
                         </Button>
                     </DialogFooter>
                 </form>

@@ -8,37 +8,37 @@ import { Button } from '@/components/ui/button'
 
 const adminLinks = [
     {
-        name: 'Overview',
+        name: 'Тойм',
         href: '/admin',
         icon: LayoutDashboard,
     },
     {
-        name: 'Users',
+        name: 'Хэрэглэгчид',
         href: '/admin/users',
         icon: Users,
     },
     {
-        name: 'Courses',
+        name: 'Хичээлүүд',
         href: '/admin/courses',
         icon: BookOpen,
     },
     {
-        name: 'Showcase',
+        name: 'Бүтээлүүд',
         href: '/admin/projects',
         icon: Star,
     },
     {
-        name: 'Payments',
+        name: 'Төлбөрүүд',
         href: '/admin/payments',
         icon: CreditCard,
     },
     {
-        name: 'Q&A Inbox',
+        name: 'Асуулт хариулт',
         href: '/admin/qa',
         icon: MessageSquare,
     },
     {
-        name: 'Settings',
+        name: 'Тохиргоо',
         href: '/admin/settings',
         icon: Settings,
     },
@@ -54,8 +54,8 @@ export function AdminSidebar({ isMobile = false }: { isMobile?: boolean }) {
         )}>
             <div className="p-6 border-b border-zinc-800">
                 <Link href="/admin" className="flex flex-col gap-1 transition-transform hover:scale-105 active:scale-95 origin-left">
-                    <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">Admin Portal</span>
-                    <span className="text-xs text-zinc-500 font-medium">AI Creator Academy</span>
+                    <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">Админ Портал</span>
+                    <span className="text-xs text-zinc-500 font-medium">Mind Academy</span>
                 </Link>
             </div>
 
@@ -86,7 +86,7 @@ export function AdminSidebar({ isMobile = false }: { isMobile?: boolean }) {
                 <Button variant="ghost" className="w-full justify-start text-zinc-400 hover:text-white hover:bg-white/10 transition-all font-medium" asChild>
                     <Link href="/dashboard">
                         <LogOut className="h-4 w-4 mr-2" />
-                        Exit Admin
+                        Админаас гарах
                     </Link>
                 </Button>
             </div>

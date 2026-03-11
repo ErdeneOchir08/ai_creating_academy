@@ -16,8 +16,8 @@ export default async function AdminDashboard(props: { searchParams: Promise<{ st
         <div className="min-h-screen bg-[#09090b] text-white p-8">
             <div className="container mx-auto max-w-5xl">
                 <header className="mb-8">
-                    <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
-                    <p className="text-zinc-400">Review and manage manual payment requests.</p>
+                    <h1 className="text-3xl font-bold mb-2">Админ Дашбоард</h1>
+                    <p className="text-zinc-400">Гараар илгээсэн төлбөрийн хүсэлтүүдийг шалгаж, удирдах.</p>
                 </header>
 
                 <section>
@@ -25,17 +25,17 @@ export default async function AdminDashboard(props: { searchParams: Promise<{ st
                         <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg p-1">
                             <Link href={`/admin/payments?status=pending&search=${currentSearch}`}>
                                 <button className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${currentStatus === 'pending' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white hover:bg-zinc-800'}`}>
-                                    Pending
+                                    Хүлээгдэж буй
                                 </button>
                             </Link>
                             <Link href={`/admin/payments?status=approved&search=${currentSearch}`}>
                                 <button className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${currentStatus === 'approved' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white hover:bg-zinc-800'}`}>
-                                    Approved
+                                    Зөвшөөрсөн
                                 </button>
                             </Link>
                             <Link href={`/admin/payments?status=rejected&search=${currentSearch}`}>
                                 <button className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${currentStatus === 'rejected' ? 'bg-indigo-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white hover:bg-zinc-800'}`}>
-                                    Declined
+                                    Татгалзсан
                                 </button>
                             </Link>
                         </div>
@@ -47,14 +47,14 @@ export default async function AdminDashboard(props: { searchParams: Promise<{ st
                                 type="text"
                                 name="search"
                                 defaultValue={currentSearch}
-                                placeholder="Search by student or course..."
+                                placeholder="Оюутан эсвэл хичээлээр хайх..."
                                 className="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                             />
                         </form>
                     </div>
 
                     <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                        {currentStatus === 'pending' ? 'Pending Approvals' : currentStatus === 'approved' ? 'Approved Payments' : 'Declined Payments'}
+                        {currentStatus === 'pending' ? 'Хүлээгдэж буй хүсэлтүүд' : currentStatus === 'approved' ? 'Зөвшөөрсөн төлбөрүүд' : 'Татгалзсан төлбөрүүд'}
                         <span className="bg-indigo-600 text-white text-xs px-2 py-1 rounded-full">{payments?.length || 0}</span>
                     </h2>
 
@@ -66,19 +66,19 @@ export default async function AdminDashboard(props: { searchParams: Promise<{ st
 
                                         {/* User & Course Info */}
                                         <div className="space-y-1 flex-1">
-                                            <p className="text-sm text-zinc-400">Student: <span className="text-white font-medium">{payment.profiles?.display_name || payment.user_id}</span></p>
+                                            <p className="text-sm text-zinc-400">Оюутан: <span className="text-white font-medium">{payment.profiles?.display_name || payment.user_id}</span></p>
                                             <h3 className="font-semibold text-lg">{payment.courses?.title}</h3>
                                             <p className="text-emerald-400 font-mono text-sm">{payment.courses?.price_display}</p>
-                                            <p className="text-xs text-zinc-500 mt-2">Requested: {new Date(payment.created_at).toLocaleString()}</p>
+                                            <p className="text-xs text-zinc-500 mt-2">Илгээсэн: {new Date(payment.created_at).toLocaleString()}</p>
                                         </div>
 
                                         {/* Receipt Viewer (Simulated) */}
                                         <div className="flex-1 bg-zinc-950 p-4 border border-zinc-800 rounded-md flex items-center justify-center gap-3">
                                             <ImageIcon className="h-8 w-8 text-zinc-600" />
                                             <div>
-                                                <p className="text-sm font-medium">Payment Receipt</p>
+                                                <p className="text-sm font-medium">Төлбөрийн баримт</p>
                                                 <a href={payment.proof_image_url} target="_blank" rel="noreferrer" className="text-indigo-400 text-xs hover:underline">
-                                                    View Full Image (New Tab)
+                                                    Зургийг бүтнээр харах (Шинэ цонх)
                                                 </a>
                                             </div>
                                         </div>
@@ -93,7 +93,7 @@ export default async function AdminDashboard(props: { searchParams: Promise<{ st
                                                         revalidatePath('/admin');
                                                     }}>
                                                         <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
-                                                            Approve Payment
+                                                            Төлбөр баталгаажуулах
                                                         </Button>
                                                     </form>
                                                     <form action={async () => {
@@ -102,7 +102,7 @@ export default async function AdminDashboard(props: { searchParams: Promise<{ st
                                                         revalidatePath('/admin');
                                                     }}>
                                                         <Button type="submit" variant="destructive" className="w-full bg-red-900/50 hover:bg-red-600 text-white">
-                                                            Reject
+                                                            Татгалзах
                                                         </Button>
                                                     </form>
                                                 </>
@@ -110,11 +110,11 @@ export default async function AdminDashboard(props: { searchParams: Promise<{ st
                                                 <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-zinc-950 border border-zinc-800">
                                                     {payment.status === 'approved' ? (
                                                         <div className="flex items-center gap-2 text-emerald-400 font-medium">
-                                                            <CheckCircle2 className="h-5 w-5" /> Approved
+                                                            <CheckCircle2 className="h-5 w-5" /> Зөвшөөрсөн
                                                         </div>
                                                     ) : payment.status === 'rejected' ? (
                                                         <div className="flex items-center gap-2 text-red-500 font-medium">
-                                                            <XCircle className="h-5 w-5" /> Declined
+                                                            <XCircle className="h-5 w-5" /> Татгалзсан
                                                         </div>
                                                     ) : (
                                                         <div className="flex items-center gap-2 text-yellow-500 font-medium">
@@ -130,7 +130,7 @@ export default async function AdminDashboard(props: { searchParams: Promise<{ st
                             ))
                         ) : (
                             <div className="text-center p-12 bg-zinc-900/50 rounded-xl border border-zinc-800 text-zinc-400">
-                                {currentSearch ? `No payments found matching "${currentSearch}".` : `No ${currentStatus} payment requests found.`}
+                                {currentSearch ? `Хайлтад тохирох төлбөр олдсонгүй: "${currentSearch}".` : `${currentStatus === "pending" ? "Хүлээгдэж буй" : currentStatus === "approved" ? "Зөвшөөрсөн" : "Татгалзсан"} төлөвтэй төлбөрийн хүсэлт олдсонгүй.`}
                             </div>
                         )}
                     </div>

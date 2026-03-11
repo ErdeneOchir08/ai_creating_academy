@@ -19,7 +19,7 @@ export default function DashboardLayout({
 
             {/* Mobile Header / Sidebar Toggle */}
             <div className="md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-zinc-950/80 backdrop-blur-md relative z-10">
-                <span className="font-bold text-white">Student Dashboard</span>
+                <span className="font-bold text-white">Суралцагчийн Самбар</span>
                 <Sheet>
                     <SheetTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-9 w-9 text-zinc-400">
@@ -28,8 +28,8 @@ export default function DashboardLayout({
                     </SheetTrigger>
                     <SheetContent side="left" className="p-0 w-64 border-zinc-800 bg-zinc-950">
                         <VisuallyHidden.Root>
-                            <SheetTitle>Student Navigation</SheetTitle>
-                            <SheetDescription>Navigation links for the student dashboard.</SheetDescription>
+                            <SheetTitle>Суралцагчийн Цэс</SheetTitle>
+                            <SheetDescription>Суралцагчийн самбарын хандах холбоосууд.</SheetDescription>
                         </VisuallyHidden.Root>
                         <StudentSidebar isMobile={true} />
                     </SheetContent>

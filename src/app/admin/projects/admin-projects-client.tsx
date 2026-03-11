@@ -48,7 +48,7 @@ export function AdminProjectsClient({ initialProjects, courses }: { initialProje
             setImageUrl(data.publicUrl)
         } catch (error) {
             console.error('Error uploading image:', error)
-            alert('Failed to upload image.')
+            alert('Зураг хуулахад алдаа гарлаа.')
         } finally {
             setUploadingImage(false)
         }
@@ -56,7 +56,7 @@ export function AdminProjectsClient({ initialProjects, courses }: { initialProje
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!studentName || !projectTitle || !imageUrl) return alert('Please fill all required fields and upload an image.')
+        if (!studentName || !projectTitle || !imageUrl) return alert('Бүх талбарыг бөглөж, зураг хуулна уу.')
 
         setIsSubmitting(true)
         const formData = new FormData()
@@ -72,18 +72,18 @@ export function AdminProjectsClient({ initialProjects, courses }: { initialProje
             // Reset form on success (the page will refresh or we can mutate local state, 
             // but relying on the server component's revalidatePath is safer for initialProjects.
             // For instant feedback without full reload we do:)
-            alert('Project added successfully! It will now appear on the landing page.')
+            alert('Бүтээл амжилттай нэмэгдлээ! Одоо нүүр хуудас дээр харагдах болно.')
             window.location.reload()
         } catch (error) {
             console.error(error)
-            alert('Failed to add project.')
+            alert('Бүтээл нэмэхэд алдаа гарлаа.')
         } finally {
             setIsSubmitting(false)
         }
     }
 
     const handleDelete = async (id: string) => {
-        if (!window.confirm('Delete this project? It will be removed from the landing page.')) return
+        if (!window.confirm('Энэ бүтээлийг устгах уу? Устгавал нүүр хуудаснаас алга болно.')) return
 
         try {
             const result = await adminDeleteStudentProject(id)
@@ -92,7 +92,7 @@ export function AdminProjectsClient({ initialProjects, courses }: { initialProje
             }
         } catch (error) {
             console.error(error)
-            alert('Failed to delete project.')
+            alert('Бүтээлийг устгахад алдаа гарлаа.')
         }
     }
 
@@ -102,40 +102,40 @@ export function AdminProjectsClient({ initialProjects, courses }: { initialProje
             <div className="lg:col-span-1">
                 <Card className="bg-zinc-900 border-zinc-800 shadow-xl sticky top-8">
                     <CardContent className="p-6">
-                        <h2 className="text-xl font-bold text-white mb-6">Add New Project</h2>
+                        <h2 className="text-xl font-bold text-white mb-6">Шинэ бүтээл нэмэх</h2>
                         <form onSubmit={handleSubmit} className="space-y-5">
                             <div className="space-y-2">
-                                <Label htmlFor="studentName" className="text-zinc-300">Student Name</Label>
+                                <Label htmlFor="studentName" className="text-zinc-300">Оюутны нэр</Label>
                                 <Input
                                     id="studentName"
                                     value={studentName}
                                     onChange={e => setStudentName(e.target.value)}
                                     className="bg-zinc-950 border-zinc-800"
-                                    placeholder="e.g. Jane Doe"
+                                    placeholder="ж.нь: Бат-Эрдэнэ"
                                     required
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="projectTitle" className="text-zinc-300">Project Title</Label>
+                                <Label htmlFor="projectTitle" className="text-zinc-300">Бүтээлийн нэр</Label>
                                 <Input
                                     id="projectTitle"
                                     value={projectTitle}
                                     onChange={e => setProjectTitle(e.target.value)}
                                     className="bg-zinc-950 border-zinc-800"
-                                    placeholder="e.g. AI Content Generator"
+                                    placeholder="ж.нь: AI контент үүсгэгч"
                                     required
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="courseId" className="text-zinc-300">Related Course (Optional)</Label>
+                                <Label htmlFor="courseId" className="text-zinc-300">Холбоотой хичээл (Заавал биш)</Label>
                                 <Select value={courseId} onValueChange={setCourseId}>
                                     <SelectTrigger className="bg-zinc-950 border-zinc-800 text-white">
-                                        <SelectValue placeholder="Select Course" />
+                                        <SelectValue placeholder="Хичээл сонгох" />
                                     </SelectTrigger>
                                     <SelectContent className="bg-zinc-900 border-zinc-800">
-                                        <SelectItem value="none">None</SelectItem>
+                                        <SelectItem value="none">Байхгүй</SelectItem>
                                         {courses.map(c => (
                                             <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
                                         ))}
@@ -144,14 +144,14 @@ export function AdminProjectsClient({ initialProjects, courses }: { initialProje
                             </div>
 
                             <div className="space-y-2">
-                                <Label className="text-zinc-300">Project Screenshot</Label>
+                                <Label className="text-zinc-300">Бүтээлийн зураг</Label>
                                 <div className={`border-2 border-dashed rounded-lg p-4 text-center ${imageUrl ? 'border-indigo-500/50 bg-indigo-500/5' : 'border-zinc-800 hover:border-zinc-700 bg-zinc-950/50'} transition-all`}>
                                     {imageUrl ? (
                                         <div className="space-y-3">
                                             {/* eslint-disable-next-line @next/next/no-img-element */}
                                             <img src={imageUrl} alt="Preview" className="w-full h-32 object-cover rounded-md border border-zinc-800 shadow-sm" />
                                             <Button type="button" variant="outline" size="sm" className="w-full bg-zinc-900 border-zinc-700 text-white hover:bg-zinc-800" onClick={() => setImageUrl('')}>
-                                                Remove Image
+                                                Зураг устгах
                                             </Button>
                                         </div>
                                     ) : (
@@ -160,7 +160,7 @@ export function AdminProjectsClient({ initialProjects, courses }: { initialProje
                                                 {uploadingImage ? <Loader2 className="h-5 w-5 text-indigo-400 animate-spin" /> : <ImageIcon className="h-5 w-5 text-zinc-400" />}
                                             </div>
                                             <div className="text-sm text-zinc-400">
-                                                <span className="font-medium text-indigo-400">Click to upload</span> or drag and drop
+                                                <span className="font-medium text-indigo-400">Энд дарж хуулна уу</span> эсвэл чирж оруулна уу
                                             </div>
                                             <input
                                                 type="file"
@@ -180,7 +180,7 @@ export function AdminProjectsClient({ initialProjects, courses }: { initialProje
                                 disabled={isSubmitting || uploadingImage || !imageUrl}
                             >
                                 {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
-                                Publish Showcase Project
+                                Бүтээл нийтлэх
                             </Button>
                         </form>
                     </CardContent>
@@ -190,17 +190,17 @@ export function AdminProjectsClient({ initialProjects, courses }: { initialProje
             {/* List Existing Projects */}
             <div className="lg:col-span-2 space-y-4">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-bold text-white">Active Projects</h2>
+                    <h2 className="text-xl font-bold text-white">Идэвхтэй бүтээлүүд</h2>
                     <Badge variant="outline" className="border-indigo-500/30 text-indigo-400 bg-indigo-500/5">
-                        {projects.length} Total
+                        Нийт {projects.length}
                     </Badge>
                 </div>
 
                 {projects.length === 0 ? (
                     <div className="p-12 text-center rounded-xl border border-zinc-800 border-dashed bg-zinc-900/50">
                         <ImageIcon className="h-12 w-12 text-zinc-600 mx-auto mb-4 opacity-50" />
-                        <h3 className="text-lg font-medium text-white mb-2">No projects uploaded</h3>
-                        <p className="text-zinc-500 max-w-sm mx-auto">Add your first student project showcase on the left to see it instantly appear on the landing page!</p>
+                        <h3 className="text-lg font-medium text-white mb-2">Бүтээл байршуулаагүй байна</h3>
+                        <p className="text-zinc-500 max-w-sm mx-auto">Эхний оюутны бүтээлээ зүүн талд нэмснээр нүүр хуудас дээр шууд харагдах болно!</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -216,7 +216,7 @@ export function AdminProjectsClient({ initialProjects, courses }: { initialProje
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4">
                                         <h3 className="text-white font-bold leading-tight line-clamp-1">{project.project_title}</h3>
                                         <p className="text-indigo-300 text-sm flex items-center gap-1.5 mt-1">
-                                            Built by {project.student_name}
+                                            Бүтээсэн: {project.student_name}
                                         </p>
                                     </div>
                                 </div>
@@ -232,7 +232,7 @@ export function AdminProjectsClient({ initialProjects, courses }: { initialProje
                                 </div>
                                 {project.courses?.title && (
                                     <div className="px-4 py-2 border-t border-zinc-800 bg-zinc-950/50">
-                                        <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">From Course</span>
+                                        <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Холбоотой хичээл</span>
                                         <p className="text-xs text-zinc-300 truncate">{project.courses.title}</p>
                                     </div>
                                 )}

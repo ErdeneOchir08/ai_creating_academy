@@ -113,7 +113,7 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
                     <h2 className="font-bold text-sm truncate bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">{course.title}</h2>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                    <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-4">Course Content</h3>
+                    <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-4">Хичээлийн агуулга</h3>
                     {lessons.length > 0 ? (
                         lessons.map((lesson: any, index: number) => {
                             const isActive = lesson.id === currentLesson?.id
@@ -136,7 +136,7 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
                             )
                         })
                     ) : (
-                        <p className="text-sm text-zinc-500 text-center py-4">No lessons added yet.</p>
+                        <p className="text-sm text-zinc-500 text-center py-4">Одоогоор хичээл нэмэгдээгүй байна.</p>
                     )}
                 </div>
             </div>
@@ -158,7 +158,7 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
                             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black">
                                 {isFirstLesson && !isEnrolled && (
                                     <div className="absolute top-4 left-4 z-50 bg-indigo-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg border border-indigo-400 flex items-center gap-1">
-                                        <PlayCircle className="h-3 w-3" /> FREE PREVIEW
+                                        <PlayCircle className="h-3 w-3" /> ҮНЭГҮЙ ҮЗЭХ
                                     </div>
                                 )}
                                 {videoUrl ? (
@@ -171,18 +171,18 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
                                 ) : (
                                     <div className="text-center">
                                         <Video className="h-20 w-20 text-indigo-500/50 mb-4 mx-auto drop-shadow-lg" />
-                                        <p className="text-2xl font-bold text-zinc-300">No Video Available</p>
-                                        <p className="text-zinc-500 text-base mt-2">This lesson does not have a video attached yet. Check back soon!</p>
+                                        <p className="text-2xl font-bold text-zinc-300">Видео байхгүй байна</p>
+                                        <p className="text-zinc-500 text-base mt-2">Энэ хичээлд одоогоор видео ороогүй байна. Дараа дахин шалгана уу!</p>
                                     </div>
                                 )}
                             </div>
                         ) : (
                             <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-zinc-950/90 backdrop-blur-md z-20">
-                                <h2 className="text-3xl font-black mb-3 text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Enroll to Unlock</h2>
-                                <p className="text-zinc-400 mb-8 max-w-md text-lg">You need to purchase this course to access the video content and the Q&A section.</p>
+                                <h2 className="text-3xl font-black mb-3 text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Үзэхийн тулд элсэх</h2>
+                                <p className="text-zinc-400 mb-8 max-w-md text-lg">Видео болон асуулт хариултын хэсэгт хандахын тулд энэ хичээлийг худалдан авах шаардлагатай.</p>
                                 {isPending ? (
                                     <span className="inline-flex items-center rounded-full bg-yellow-500/10 px-6 py-3 text-base font-bold text-yellow-500 ring-1 ring-inset ring-yellow-500/20 shadow-[0_0_20px_rgba(234,179,8,0.2)]">
-                                        Payment Review Pending
+                                        Төлбөр хүлээгдэх төлөвтэй байна
                                     </span>
                                 ) : (
                                     <div className="w-72 mx-auto scale-110">
@@ -202,14 +202,14 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
                         <div className="flex-1">
                             <h1 className="text-4xl font-black mb-4 tracking-tight text-white drop-shadow-sm">{currentLesson?.title || course.title}</h1>
-                            <p className="text-zinc-300 text-lg leading-relaxed max-w-3xl">{course.description || "In this lesson, you will learn the core concepts..."}</p>
+                            <p className="text-zinc-300 text-lg leading-relaxed max-w-3xl">{course.description || "Энэ хичээлээр та үндсэн ойлголтуудыг сурах болно..."}</p>
                         </div>
 
                         {!isEnrolled && (
                             <div className="w-full md:w-80 shrink-0 flex flex-col gap-4">
                                 <div className="p-6 rounded-2xl bg-gradient-to-br from-indigo-900/40 to-purple-900/20 border border-indigo-500/30 text-center shadow-xl shadow-indigo-500/10">
-                                    <h3 className="text-lg font-bold text-white mb-2">Unlock the Full Course</h3>
-                                    <p className="text-sm text-indigo-200/80 mb-5 leading-relaxed">Enjoying the free preview? Get full access to all lessons and the Q&A community.</p>
+                                    <h3 className="text-lg font-bold text-white mb-2">Бүтэн хичээлийг нээх</h3>
+                                    <p className="text-sm text-indigo-200/80 mb-5 leading-relaxed">Үнэгүй хичээл таалагдаж байна уу? Бүх хичээл болон нийгэмлэгт хандах эрхээ аваарай.</p>
                                     <PaymentModal
                                         courseId={course.id}
                                         coursePrice={course.price_display}
@@ -234,7 +234,7 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
                                 {isCurrentLessonCompleted && nextLesson && (
                                     <Link href={`/courses/${course.id}?lesson=${nextLesson.id}`} className="w-full block">
                                         <Button className="w-full h-14 text-lg font-bold bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-xl shadow-indigo-500/20 rounded-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-indigo-500/40 border border-white/10 active:scale-95 group">
-                                            Next Lesson
+                                            Дараагийн хичээл
                                             <span className="ml-2 group-hover:translate-x-1 transition-transform duration-300 inline-block">➡️</span>
                                         </Button>
                                     </Link>
@@ -242,7 +242,7 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
 
                                 {isCurrentLessonCompleted && !nextLesson && (
                                     <div className="w-full p-4 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/10 border border-emerald-500/30 text-center text-emerald-300 font-bold shadow-lg shadow-emerald-500/5">
-                                        🎉 Course Completed!
+                                        🎉 Хичээл дууслаа!
                                     </div>
                                 )}
                             </div>
@@ -251,7 +251,7 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
 
                     {/* Mobile / Tablet Lessons List Structure */}
                     <div className="lg:hidden mt-8 pt-8 border-t border-white/5">
-                        <h3 className="text-xl font-bold mb-4 text-white">Course Lessons</h3>
+                        <h3 className="text-xl font-bold mb-4 text-white">Хичээлүүд</h3>
                         <div className="flex flex-col gap-2">
                             {lessons.length > 0 ? (
                                 lessons.map((lesson: any, index: number) => {
@@ -275,17 +275,17 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
                                     )
                                 })
                             ) : (
-                                <p className="text-sm text-zinc-500 py-4">No lessons added yet.</p>
+                                <p className="text-sm text-zinc-500 py-4">Одоогоор хичээл нэмэгдээгүй байна.</p>
                             )}
                         </div>
                     </div>
 
                     {/* Mobile / Tablet Q&A Section */}
                     <div className="xl:hidden mt-8 pt-8 border-t border-white/5 pb-12">
-                        <h3 className="text-xl font-bold mb-4 text-white">Lesson Q&A</h3>
+                        <h3 className="text-xl font-bold mb-4 text-white">Асуулт, хариулт</h3>
                         {!isEnrolled ? (
                             <div className="bg-zinc-900/50 rounded-xl p-6 text-center border border-white/5">
-                                <p className="text-zinc-400">Enroll in the course to ask the Instructor questions.</p>
+                                <p className="text-zinc-400">Багшаас асуулт асуухын тулд хичээлд элсэнэ үү.</p>
                             </div>
                         ) : (
                             currentLessonId && (
@@ -306,7 +306,7 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
             <div className="hidden xl:block w-[400px] shrink-0 border-l border-white/5 h-full relative z-10 bg-zinc-950/50 backdrop-blur-2xl shadow-2xl">
                 {!isEnrolled ? (
                     <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 text-center">
-                        <p className="text-zinc-400 font-medium">Enroll in the course to ask the Instructor questions.</p>
+                        <p className="text-zinc-400 font-medium">Багшаас асуулт асуухын тулд хичээлд элсэнэ үү.</p>
                     </div>
                 ) : (
                     currentLessonId && (

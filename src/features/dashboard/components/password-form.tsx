@@ -11,7 +11,7 @@ function SubmitPasswordButton() {
     const { pending } = useFormStatus()
     return (
         <Button type="submit" disabled={pending} variant="secondary" className="bg-zinc-800 text-white hover:bg-zinc-700 mt-2 border border-zinc-700 font-semibold">
-            {pending ? 'Updating secure pass...' : 'Change Password'}
+            {pending ? 'Шинэчилж байна...' : 'Нууц үг өөрчлөх'}
         </Button>
     )
 }
@@ -34,7 +34,7 @@ export function PasswordForm() {
     return (
         <form action={handleAction} className="space-y-4 max-w-md">
             <div className="space-y-2">
-                <Label htmlFor="password" className="text-zinc-300">New Password</Label>
+                <Label htmlFor="password" className="text-zinc-300">Шинэ нууц үг</Label>
                 <Input
                     id="password"
                     name="password"
@@ -44,7 +44,7 @@ export function PasswordForm() {
                     className="bg-zinc-900 border-zinc-700 focus-visible:ring-indigo-500 text-white"
                     placeholder="••••••••"
                 />
-                <p className="text-xs text-zinc-500">Must be at least 6 characters long.</p>
+                <p className="text-xs text-zinc-500">Доод тал нь 6 тэмдэгт байх ёстой.</p>
             </div>
 
             {message && (

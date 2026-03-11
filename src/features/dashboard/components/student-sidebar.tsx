@@ -8,17 +8,17 @@ import { Button } from '@/components/ui/button'
 
 const studentLinks = [
     {
-        name: 'My Courses',
+        name: 'Миний хичээлүүд',
         href: '/dashboard/courses',
         icon: BookOpen,
     },
     {
-        name: 'My Progress',
+        name: 'Миний ахиц',
         href: '/dashboard/progress',
         icon: PieChart,
     },
     {
-        name: 'Settings',
+        name: 'Тохиргоо',
         href: '/dashboard/settings',
         icon: Settings,
     }
@@ -34,8 +34,8 @@ export function StudentSidebar({ isMobile = false }: { isMobile?: boolean }) {
         )}>
             <div className="p-6 border-b border-zinc-800">
                 <Link href="/dashboard" className="flex flex-col gap-1 transition-transform hover:scale-105 active:scale-95 origin-left">
-                    <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">Student Portal</span>
-                    <span className="text-xs text-zinc-500 font-medium">AI Creator Academy</span>
+                    <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">Суралцагчийн Самбар</span>
+                    <span className="text-xs text-zinc-500 font-medium">Mind Academy</span>
                 </Link>
             </div>
 
@@ -66,13 +66,13 @@ export function StudentSidebar({ isMobile = false }: { isMobile?: boolean }) {
                 <Button variant="outline" className="w-full justify-start border-white/10 bg-white/5 text-zinc-300 hover:text-white hover:bg-white/10 transition-all" asChild>
                     <Link href="/">
                         <Compass className="h-4 w-4 mr-2" />
-                        Browse Courses
+                        Хичээл үзэх
                     </Link>
                 </Button>
                 <form action="/api/auth/signout" method="post">
                     <Button type="submit" variant="ghost" className="w-full justify-start text-zinc-400 hover:text-white hover:bg-red-950/30 hover:text-red-400">
                         <LogOut className="h-4 w-4 mr-2" />
-                        Log Out
+                        Гарах
                     </Button>
                 </form>
             </div>

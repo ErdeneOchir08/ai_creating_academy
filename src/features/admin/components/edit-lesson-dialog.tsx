@@ -28,7 +28,7 @@ export function EditLessonDialog({ lesson, courseId }: { lesson: { id: string; t
             setOpen(false)
         } catch (error) {
             console.error(error)
-            alert('Failed to update lesson. Please try again.')
+            alert('Хичээл шинэчлэхэд алдаа гарлаа. Дахин оролдоно уу.')
         } finally {
             setIsLoading(false)
         }
@@ -43,34 +43,34 @@ export function EditLessonDialog({ lesson, courseId }: { lesson: { id: string; t
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px] bg-zinc-950 border-zinc-800 text-white">
                 <DialogHeader>
-                    <DialogTitle>Edit Lesson</DialogTitle>
+                    <DialogTitle>Хичээл засах</DialogTitle>
                     <DialogDescription className="text-zinc-400">
-                        Update the lesson title and video URL.
+                        Хичээлийн гарчиг болон видео холбоосыг шинэчлэх.
                     </DialogDescription>
                 </DialogHeader>
 
                 <form action={onSubmit} className="space-y-4 py-4">
                     <div className="space-y-2">
-                        <Label htmlFor="title">Lesson Title <span className="text-red-500">*</span></Label>
+                        <Label htmlFor="title">Хичээлийн гарчиг <span className="text-red-500">*</span></Label>
                         <Input id="title" name="title" required defaultValue={lesson.title} className="bg-zinc-900 border-zinc-800" />
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="video_url">Video URL</Label>
+                        <Label htmlFor="video_url">Видео холбоос</Label>
                         <Input id="video_url" name="video_url" placeholder="https://youtube.com/..." defaultValue={lesson.video_url || ''} className="bg-zinc-900 border-zinc-800" />
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="order_index">Order Index</Label>
+                        <Label htmlFor="order_index">Дарааллын дугаар</Label>
                         <Input id="order_index" name="order_index" type="number" required defaultValue={lesson.order_index} className="bg-zinc-900 border-zinc-800 w-24" />
                     </div>
 
                     <DialogFooter className="pt-4">
                         <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="text-zinc-400 hover:text-white">
-                            Cancel
+                            Болих
                         </Button>
                         <Button type="submit" disabled={isLoading} className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                            {isLoading ? 'Saving...' : 'Save Changes'}
+                            {isLoading ? 'Хадгалж байна...' : 'Өөрчлөлтийг хадгалах'}
                         </Button>
                     </DialogFooter>
                 </form>

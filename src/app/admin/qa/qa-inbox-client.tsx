@@ -41,7 +41,7 @@ export function QAInboxClient({ initialQuestions }: { initialQuestions: any[] })
     }
 
     const handleDelete = async (id: string) => {
-        if (!window.confirm('Are you sure you want to permanently delete this thread? This action cannot be undone.')) return
+        if (!window.confirm('Та энэ харилцан яриаг бүрмөсөн устгахдаа итгэлтэй байна уу? Энэ үйлдлийг буцаах боломжгүй.')) return
 
         setIsDeleting(true)
         try {
@@ -52,7 +52,7 @@ export function QAInboxClient({ initialQuestions }: { initialQuestions: any[] })
             }
         } catch (error) {
             console.error('Failed to delete question:', error)
-            alert('Failed to delete the thread. Please try again.')
+            alert('Харилцан яриаг устгахад алдаа гарлаа. Дахин оролдоно уу.')
         } finally {
             setIsDeleting(false)
         }
@@ -67,12 +67,12 @@ export function QAInboxClient({ initialQuestions }: { initialQuestions: any[] })
                     <div>
                         <h2 className="font-bold text-white text-lg flex items-center gap-2">
                             <MessageSquare className="h-5 w-5 text-indigo-400" />
-                            Inbox
+                            Ирсэн зурвасууд
                         </h2>
                     </div>
                     {unansweredCount > 0 && (
                         <Badge variant="destructive" className="bg-red-500/10 text-red-500 border-red-500/20">
-                            {unansweredCount} New
+                            {unansweredCount} Шинэ
                         </Badge>
                     )}
                 </div>
@@ -82,19 +82,19 @@ export function QAInboxClient({ initialQuestions }: { initialQuestions: any[] })
                         onClick={() => setFilter('all')}
                         className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-colors ${filter === 'all' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'}`}
                     >
-                        All
+                        Бүх
                     </button>
                     <button
                         onClick={() => setFilter('unread')}
                         className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-colors ${filter === 'unread' ? 'bg-indigo-500/20 text-indigo-400' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'}`}
                     >
-                        Unread
+                        Уншаагүй
                     </button>
                     <button
                         onClick={() => setFilter('resolved')}
                         className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-colors ${filter === 'resolved' ? 'bg-emerald-500/20 text-emerald-400' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'}`}
                     >
-                        Resolved
+                        Шийдвэрлэсэн
                     </button>
                 </div>
 
@@ -102,14 +102,14 @@ export function QAInboxClient({ initialQuestions }: { initialQuestions: any[] })
                     {filteredQuestions.length === 0 ? (
                         <div className="p-8 text-center text-zinc-500">
                             <CheckCircle2 className="h-8 w-8 mx-auto mb-3 opacity-20" />
-                            <p className="text-sm">Inbox Zero. Great job!</p>
+                            <p className="text-sm">Ирсэн зурвас алга. Сайн байна!</p>
                         </div>
                     ) : (
                         <div className="flex flex-col">
                             {filteredQuestions.map((q) => {
                                 const isSelected = q.id === selectedQuestionId;
-                                const studentName = Array.isArray(q.profiles) ? (q.profiles[0] as any)?.display_name : (q.profiles as any)?.display_name || 'Student'
-                                const courseName = Array.isArray(q.courses) ? (q.courses[0] as any)?.title : (q.courses as any)?.title || 'Course'
+                                const studentName = Array.isArray(q.profiles) ? (q.profiles[0] as any)?.display_name : (q.profiles as any)?.display_name || 'Оюутан'
+                                const courseName = Array.isArray(q.courses) ? (q.courses[0] as any)?.title : (q.courses as any)?.title || 'Хичээл'
                                 const isUnread = !q.is_answered;
 
                                 return (

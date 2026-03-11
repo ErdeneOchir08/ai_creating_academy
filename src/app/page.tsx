@@ -41,18 +41,18 @@ export default async function LandingPage() {
             <div className="inline-flex items-center rounded-full border border-indigo-500/30 bg-indigo-500/10 px-4 py-1.5 text-sm font-medium text-indigo-300 mb-8 backdrop-blur-md shadow-lg shadow-indigo-500/10 hover:bg-indigo-500/20 transition-colors cursor-default">
               <span className="flex h-2 w-2 rounded-full bg-indigo-500 mr-3 animate-ping absolute"></span>
               <span className="flex h-2 w-2 rounded-full bg-indigo-400 mr-3 relative"></span>
-              {settings.landing_badge || 'Empowering the next generation of AI Builders'}
+              {settings.landing_badge || 'AI бүтээгчдийн дараагийн үеийг бэлтгэнэ'}
             </div>
 
             <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white mb-8 leading-[1.1] drop-shadow-2xl">
-              {settings.landing_title_main || 'Build your own'} <br />
+              {settings.landing_title_main || 'Өөрийн'} <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 animate-gradient-x">
-                {settings.landing_title_highlight || 'AI Applications'}
+                {settings.landing_title_highlight || 'AI аппликейшн бүтээ'}
               </span>
             </h1>
 
             <p className="text-xl md:text-2xl text-zinc-400 mb-12 max-w-3xl mx-auto leading-relaxed font-light whitespace-pre-wrap">
-              {settings.landing_subtitle || 'Join AI Creator Academy. Learn to code, prompt, and deploy real generative AI apps in a meticulously designed, immersive learning environment.'}
+              {settings.landing_subtitle || 'Mind Academy-д нэгд. Бодит AI аппликейшн кодлох, промпт бичих, хөгжүүлэх арга барилд суралц.'}
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
@@ -60,13 +60,13 @@ export default async function LandingPage() {
                 <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full blur opacity-50 group-hover:opacity-100 transition duration-500 group-hover:duration-200" />
                 <Link href="/#courses" className="relative block">
                   <Button size="lg" className="h-14 px-10 text-lg bg-white text-black hover:bg-zinc-100 w-full sm:w-auto rounded-full font-bold shadow-2xl transition-all duration-300 transform group-hover:scale-105">
-                    {settings.landing_cta_primary || 'Start Learning Now'}
+                    {settings.landing_cta_primary || 'Одоо суралцаж эхлэх'}
                   </Button>
                 </Link>
               </div>
               <Link href="/register" className="w-full sm:w-auto">
                 <Button size="lg" variant="outline" className="h-14 px-10 text-lg border-zinc-700 bg-zinc-900/50 hover:bg-zinc-800 hover:text-white text-zinc-300 w-full rounded-full font-bold backdrop-blur-md transition-all duration-300">
-                  {settings.landing_cta_secondary || 'Create Free Account'} <ArrowRight className="ml-2 h-5 w-5" />
+                  {settings.landing_cta_secondary || 'Үнэгүй бүртгүүлэх'} <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
             </div>
@@ -80,8 +80,8 @@ export default async function LandingPage() {
       {/* Netflix-style Course Grid */}
       <section id="courses" className="py-20 container mx-auto px-4">
         <div className="mb-10">
-          <h2 className="text-3xl font-bold text-white mb-2">{settings.landing_course_title || 'Featured Masterclasses'}</h2>
-          <p className="text-zinc-400">{settings.landing_course_subtitle || 'Complete paths from beginner to AI expert.'}</p>
+          <h2 className="text-3xl font-bold text-white mb-2">{settings.landing_course_title || 'Онцлох хичээлүүд'}</h2>
+          <p className="text-zinc-400">{settings.landing_course_subtitle || 'Анхан шатнаас AI мэргэжилтэн хүртэлх цогц хөтөлбөр.'}</p>
         </div>
 
         {courses.length > 0 ? (
@@ -93,9 +93,9 @@ export default async function LandingPage() {
         ) : (
           <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/50 p-12 text-center flex flex-col items-center">
             <Sparkles className="h-12 w-12 text-zinc-600 mb-4" />
-            <h3 className="text-xl font-semibold text-white mb-2">{settings.landing_empty_title || 'No courses available yet'}</h3>
+            <h3 className="text-xl font-semibold text-white mb-2">{settings.landing_empty_title || 'Одоогоор хичээл ороогүй байна'}</h3>
             <p className="text-zinc-500 max-w-md mx-auto whitespace-pre-wrap">
-              {settings.landing_empty_subtitle || "You haven't added any courses to the database yet. You can add them through the Supabase Dashboard!"}
+              {settings.landing_empty_subtitle || "Мэдээллийн санд хичээл нэмэгдээгүй байна. Админ эрхээр нэвтэрч хичээл нэмнэ үү!"}
             </p>
           </div>
         )}

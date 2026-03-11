@@ -17,7 +17,7 @@ function SubmitButton() {
             type="submit"
             disabled={pending}
         >
-            {pending ? 'Logging in...' : 'Log in to continue'}
+            {pending ? 'Нэвтэрч байна...' : 'Нэвтрэх'}
         </Button>
     )
 }
@@ -35,13 +35,13 @@ export function LoginForm() {
     return (
         <Card className="w-full max-w-md mx-auto bg-zinc-950/40 border-zinc-800/50 backdrop-blur-xl shadow-2xl rounded-2xl overflow-hidden">
             <CardHeader className="space-y-2 pb-6">
-                <CardTitle className="text-2xl font-bold text-white">Welcome back</CardTitle>
-                <CardDescription className="text-zinc-400">Enter your email and password to access your account.</CardDescription>
+                <CardTitle className="text-2xl font-bold text-white">Тавтай морилно уу</CardTitle>
+                <CardDescription className="text-zinc-400">Бүртгэл рүүгээ нэвтрэхийн тулд и-мэйл болон нууц үгээ оруулна уу.</CardDescription>
             </CardHeader>
             <form action={clientAction}>
                 <CardContent className="space-y-5">
                     <div className="space-y-2">
-                        <Label htmlFor="email" className="text-zinc-300">Email address</Label>
+                        <Label htmlFor="email" className="text-zinc-300">И-мэйл хаяг</Label>
                         <Input
                             id="email"
                             name="email"
@@ -53,7 +53,7 @@ export function LoginForm() {
                     </div>
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                            <Label htmlFor="password" className="text-zinc-300">Password</Label>
+                            <Label htmlFor="password" className="text-zinc-300">Нууц үг</Label>
                         </div>
                         <Input
                             id="password"
@@ -72,9 +72,9 @@ export function LoginForm() {
                 <CardFooter className="flex flex-col space-y-5 pt-2">
                     <SubmitButton />
                     <div className="text-sm text-center text-zinc-400 w-full">
-                        Don&apos;t have an account?{' '}
+                        Бүртгэлгүй юу?{' '}
                         <Link href="/register" className="text-indigo-400 hover:text-indigo-300 hover:underline font-medium transition-colors">
-                            Sign up for free
+                            Үнэгүй бүртгүүлэх
                         </Link>
                     </div>
                 </CardFooter>

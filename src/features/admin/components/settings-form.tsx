@@ -34,9 +34,9 @@ export function SettingsForm({ initialSettings }: { initialSettings: SettingsMap
             const chatRes = await updateAppSetting('telegram_chat_id', chatId)
             if (!chatRes.success) throw new Error(chatRes.error)
 
-            setSuccessMsg('Settings saved successfully!')
+            setSuccessMsg('Тохиргоог амжилттай хадгаллаа!')
         } catch (err: any) {
-            setErrorMsg(err.message || 'Failed to save settings')
+            setErrorMsg(err.message || 'Тохиргоог хадгалахад алдаа гарлаа')
         } finally {
             setIsLoading(false)
         }
@@ -46,10 +46,10 @@ export function SettingsForm({ initialSettings }: { initialSettings: SettingsMap
         <Card className="bg-zinc-900/50 border-zinc-800 backdrop-blur-sm">
             <CardHeader>
                 <CardTitle className="text-xl text-white flex items-center gap-2">
-                    Telegram Notifications
+                    Telegram мэдэгдлүүд
                 </CardTitle>
                 <CardDescription className="text-zinc-400">
-                    Configure your free Telegram bot to receive instant push notifications when a student submits a manual payment request.
+                    Оюутан төлбөрийн хүсэлт илгээх үед шууд мэдэгдэл авахын тулд Telegram ботоо тохируулна уу.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -69,30 +69,30 @@ export function SettingsForm({ initialSettings }: { initialSettings: SettingsMap
                     )}
 
                     <div className="space-y-2">
-                        <Label htmlFor="telegram_bot_token" className="text-zinc-300">Bot Token</Label>
+                        <Label htmlFor="telegram_bot_token" className="text-zinc-300">Ботын Токен</Label>
                         <Input
                             id="telegram_bot_token"
                             value={token}
                             onChange={(e) => setToken(e.target.value)}
-                            placeholder="e.g. 1234567890:ABCdefGHIjklmnoPQRstuvWXYZ"
+                            placeholder="ж.нь: 1234567890:ABCdefGHIjklmnoPQRstuvWXYZ"
                             className="bg-zinc-950/50 border-zinc-800 text-white placeholder:text-zinc-700"
                         />
                         <p className="text-xs text-zinc-500 font-medium mt-1">
-                            Get this by creating a new bot with <a href="https://t.me/botfather" target="_blank" rel="noreferrer" className="text-indigo-400 hover:underline">@BotFather</a> on Telegram.
+                            Telegram дээр <a href="https://t.me/botfather" target="_blank" rel="noreferrer" className="text-indigo-400 hover:underline">@BotFather</a>-тай шинэ бот үүсгэж үүнийг авна уу.
                         </p>
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="telegram_chat_id" className="text-zinc-300">Group / Chat ID</Label>
+                        <Label htmlFor="telegram_chat_id" className="text-zinc-300">Групп / Чатын ID</Label>
                         <Input
                             id="telegram_chat_id"
                             value={chatId}
                             onChange={(e) => setChatId(e.target.value)}
-                            placeholder="e.g. -1001234567890"
+                            placeholder="ж.нь: -1001234567890"
                             className="bg-zinc-950/50 border-zinc-800 text-white placeholder:text-zinc-700"
                         />
                         <p className="text-xs text-zinc-500 font-medium mt-1">
-                            The ID of the Chat or Group you want the bot to post to. (Tip: Use <a href="https://t.me/userinfobot" target="_blank" rel="noreferrer" className="text-indigo-400 hover:underline">@userinfobot</a> to find your ID). Remember to add your bot to the group!
+                            Ботоор мэдээлэл илгээх Чатын эсвэл Группийн ID. (Зөвлөгөө: ID-гаа олохын тулд <a href="https://t.me/userinfobot" target="_blank" rel="noreferrer" className="text-indigo-400 hover:underline">@userinfobot</a> ашиглана уу). Ботоо групптээ нэмэхээ мартуузай!
                         </p>
                     </div>
 
@@ -104,10 +104,10 @@ export function SettingsForm({ initialSettings }: { initialSettings: SettingsMap
                         {isLoading ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Saving...
+                                Хадгалж байна...
                             </>
                         ) : (
-                            'Save Telegram Settings'
+                            'Telegram тохиргоог хадгалах'
                         )}
                     </Button>
                 </form>

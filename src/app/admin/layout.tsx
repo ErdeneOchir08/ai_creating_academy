@@ -19,7 +19,7 @@ export default function AdminLayout({
 
             {/* Mobile Header / Sidebar Toggle */}
             <div className="md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-zinc-950/80 backdrop-blur-md relative z-10">
-                <span className="font-bold text-white">Admin Dashboard</span>
+                <span className="font-bold text-white">Админ Дашбоард</span>
                 <Sheet>
                     <SheetTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-9 w-9 text-zinc-400">
@@ -28,8 +28,8 @@ export default function AdminLayout({
                     </SheetTrigger>
                     <SheetContent side="left" className="p-0 w-64 border-zinc-800 bg-zinc-950">
                         <VisuallyHidden.Root>
-                            <SheetTitle>Admin Navigation</SheetTitle>
-                            <SheetDescription>Navigation links for the admin dashboard.</SheetDescription>
+                            <SheetTitle>Админ Цэс</SheetTitle>
+                            <SheetDescription>Админ дашбоардын цэсийн холбоосууд.</SheetDescription>
                         </VisuallyHidden.Root>
                         <AdminSidebar isMobile={true} />
                     </SheetContent>

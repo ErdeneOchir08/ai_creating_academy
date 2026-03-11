@@ -21,17 +21,17 @@ export default async function AdminCoursesPage() {
         <div className="p-8">
             <header className="flex items-start justify-between mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-white mb-2">Courses</h1>
-                    <p className="text-zinc-400">Manage course catalogs and lesson structures.</p>
+                    <h1 className="text-3xl font-bold text-white mb-2">Хичээлүүд</h1>
+                    <p className="text-zinc-400">Хичээлийн каталог болон хичээлийн бүтцийг удирдах.</p>
                 </div>
                 <CreateCourseDialog />
             </header>
 
             <Card className="bg-zinc-950 border-zinc-800 text-white">
                 <CardHeader>
-                    <CardTitle>All Courses</CardTitle>
+                    <CardTitle>Бүх хичээлүүд</CardTitle>
                     <CardDescription className="text-zinc-500">
-                        {courses.length} total courses on the platform.
+                        Платформ дээр нийт {courses.length} хичээл байна.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -39,18 +39,18 @@ export default async function AdminCoursesPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow className="border-zinc-800 hover:bg-zinc-900/50">
-                                    <TableHead className="text-zinc-400">Title</TableHead>
-                                    <TableHead className="text-zinc-400">Status</TableHead>
-                                    <TableHead className="text-zinc-400 text-center">Lessons</TableHead>
-                                    <TableHead className="text-zinc-400">Price</TableHead>
-                                    <TableHead className="text-zinc-400 text-right">Actions</TableHead>
+                                    <TableHead className="text-zinc-400">Гарчиг</TableHead>
+                                    <TableHead className="text-zinc-400">Төлөв</TableHead>
+                                    <TableHead className="text-zinc-400 text-center">Хичээлүүд</TableHead>
+                                    <TableHead className="text-zinc-400">Үнэ</TableHead>
+                                    <TableHead className="text-zinc-400 text-right">Үйлдэл</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {courses.length === 0 ? (
                                     <TableRow className="border-0 hover:bg-transparent">
                                         <TableCell colSpan={5} className="h-24 text-center text-zinc-500">
-                                            No courses found. Try creating one!
+                                            Хичээл олдсонгүй. Шинээр үүсгэнэ үү!
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -63,9 +63,9 @@ export default async function AdminCoursesPage() {
                                             </TableCell>
                                             <TableCell>
                                                 {course.published ? (
-                                                    <Badge className="bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20">Published</Badge>
+                                                    <Badge className="bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20">Нийтлэгдсэн</Badge>
                                                 ) : (
-                                                    <Badge variant="outline" className="text-zinc-500 border-zinc-700">Draft</Badge>
+                                                    <Badge variant="outline" className="text-zinc-500 border-zinc-700">Ноорог</Badge>
                                                 )}
                                             </TableCell>
                                             <TableCell className="text-center text-zinc-300">

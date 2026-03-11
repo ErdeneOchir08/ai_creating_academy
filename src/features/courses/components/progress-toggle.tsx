@@ -42,12 +42,12 @@ export function ProgressToggle({ lessonId, courseId, isCompleted }: { lessonId: 
             {isCompleted ? (
                 <>
                     <CheckCircle2 className="mr-2 h-4 w-4" />
-                    Completed
+                    Дуусгасан
                 </>
             ) : (
                 <>
                     <Circle className="mr-2 h-4 w-4" />
-                    Mark as Complete
+                    Дуусгасан гэж тэмдэглэх
                 </>
             )}
         </Button>

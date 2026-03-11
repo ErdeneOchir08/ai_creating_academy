@@ -11,7 +11,7 @@ function SubmitProfileButton() {
     const { pending } = useFormStatus()
     return (
         <Button type="submit" disabled={pending} className="bg-indigo-600 hover:bg-indigo-700 text-white mt-2 font-semibold">
-            {pending ? 'Saving...' : 'Save Profile'}
+            {pending ? 'Хадгалж байна...' : 'Профайл хадгалах'}
         </Button>
     )
 }
@@ -35,7 +35,7 @@ export function ProfileForm({ userId, email, defaultName }: { userId: string; em
             <input type="hidden" name="userId" value={userId} />
 
             <div className="space-y-2">
-                <Label htmlFor="email" className="text-zinc-300">Email Address (Read-Only)</Label>
+                <Label htmlFor="email" className="text-zinc-300">И-мэйл хаяг (Зөвхөн харах)</Label>
                 <Input
                     id="email"
                     type="email"
@@ -43,11 +43,11 @@ export function ProfileForm({ userId, email, defaultName }: { userId: string; em
                     defaultValue={email}
                     className="bg-zinc-900/50 border-zinc-800 text-zinc-500 cursor-not-allowed"
                 />
-                <p className="text-xs text-zinc-500">Your email address cannot be changed at this time.</p>
+                <p className="text-xs text-zinc-500">Одоогоор и-мэйл хаяг өөрчлөх боломжгүй байна.</p>
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="full_name" className="text-zinc-300">Display Name</Label>
+                <Label htmlFor="full_name" className="text-zinc-300">Дэлгэцийн нэр</Label>
                 <Input
                     id="full_name"
                     name="full_name"

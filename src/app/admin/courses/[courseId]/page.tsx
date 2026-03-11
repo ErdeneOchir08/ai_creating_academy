@@ -41,9 +41,9 @@ export default async function AdminCourseDetailsPage({
                     <div className="flex items-center gap-3">
                         <h1 className="text-3xl font-bold text-white mb-1">{course.title}</h1>
                         {course.published ? (
-                            <Badge className="bg-emerald-500/10 text-emerald-400">Published</Badge>
+                            <Badge className="bg-emerald-500/10 text-emerald-400">Нийтлэгдсэн</Badge>
                         ) : (
-                            <Badge variant="outline" className="text-zinc-500 border-zinc-700">Draft</Badge>
+                            <Badge variant="outline" className="text-zinc-500 border-zinc-700">Ноорог</Badge>
                         )}
                     </div>
                     <p className="text-zinc-400">{course.id}</p>
@@ -54,14 +54,14 @@ export default async function AdminCourseDetailsPage({
                 {/* Left Col: Lessons */}
                 <div className="md:col-span-2 space-y-4">
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-xl font-bold text-white">Course Curriculum</h2>
+                        <h2 className="text-xl font-bold text-white">Хичээлийн хөтөлбөр</h2>
                         <CreateLessonDialog courseId={course.id} nextOrderIndex={nextOrderIndex} />
                     </div>
 
                     <div className="space-y-3">
                         {lessons.length === 0 ? (
                             <div className="p-12 border border-zinc-800 border-dashed rounded-xl text-center text-zinc-500 bg-zinc-900/20">
-                                No lessons added yet. Click &quot;Add Lesson&quot; to start building the curriculum.
+                                Одоогоор хичээл нэмэгдээгүй байна. &quot;Хичээл нэмэх&quot; дээр дарж хөтөлбөрөө үүсгэж эхэлнэ үү.
                             </div>
                         ) : (
                             lessons.map((lesson: { id: string; title: string; video_url: string; order_index: number }, index: number) => (
@@ -94,7 +94,7 @@ export default async function AdminCourseDetailsPage({
                                                 <div>
                                                     <p className="font-semibold text-lg">{lesson.title}</p>
                                                     <a href={lesson.video_url} target="_blank" rel="noreferrer" className="text-xs text-zinc-500 hover:text-indigo-400 flex items-center gap-1 mt-1">
-                                                        <PlayCircle className="h-3 w-3" /> External Link
+                                                        <PlayCircle className="h-3 w-3" /> Гадаад холбоос
                                                     </a>
                                                 </div>
                                             </div>
@@ -119,22 +119,22 @@ export default async function AdminCourseDetailsPage({
 
                 {/* Right Col: Details Summary */}
                 <div className="space-y-4">
-                    <h2 className="text-xl font-bold text-white mb-4">Course Info</h2>
+                    <h2 className="text-xl font-bold text-white mb-4">Хичээлийн мэдээлэл</h2>
                     <Card className="bg-zinc-950 border-zinc-800 text-white">
                         <CardHeader className="bg-zinc-900/50 border-b border-zinc-800 pb-4">
-                            <CardTitle className="text-lg">Metadata</CardTitle>
+                            <CardTitle className="text-lg">Мэдээлэл</CardTitle>
                         </CardHeader>
                         <CardContent className="pt-4 space-y-4">
                             <div>
-                                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">Price String</h3>
+                                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">Үнэ</h3>
                                 <p className="font-mono text-emerald-400">{course.price_display}</p>
                             </div>
                             <div>
-                                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">Description</h3>
+                                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">Тайлбар</h3>
                                 <p className="text-sm text-zinc-300 line-clamp-4">{course.description}</p>
                             </div>
                             <div>
-                                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">Thumbnail</h3>
+                                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">Зураг</h3>
                                 <img src={course.thumbnail_url} alt="Cover" className="w-full h-auto aspect-video object-cover rounded-md border border-zinc-800 mt-2 bg-black" />
                             </div>
                         </CardContent>

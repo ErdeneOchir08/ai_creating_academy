@@ -31,10 +31,10 @@ export function ProjectShowcaseSlider({ projects }: { projects: any[] }) {
 
             <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 mb-12 text-center relative z-20">
                 <h2 className="text-3xl md:text-5xl font-bold tracking-tighter text-white mb-4">
-                    Built by our <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">Students</span>
+                    Манай <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">суралцагчдын бүтээл</span>
                 </h2>
                 <p className="text-zinc-400 max-w-2xl mx-auto text-lg">
-                    Join hundreds of creators who have turned their ideas into reality using the exact systems taught in our academy.
+                    Манай академид заасан арга барилыг ашиглан санаагаа бодит болгож чадсан олон зуун бүтээгчидтэй нэгдээрэй.
                 </p>
             </div>
 
@@ -71,7 +71,7 @@ export function ProjectShowcaseSlider({ projects }: { projects: any[] }) {
                                         <div className="h-6 w-6 rounded-full bg-indigo-500/20 flex items-center justify-center shrink-0 border border-indigo-500/30">
                                             <span className="text-indigo-400 font-bold text-[10px]">{project.student_name.charAt(0).toUpperCase()}</span>
                                         </div>
-                                        <span className="text-sm font-medium">Built by {project.student_name}</span>
+                                        <span className="text-sm font-medium">Бүтээсэн: {project.student_name}</span>
                                     </div>
                                 </div>
                             </div>

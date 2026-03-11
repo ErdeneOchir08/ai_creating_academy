@@ -44,7 +44,7 @@ export default async function CourseSalesPage(props: { params: Promise<{ id: str
                 {/* Back Button */}
                 <Link href="/" className="inline-flex items-center text-zinc-400 hover:text-white transition-colors mb-8">
                     <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back to all courses
+                    Бүх хичээл рүү буцах
                 </Link>
 
                 <div className="grid lg:grid-cols-12 gap-12 items-start">
@@ -53,11 +53,11 @@ export default async function CourseSalesPage(props: { params: Promise<{ id: str
                         <div>
                             <div className="flex items-center gap-3 mb-6">
                                 <span className="inline-flex items-center rounded-full bg-indigo-500/10 px-3 py-1 text-sm font-medium text-indigo-400 border border-indigo-500/20">
-                                    Masterclass
+                                    Мастеркласс
                                 </span>
                                 <span className="flex items-center text-sm text-zinc-400">
                                     <Star className="w-4 h-4 text-emerald-400 fill-emerald-400 mr-1" />
-                                    4.9 (120+ reviews)
+                                    4.9 (120+ үнэлгээ)
                                 </span>
                             </div>
 
@@ -75,22 +75,22 @@ export default async function CourseSalesPage(props: { params: Promise<{ id: str
                             <div className="flex items-center gap-3">
                                 <MonitorPlay className="w-8 h-8 text-indigo-400" />
                                 <div>
-                                    <p className="font-bold">{lessons.length} Lessons</p>
-                                    <p className="text-sm text-zinc-500">Video Content</p>
+                                    <p className="font-bold">{lessons.length} Хичээл</p>
+                                    <p className="text-sm text-zinc-500">Видео хичээл</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
                                 <Users className="w-8 h-8 text-purple-400" />
                                 <div>
-                                    <p className="font-bold">Community</p>
-                                    <p className="text-sm text-zinc-500">Q&A Support</p>
+                                    <p className="font-bold">Нийгэмлэг</p>
+                                    <p className="text-sm text-zinc-500">Асуулт, хариулт</p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Curriculum List */}
                         <div>
-                            <h2 className="text-2xl font-bold mb-6">Course Curriculum</h2>
+                            <h2 className="text-2xl font-bold mb-6">Хичээлийн хөтөлбөр</h2>
                             <CourseCurriculumList lessons={lessons} courseId={course.id} />
                         </div>
                     </div>
@@ -129,12 +129,12 @@ export default async function CourseSalesPage(props: { params: Promise<{ id: str
 
                                 {paymentStatus === 'pending' ? (
                                     <div className="w-full text-center py-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-yellow-500 font-bold">
-                                        Payment Pending Admin Review
+                                        Төлбөр хүлээгдэх төлөвтэй байна
                                     </div>
                                 ) : !user ? (
                                     <Link href="/login" className="block w-full">
                                         <Button className="w-full h-14 text-lg font-bold bg-white text-black hover:bg-zinc-200 shadow-[0_0_20px_rgba(255,255,255,0.2)] rounded-xl relative overflow-hidden group">
-                                            <span className="relative z-10">Log in to Enroll</span>
+                                            <span className="relative z-10">Нэвтэрч элсэх</span>
                                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
                                         </Button>
                                     </Link>
@@ -144,9 +144,9 @@ export default async function CourseSalesPage(props: { params: Promise<{ id: str
 
                                 <div className="mt-6 space-y-3 shrink-0">
                                     {[
-                                        'Lifetime access to all videos',
-                                        'Direct Q&A with the instructor',
-                                        'Certificate of completion'
+                                        'Бүх видеог насан туршдаа үзэх эрх',
+                                        'Багштай шууд холбогдож асуулт асуух',
+                                        'Төгссөн батламж'
                                     ].map((feature, i) => (
                                         <div key={i} className="flex items-center text-zinc-300 text-sm">
                                             <CheckCircle2 className="w-4 h-4 mr-3 text-emerald-400 shrink-0" />

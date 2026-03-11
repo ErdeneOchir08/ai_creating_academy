@@ -29,7 +29,7 @@ export function AdminReplyForm({
             }
         } catch (error) {
             console.error(error)
-            alert('Failed to post reply')
+            alert('Хариулт илгээхэд алдаа гарлаа')
         } finally {
             setIsSubmitting(false)
         }
@@ -40,7 +40,7 @@ export function AdminReplyForm({
             <Textarea
                 value={reply}
                 onChange={(e) => setReply(e.target.value)}
-                placeholder="Write your reply to the student... (This will instantly mark the thread as resolved)"
+                placeholder="Оюутанд хариу бичих... (Энэ нь харилцан яриаг шууд шийдвэрлэгдсэн төлөвт шилжүүлнэ)"
                 className="min-h-[60px] max-h-[200px] bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500 focus-visible:ring-indigo-500 resize-y"
                 disabled={isSubmitting}
             />

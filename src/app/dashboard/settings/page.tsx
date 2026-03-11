@@ -23,16 +23,16 @@ export default async function SettingsPage() {
     return (
         <div className="p-8 max-w-4xl mx-auto space-y-8">
             <header className="mb-8">
-                <h1 className="text-3xl font-bold text-white tracking-tight">Account Settings</h1>
-                <p className="text-zinc-400 mt-2">Manage your personal information and security preferences.</p>
+                <h1 className="text-3xl font-bold text-white tracking-tight">Бүртгэлийн тохиргоо</h1>
+                <p className="text-zinc-400 mt-2">Хувийн мэдээлэл болон аюулгүй байдлын тохиргоогоо удирдах.</p>
             </header>
 
             <div className="grid gap-8">
                 {/* Profile Information */}
                 <Card className="bg-zinc-950/50 border-zinc-800 backdrop-blur-sm text-white shadow-xl">
                     <CardHeader>
-                        <CardTitle className="text-xl">Profile Information</CardTitle>
-                        <CardDescription className="text-zinc-400">Update your account&apos;s public-facing details.</CardDescription>
+                        <CardTitle className="text-xl">Профайлын мэдээлэл</CardTitle>
+                        <CardDescription className="text-zinc-400">Бүртгэлийнхээ нийтэд харагдах мэдээллийг шинэчлэх.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <ProfileForm
@@ -46,8 +46,8 @@ export default async function SettingsPage() {
                 {/* Password Security */}
                 <Card className="bg-zinc-950/50 border-zinc-800 backdrop-blur-sm text-white shadow-xl">
                     <CardHeader>
-                        <CardTitle className="text-xl">Security</CardTitle>
-                        <CardDescription className="text-zinc-400">Update your password to keep your account secure.</CardDescription>
+                        <CardTitle className="text-xl">Аюулгүй байдал</CardTitle>
+                        <CardDescription className="text-zinc-400">Бүртгэлийнхээ аюулгүй байдлыг хангах үүднээс нууц үгээ шинэчлээрэй.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <PasswordForm />

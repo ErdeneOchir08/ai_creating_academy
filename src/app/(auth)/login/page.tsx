@@ -19,19 +19,19 @@ export default function LoginPage() {
                             <Sparkles className="h-6 w-6 text-indigo-400" />
                         </div>
                         <span className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-                            AI Creator Academy
+                            Mind Academy
                         </span>
                     </Link>
 
                     <h1 className="text-4xl lg:text-5xl font-extrabold text-white mb-6 leading-tight">
-                        Welcome back to your <br />
+                        Тавтай морилно уу! <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
-                            Creator Journey
+                            Бүтээгчийн Аялал
                         </span>
                     </h1>
 
                     <p className="text-lg text-zinc-400 mb-8 leading-relaxed">
-                        Log in to resume your courses, ask questions, and master the art of building AI applications.
+                        Нэвтэрч ороод хичээлүүдээ үргэлжлүүлж, асуулт асууж, AI аппликейшн бүтээх урлагт суралцаарай.
                     </p>
 
                     <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800/50 backdrop-blur-sm relative overflow-hidden">
@@ -41,8 +41,8 @@ export default function LoginPage() {
                                 🚀
                             </div>
                             <div>
-                                <h4 className="text-white font-semibold">Ready to build?</h4>
-                                <p className="text-zinc-400 text-sm">Join thousands of students creating AI apps.</p>
+                                <h4 className="text-white font-semibold">Бүтээхэд бэлэн үү?</h4>
+                                <p className="text-zinc-400 text-sm">AI апп бүтээж буй мянга мянган суралцагчидтай нэгд.</p>
                             </div>
                         </div>
                     </div>
@@ -62,7 +62,7 @@ export default function LoginPage() {
                         <Link href="/" className="inline-flex items-center gap-2">
                             <Sparkles className="h-6 w-6 text-indigo-400" />
                             <span className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-                                Academy
+                                Академи
                             </span>
                         </Link>
                     </div>

@@ -25,7 +25,7 @@ export function DeleteUserAlert({ user }: { user: any }) {
             await deleteUser(user.id)
         } catch (error) {
             console.error(error)
-            alert('Failed to delete user.')
+            alert('Хэрэглэгчийг устгахад алдаа гарлаа.')
         } finally {
             setIsLoading(false)
         }
@@ -40,23 +40,22 @@ export function DeleteUserAlert({ user }: { user: any }) {
             </AlertDialogTrigger>
             <AlertDialogContent className="bg-zinc-950 border-zinc-800 text-white">
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogTitle>Та үнэхээр итгэлтэй байна уу?</AlertDialogTitle>
                     <AlertDialogDescription className="text-zinc-400">
-                        This action cannot be undone. This will permanently delete the
-                        profile for <span className="text-white font-semibold">{user.display_name || user.email || 'this user'}</span>
-                        {(user.enrollments?.[0]?.count || 0) > 0 && " and all their active enrollments."}
+                        Энэ үйлдлийг буцаах боломжгүй. Энэ нь дараах профайлыг бүрмөсөн устгах болно: <span className="text-white font-semibold">{user.display_name || user.email || 'энэ хэрэглэгч'}</span>
+                        {(user.enrollments?.[0]?.count || 0) > 0 && " болон тэдний бүх идэвхтэй элсэлтүүдийг хуулах болно."}
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogCancel className="bg-transparent border-zinc-700 hover:bg-zinc-800 hover:text-white">
-                        Cancel
+                        Цуцлах
                     </AlertDialogCancel>
                     <AlertDialogAction
                         onClick={handleConfirm}
                         disabled={isLoading}
                         className="bg-red-600 hover:bg-red-700 text-white"
                     >
-                        {isLoading ? 'Deleting...' : 'Delete User'}
+                        {isLoading ? 'Устгаж байна...' : 'Хэрэглэгч устгах'}
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>

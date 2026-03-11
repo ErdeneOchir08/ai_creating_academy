@@ -13,15 +13,15 @@ export default async function DashboardCoursesPage() {
     return (
         <div className="p-8 max-w-6xl mx-auto">
             <header className="mb-10">
-                <h1 className="text-3xl font-bold mb-2">My Courses</h1>
-                <p className="text-zinc-400">Welcome back, {profile?.display_name || 'Student'}. Pick up where you left off!</p>
+                <h1 className="text-3xl font-bold mb-2">Миний хичээлүүд</h1>
+                <p className="text-zinc-400">Тавтай морилно уу, {profile?.display_name || 'Суралцагч'}. Хичээлээ үргэлжлүүлээрэй!</p>
             </header>
 
             {/* Enrolled Courses */}
             {enrollments && enrollments.length > 0 && (
                 <div className="mb-12">
                     <h2 className="text-xl font-bold mb-6 text-white flex items-center gap-2">
-                        Active Courses <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-2 py-1 rounded-full">{enrollments.length}</span>
+                        Идэвхтэй хичээлүүд <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-2 py-1 rounded-full">{enrollments.length}</span>
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {enrollments.map((enrollment: any) => {
@@ -39,18 +39,18 @@ export default async function DashboardCoursesPage() {
                                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                                             <Link href={`/courses/${course.id}`}>
                                                 <Button className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white">
-                                                    Resume Course
+                                                    Үргэлжлүүлэх
                                                 </Button>
                                             </Link>
                                         </div>
                                     </div>
                                     <CardContent className="p-4 flex flex-col flex-1">
                                         <h3 className="font-semibold text-lg line-clamp-1">{course.title}</h3>
-                                        <p className="text-zinc-400 text-sm mt-1 mb-4 flex-1">Enrolled: {new Date(enrollment.granted_at).toLocaleDateString()}</p>
+                                        <p className="text-zinc-400 text-sm mt-1 mb-4 flex-1">Элссэн огноо: {new Date(enrollment.granted_at).toLocaleDateString()}</p>
                                         <div className="mt-auto pt-4 border-t border-zinc-800/50">
                                             <Link href={`/courses/${course.id}`} className="w-full">
                                                 <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/20 rounded-xl font-bold h-12 text-md">
-                                                    Continue Learning
+                                                    Хичээл үзэх
                                                 </Button>
                                             </Link>
                                         </div>
@@ -66,7 +66,7 @@ export default async function DashboardCoursesPage() {
             {pendingCourses && pendingCourses.length > 0 && (
                 <div className="mb-12">
                     <h2 className="text-xl font-bold mb-6 text-white flex items-center gap-2">
-                        Pending Approval <span className="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 text-xs px-2 py-1 rounded-full">{pendingCourses.length}</span>
+                        Зөвшөөрөл хүлээгдэж буй <span className="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 text-xs px-2 py-1 rounded-full">{pendingCourses.length}</span>
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {pendingCourses.map((request: any) => {
@@ -82,16 +82,16 @@ export default async function DashboardCoursesPage() {
                                             </div>
                                         )}
                                         <div className="absolute top-2 right-2 bg-yellow-500/20 backdrop-blur-md border border-yellow-500/50 text-yellow-500 text-xs font-bold px-2 py-1 rounded-md flex items-center gap-1">
-                                            <Clock className="w-3 h-3" /> Under Review
+                                            <Clock className="w-3 h-3" /> Хянагдаж байна
                                         </div>
                                     </div>
                                     <CardContent className="p-4 flex flex-col flex-1">
                                         <h3 className="font-semibold text-lg line-clamp-1">{course.title}</h3>
-                                        <p className="text-zinc-400 text-sm mt-1 mb-4 flex-1">Requested: {new Date(request.created_at).toLocaleDateString()}</p>
+                                        <p className="text-zinc-400 text-sm mt-1 mb-4 flex-1">Хүсэлт илгээсэн: {new Date(request.created_at).toLocaleDateString()}</p>
                                         <div className="mt-auto pt-4 border-t border-zinc-800/50">
                                             <Link href={`/course/${course.id}`} className="w-full">
                                                 <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/20 rounded-xl font-bold h-12 text-md">
-                                                    View Status
+                                                    Төлөв харах
                                                 </Button>
                                             </Link>
                                         </div>
@@ -105,10 +105,10 @@ export default async function DashboardCoursesPage() {
 
             {(!enrollments || enrollments.length === 0) && (!pendingCourses || pendingCourses.length === 0) && (
                 <div className="text-center p-12 bg-zinc-900/50 rounded-xl border border-zinc-800">
-                    <h3 className="text-xl font-semibold mb-2">No courses yet</h3>
-                    <p className="text-zinc-400 mb-6">You haven't enrolled in any courses. Explore the academy to get started!</p>
+                    <h3 className="text-xl font-semibold mb-2">Одоогоор хичээл алга</h3>
+                    <p className="text-zinc-400 mb-6">Та ямар нэг хичээлд элсээгүй байна.</p>
                     <Link href="/#courses">
-                        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">Browse Courses</Button>
+                        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">Хичээл үзэх</Button>
                     </Link>
                 </div>
             )}

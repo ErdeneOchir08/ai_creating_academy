@@ -71,7 +71,7 @@ export function QASidebar({ courseId, lessonId, initialData }: QAProps) {
             // Rollback optimistic update
             setQuestions(initialData)
             setInputValue(currentContent)
-            alert('Failed to post question. Please try again.')
+            alert('Асуулт илгээхэд алдаа гарлаа. Дахин оролдоно уу.')
         } finally {
             setIsPosting(false)
         }
@@ -89,9 +89,9 @@ export function QASidebar({ courseId, lessonId, initialData }: QAProps) {
             <div className="p-4 border-b border-zinc-800 bg-zinc-900/50">
                 <h2 className="font-semibold flex items-center gap-2">
                     <User className="h-4 w-4 text-indigo-400" />
-                    Teacher Q&A
+                    Багшаас асуух
                 </h2>
-                <p className="text-xs text-zinc-400 mt-1">Ask questions and get help directly from the instructor.</p>
+                <p className="text-xs text-zinc-400 mt-1">Асуулт асууж, багшаас шууд тусламж аваарай.</p>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-6 flex flex-col-reverse">
@@ -99,8 +99,8 @@ export function QASidebar({ courseId, lessonId, initialData }: QAProps) {
 
                 {questions.length === 0 && (
                     <div className="text-center text-zinc-500 py-10 my-auto">
-                        <p className="text-sm">No questions asked yet for this lesson.</p>
-                        <p className="text-xs mt-2">Be the first to ask!</p>
+                        <p className="text-sm">Энэ хичээл дээр одоогоор асуулт гараагүй байна.</p>
+                        <p className="text-xs mt-2">Эхнийхийг нь та асуугаарай!</p>
                     </div>
                 )}
 
@@ -118,7 +118,7 @@ export function QASidebar({ courseId, lessonId, initialData }: QAProps) {
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-baseline gap-2 mb-1">
                                     <span className="font-medium text-sm text-zinc-200 truncate">
-                                        {q.profiles?.display_name || 'Student'}
+                                        {q.profiles?.display_name || 'Оюутан'}
                                     </span>
                                     <span className="text-[10px] text-zinc-500 shrink-0">
                                         {mounted ? new Date(q.created_at).toLocaleDateString() : ''}
@@ -141,7 +141,7 @@ export function QASidebar({ courseId, lessonId, initialData }: QAProps) {
                                         <div className="flex-1 min-w-0 bg-indigo-950/20 rounded-md p-2 border border-indigo-500/10">
                                             <div className="flex items-baseline gap-2 mb-1">
                                                 <span className="font-medium text-xs text-indigo-300">
-                                                    Instructor
+                                                    Багш
                                                 </span>
                                             </div>
                                             <div className="text-sm text-zinc-300 whitespace-pre-wrap">
@@ -162,7 +162,7 @@ export function QASidebar({ courseId, lessonId, initialData }: QAProps) {
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder="Ask the instructor a question..."
+                        placeholder="Багшаас асуулт асуух..."
                         className="pr-12 resize-none bg-zinc-900 border-zinc-800 focus-visible:ring-indigo-500 rounded-xl min-h-[60px] max-h-[150px]"
                         disabled={isPosting}
                     />
@@ -176,7 +176,7 @@ export function QASidebar({ courseId, lessonId, initialData }: QAProps) {
                     </Button>
                 </form>
                 <div className="text-center mt-2">
-                    <span className="text-[10px] text-zinc-500">Press Enter to send, Shift+Enter for new line</span>
+                    <span className="text-[10px] text-zinc-500">Илгээхийн тулд Enter дарж, шинэ мөр рүү шилжихийн тулд Shift+Enter дарна уу</span>
                 </div>
             </div>
         </div>

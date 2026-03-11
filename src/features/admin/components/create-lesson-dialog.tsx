@@ -27,7 +27,7 @@ export function CreateLessonDialog({ courseId, nextOrderIndex }: { courseId: str
             setOpen(false)
         } catch (error) {
             console.error(error)
-            alert('Failed to create lesson. Please try again.')
+            alert('Хичээл үүсгэхэд алдаа гарлаа. Дахин оролдоно уу.')
         } finally {
             setIsLoading(false)
         }
@@ -38,14 +38,14 @@ export function CreateLessonDialog({ courseId, nextOrderIndex }: { courseId: str
             <DialogTrigger asChild>
                 <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white">
                     <Plus className="mr-2 h-4 w-4" />
-                    Add Lesson
+                    Хичээл нэмэх
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px] bg-zinc-950 border-zinc-800 text-white">
                 <DialogHeader>
-                    <DialogTitle>Add New Lesson</DialogTitle>
+                    <DialogTitle>Шинэ хичээл нэмэх</DialogTitle>
                     <DialogDescription className="text-zinc-400">
-                        Add a YouTube video lesson to this course.
+                        Энэ хичээлд YouTube видео нэмэх.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -53,26 +53,26 @@ export function CreateLessonDialog({ courseId, nextOrderIndex }: { courseId: str
                     <input type="hidden" name="course_id" value={courseId} />
 
                     <div className="space-y-2">
-                        <Label htmlFor="title">Lesson Title <span className="text-red-500">*</span></Label>
-                        <Input id="title" name="title" required placeholder="e.g., Installing Flowise" className="bg-zinc-900 border-zinc-800" />
+                        <Label htmlFor="title">Хичээлийн гарчиг <span className="text-red-500">*</span></Label>
+                        <Input id="title" name="title" required placeholder="ж.нь: Flowise суулгах" className="bg-zinc-900 border-zinc-800" />
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="video_url">YouTube Video URL <span className="text-red-500">*</span></Label>
+                        <Label htmlFor="video_url">YouTube видеоны холбоос <span className="text-red-500">*</span></Label>
                         <Input id="video_url" name="video_url" required placeholder="https://youtube.com/watch?v=..." className="bg-zinc-900 border-zinc-800" />
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="order_index">Order Index</Label>
+                        <Label htmlFor="order_index">Дарааллын дугаар</Label>
                         <Input id="order_index" name="order_index" type="number" defaultValue={nextOrderIndex} className="bg-zinc-900 border-zinc-800" />
                     </div>
 
                     <DialogFooter className="pt-4">
                         <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="text-zinc-400 hover:text-white">
-                            Cancel
+                            Болих
                         </Button>
                         <Button type="submit" disabled={isLoading} className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                            {isLoading ? 'Saving...' : 'Save Lesson'}
+                            {isLoading ? 'Хадгалж байна...' : 'Хичээл хадгалах'}
                         </Button>
                     </DialogFooter>
                 </form>
