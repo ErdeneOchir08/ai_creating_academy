@@ -11,81 +11,47 @@ import Link from 'next/link'
 
 function SubmitButton() {
     const { pending } = useFormStatus()
-    return (
-        <Button
-            className="w-full h-11 bg-white text-black hover:bg-zinc-200 transition-all duration-300 font-semibold rounded-xl"
-            type="submit"
-            disabled={pending}
-        >
-            {pending ? 'Бүртгэл үүсгэж байна...' : 'Бүртгүүлэх'}
-        </Button>
-    )
+    return <Button className="h-11 w-full rounded-xl bg-white font-semibold text-black transition-all duration-300 hover:bg-zinc-200" type="submit" disabled={pending}>{pending ? 'Бүртгэж байна…' : 'Бүртгүүлэх'}</Button>
 }
 
 export function RegisterForm() {
     const [error, setError] = useState<string | null>(null)
+    const [success, setSuccess] = useState<string | null>(null)
 
     async function clientAction(formData: FormData) {
+        setError(null)
+        setSuccess(null)
         const result = await signup(formData)
-        if (result?.error) {
-            setError(result.error)
-        }
+        if (result?.error) setError(result.error)
+        if (result?.success) setSuccess(result.success)
     }
 
     return (
-        <Card className="w-full max-w-md mx-auto bg-zinc-950/40 border-zinc-800/50 backdrop-blur-xl shadow-2xl rounded-2xl overflow-hidden">
+        <Card className="mx-auto w-full max-w-md overflow-hidden rounded-2xl border-zinc-800/50 bg-zinc-950/40 shadow-2xl backdrop-blur-xl">
             <CardHeader className="space-y-2 pb-6">
                 <CardTitle className="text-2xl font-bold text-white">Бүртгэл үүсгэх</CardTitle>
-                <CardDescription className="text-zinc-400">Академид нэгдэн AI сурах аяллаа эхлүүлээрэй.</CardDescription>
+                <CardDescription className="text-zinc-400">Академид нэгдэж, AI сурах аяллаа эхлүүлээрэй.</CardDescription>
             </CardHeader>
             <form action={clientAction}>
                 <CardContent className="space-y-5">
                     <div className="space-y-2">
                         <Label htmlFor="full_name" className="text-zinc-300">Овог нэр</Label>
-                        <Input
-                            id="full_name"
-                            name="full_name"
-                            placeholder="John Doe"
-                            required
-                            className="bg-zinc-900/50 border-zinc-800 text-white placeholder:text-zinc-500 rounded-xl h-11 focus-visible:ring-indigo-500/50 transition-all duration-300"
-                        />
+                        <Input id="full_name" name="full_name" placeholder="Жишээ: Бат Болд" required autoComplete="name" className="h-11 rounded-xl border-zinc-800 bg-zinc-900/50 text-white" />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="email" className="text-zinc-300">И-мэйл хаяг</Label>
-                        <Input
-                            id="email"
-                            name="email"
-                            type="email"
-                            placeholder="m@example.com"
-                            required
-                            className="bg-zinc-900/50 border-zinc-800 text-white placeholder:text-zinc-500 rounded-xl h-11 focus-visible:ring-indigo-500/50 transition-all duration-300"
-                        />
+                        <Input id="email" name="email" type="email" placeholder="m@example.com" required autoComplete="email" className="h-11 rounded-xl border-zinc-800 bg-zinc-900/50 text-white" />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="password" className="text-zinc-300">Нууц үг</Label>
-                        <Input
-                            id="password"
-                            name="password"
-                            type="password"
-                            required
-                            minLength={6}
-                            className="bg-zinc-900/50 border-zinc-800 text-white placeholder:text-zinc-500 rounded-xl h-11 focus-visible:ring-indigo-500/50 transition-all duration-300"
-                        />
+                        <Input id="password" name="password" type="password" required minLength={8} autoComplete="new-password" className="h-11 rounded-xl border-zinc-800 bg-zinc-900/50 text-white" />
                     </div>
-                    {error && (
-                        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-500 font-medium">
-                            {error}
-                        </div>
-                    )}
+                    {error && <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm font-medium text-red-400">{error}</div>}
+                    {success && <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm font-medium text-emerald-300">{success}</div>}
                 </CardContent>
-                <CardFooter className="flex flex-col space-y-5 pt-2">
+                <CardFooter className="flex w-full flex-col space-y-5 pt-2">
                     <SubmitButton />
-                    <div className="text-sm text-center text-zinc-400 w-full">
-                        Бүртгэлтэй юу?{' '}
-                        <Link href="/login" className="text-indigo-400 hover:text-indigo-300 hover:underline font-medium transition-colors">
-                            Нэвтрэх
-                        </Link>
-                    </div>
+                    <div className="w-full text-center text-sm text-zinc-400">Бүртгэлтэй юу? <Link href="/login" className="font-medium text-indigo-400 transition-colors hover:text-indigo-300 hover:underline">Нэвтрэх</Link></div>
                 </CardFooter>
             </form>
         </Card>

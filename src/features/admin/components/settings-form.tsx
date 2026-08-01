@@ -35,8 +35,8 @@ export function SettingsForm({ initialSettings }: { initialSettings: SettingsMap
             if (!chatRes.success) throw new Error(chatRes.error)
 
             setSuccessMsg('Тохиргоог амжилттай хадгаллаа!')
-        } catch (err: any) {
-            setErrorMsg(err.message || 'Тохиргоог хадгалахад алдаа гарлаа')
+        } catch (err: unknown) {
+            setErrorMsg(err instanceof Error ? err.message : 'Тохиргоог хадгалахад алдаа гарлаа')
         } finally {
             setIsLoading(false)
         }

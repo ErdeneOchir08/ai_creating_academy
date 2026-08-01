@@ -6,12 +6,22 @@ import { Textarea } from '@/components/ui/textarea'
 import { adminPostAnswer } from '@/features/admin/qa/qa-admin-actions'
 import { Send } from 'lucide-react'
 
+type PostedAnswer = {
+    id: string
+    content: string
+    created_at: string
+    emailNotification?: {
+        sent: boolean
+        error?: string
+    }
+}
+
 export function AdminReplyForm({
     questionId,
     onReplyPosted
 }: {
     questionId: string
-    onReplyPosted?: (answer: any) => void
+    onReplyPosted?: (answer: PostedAnswer) => void
 }) {
     const [reply, setReply] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -27,9 +37,12 @@ export function AdminReplyForm({
             if (onReplyPosted && newAnswer) {
                 onReplyPosted(newAnswer)
             }
+            if (newAnswer?.emailNotification && !newAnswer.emailNotification.sent) {
+                alert(`Хариулт хадгалагдсан боловч имэйл илгээгдсэнгүй. ${newAnswer.emailNotification.error ?? ''}`)
+            }
         } catch (error) {
             console.error(error)
-            alert('Хариулт илгээхэд алдаа гарлаа')
+            alert(error instanceof Error ? error.message : 'Хариулт илгээхэд алдаа гарлаа. Дахин оролдоно уу.')
         } finally {
             setIsSubmitting(false)
         }
@@ -40,6 +53,7 @@ export function AdminReplyForm({
             <Textarea
                 value={reply}
                 onChange={(e) => setReply(e.target.value)}
+                maxLength={4000}
                 placeholder="Оюутанд хариу бичих... (Энэ нь харилцан яриаг шууд шийдвэрлэгдсэн төлөвт шилжүүлнэ)"
                 className="min-h-[60px] max-h-[200px] bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500 focus-visible:ring-indigo-500 resize-y"
                 disabled={isSubmitting}

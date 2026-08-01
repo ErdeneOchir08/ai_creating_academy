@@ -2,43 +2,55 @@ import { QASidebar } from '@/features/qa/components/qa-sidebar'
 import { getCourseById, getCourseLessons } from '@/features/courses/actions/course-actions'
 import { getLessonQA } from '@/features/qa/actions/qa-actions'
 import { getUserProgress } from '@/features/courses/actions/progress-actions'
-import { getUserProgressDashboard } from '@/features/dashboard/actions/progress-dashboard-actions'
-import { checkPaymentStatus } from '@/features/payments/actions/payment-actions'
+import { checkPaymentStatus, getRejectedPaymentReason } from '@/features/payments/actions/payment-actions'
 import { PaymentModal } from '@/features/payments/components/payment-modal'
 import { ProgressToggle } from '@/features/courses/components/progress-toggle'
 import { createClient } from '@/lib/supabase/server'
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Video, PlayCircle, CheckCircle2, Menu, MessageSquare } from 'lucide-react'
-import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from '@/components/ui/sheet'
+import { ArrowLeft, Video, PlayCircle, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
+import { getPaymentConfiguration } from '@/features/admin/actions/settings-actions.admin'
+import { getCloudflareStreamPlaybackUrl } from '@/lib/cloudflare-stream/playback'
 
 function getYouTubeEmbedUrl(url: string) {
-    if (!url) return '';
+    if (!url) return ''
+
     try {
-        let videoId = '';
-        if (url.includes('youtube.com/watch')) {
-            const urlObj = new URL(url);
-            videoId = urlObj.searchParams.get('v') || '';
-        } else if (url.includes('youtu.be/')) {
-            videoId = url.split('youtu.be/')[1].split('?')[0];
-        } else if (url.includes('youtube.com/embed/')) {
-            return url;
+        const parsed = new URL(url)
+        const hostname = parsed.hostname.toLowerCase()
+        const allowedHosts = new Set([
+            'youtube.com',
+            'www.youtube.com',
+            'm.youtube.com',
+            'youtu.be',
+            'www.youtu.be',
+            'youtube-nocookie.com',
+            'www.youtube-nocookie.com',
+        ])
+
+        if (parsed.protocol !== 'https:' || !allowedHosts.has(hostname)) return ''
+
+        let videoId = ''
+        if (hostname.endsWith('youtu.be')) {
+            videoId = parsed.pathname.split('/').filter(Boolean)[0] ?? ''
+        } else if (parsed.pathname === '/watch') {
+            videoId = parsed.searchParams.get('v') ?? ''
+        } else if (parsed.pathname.startsWith('/embed/') || parsed.pathname.startsWith('/shorts/')) {
+            videoId = parsed.pathname.split('/').filter(Boolean)[1] ?? ''
         }
-        return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
-    } catch (e) {
-        return url;
+
+        return /^[A-Za-z0-9_-]{11}$/.test(videoId)
+            ? `https://www.youtube-nocookie.com/embed/${videoId}?rel=0`
+            : ''
+    } catch {
+        return ''
     }
 }
 
 export default async function CoursePlayerPage(props: { params: Promise<{ id: string }>, searchParams: Promise<{ lesson?: string }> }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-        redirect('/login')
-    }
 
     const { id } = await props.params
     const searchParams = await props.searchParams
@@ -49,6 +61,7 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
     }
 
     const paymentStatus = await checkPaymentStatus(id)
+    const rejectionReason = paymentStatus === 'rejected' ? await getRejectedPaymentReason(id) : null
     const isEnrolled = paymentStatus === 'enrolled'
     const isPending = paymentStatus === 'pending'
 
@@ -58,43 +71,31 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
     ])
 
     // Map completed lesson IDs for easy lookup
-    const completedLessonIds = new Set(progress.filter((p: any) => p.completed).map((p: any) => p.lesson_id))
+    const completedLessonIds = new Set(progress.filter((item) => item.completed).map((item) => item.lesson_id))
 
-    const currentLessonId = searchParams.lesson || (lessons.length > 0 ? lessons[0].id : null)
-    const currentLesson = lessons.find((l: any) => l.id === currentLessonId) || lessons[0]
+    const requestedLessonId = searchParams.lesson
+    const currentLesson = lessons.find((lesson) => lesson.id === requestedLessonId) || lessons[0]
+    const currentLessonId = currentLesson?.id ?? null
 
     // Fetch Q&A threads for current lesson
-    const qaThreads = currentLessonId ? await getLessonQA(currentLessonId) : []
+    const qaThreads = currentLessonId && isEnrolled ? await getLessonQA(currentLessonId) : []
 
-    const currentLessonIndex = lessons.findIndex((l: any) => l.id === currentLesson?.id)
+    const currentLessonIndex = lessons.findIndex((lesson) => lesson.id === currentLesson?.id)
     const nextLesson = currentLessonIndex !== -1 && currentLessonIndex < lessons.length - 1 ? lessons[currentLessonIndex + 1] : null
     const isCurrentLessonCompleted = currentLesson ? completedLessonIds.has(currentLesson.id) : false
 
-    const videoUrl = currentLesson?.video_url ? getYouTubeEmbedUrl(currentLesson.video_url) : ''
+    const hasVideoAccess = isEnrolled || currentLesson?.is_preview === true
+    const videoUrl = currentLesson?.video_provider === 'youtube' && currentLesson.video_url
+        ? getYouTubeEmbedUrl(currentLesson.video_url)
+        : ''
+    const cloudflareVideoUrl = hasVideoAccess
+        && currentLesson?.video_provider === 'cloudflare'
+        && currentLesson.provider_video_id
+        && currentLesson.playback_status === 'ready'
+        ? await getCloudflareStreamPlaybackUrl(currentLesson.provider_video_id)
+        : ''
 
-    // Check Free Preview Logic
-    const isFirstLesson = lessons.length > 0 && currentLessonId === lessons[0].id
-    const hasVideoAccess = isEnrolled || isFirstLesson
-
-    // Fetch active XP discount
-    const { data: activeDiscountData } = await supabase
-        .from('xp_redemptions')
-        .select('id, discount_percentage')
-        .eq('user_id', user.id)
-        .eq('is_used', false)
-        .order('discount_percentage', { ascending: false })
-        .limit(1)
-        .single()
-
-    const activeDiscount = activeDiscountData?.discount_percentage || 0
-    const activeDiscountId = activeDiscountData?.id || null
-
-    // Get User Total XP to allow them to buy a new discount at checkout
-    let totalXP = 0
-    if (user) {
-        const progressDashboard = await getUserProgressDashboard()
-        totalXP = progressDashboard?.gamification.totalXP || 0
-    }
+    const paymentConfiguration = await getPaymentConfiguration()
 
     return (
         <div className="flex h-[calc(100vh-64px)] w-full overflow-hidden bg-[#09090b] text-white relative">
@@ -115,7 +116,7 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
                 <div className="flex-1 overflow-y-auto p-4 space-y-2">
                     <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-4">Хичээлийн агуулга</h3>
                     {lessons.length > 0 ? (
-                        lessons.map((lesson: any, index: number) => {
+                        lessons.map((lesson, index) => {
                             const isActive = lesson.id === currentLesson?.id
                             const isCompleted = completedLessonIds.has(lesson.id)
                             return (
@@ -156,14 +157,9 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
                     <div className="w-full aspect-video rounded-[2rem] overflow-hidden bg-black border-[4px] border-indigo-500/30 shadow-[0_0_50px_rgba(99,102,241,0.2)] relative mb-8 transition-all duration-700 hover:shadow-[0_0_80px_rgba(99,102,241,0.3)]">
                         {hasVideoAccess ? (
                             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black">
-                                {isFirstLesson && !isEnrolled && (
-                                    <div className="absolute top-4 left-4 z-50 bg-indigo-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg border border-indigo-400 flex items-center gap-1">
-                                        <PlayCircle className="h-3 w-3" /> ҮНЭГҮЙ ҮЗЭХ
-                                    </div>
-                                )}
-                                {videoUrl ? (
+                                {videoUrl || cloudflareVideoUrl ? (
                                     <iframe
-                                        src={videoUrl}
+                                        src={cloudflareVideoUrl || videoUrl}
                                         className="w-full h-full border-0"
                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                         allowFullScreen
@@ -184,16 +180,20 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
                                     <span className="inline-flex items-center rounded-full bg-yellow-500/10 px-6 py-3 text-base font-bold text-yellow-500 ring-1 ring-inset ring-yellow-500/20 shadow-[0_0_20px_rgba(234,179,8,0.2)]">
                                         Төлбөр хүлээгдэх төлөвтэй байна
                                     </span>
-                                ) : (
+                                ) : user ? (
                                     <div className="w-72 mx-auto scale-110">
                                         <PaymentModal
                                             courseId={course.id}
                                             coursePrice={course.price_display}
-                                            discountPercentage={activeDiscount}
-                                            discountId={activeDiscountId}
-                                            totalXP={totalXP}
+                                            paymentInstructions={paymentConfiguration.instructions}
+                                            isTestMode={paymentConfiguration.isTestMode}
+                                            rejectionReason={rejectionReason}
                                         />
                                     </div>
+                                ) : (
+                                    <Link href={`/course/${course.id}`} className="inline-flex">
+                                        <Button className="h-12 bg-indigo-600 px-6 font-bold text-white hover:bg-indigo-700">Хичээлд бүртгүүлэх</Button>
+                                    </Link>
                                 )}
                             </div>
                         )}
@@ -210,13 +210,19 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
                                 <div className="p-6 rounded-2xl bg-gradient-to-br from-indigo-900/40 to-purple-900/20 border border-indigo-500/30 text-center shadow-xl shadow-indigo-500/10">
                                     <h3 className="text-lg font-bold text-white mb-2">Бүтэн хичээлийг нээх</h3>
                                     <p className="text-sm text-indigo-200/80 mb-5 leading-relaxed">Үнэгүй хичээл таалагдаж байна уу? Бүх хичээл болон нийгэмлэгт хандах эрхээ аваарай.</p>
-                                    <PaymentModal
-                                        courseId={course.id}
-                                        coursePrice={course.price_display}
-                                        discountPercentage={activeDiscount}
-                                        discountId={activeDiscountId}
-                                        totalXP={totalXP}
-                                    />
+                                    {user ? (
+                                        <PaymentModal
+                                            courseId={course.id}
+                                            coursePrice={course.price_display}
+                                            paymentInstructions={paymentConfiguration.instructions}
+                                            isTestMode={paymentConfiguration.isTestMode}
+                                            rejectionReason={rejectionReason}
+                                        />
+                                    ) : (
+                                        <Link href={`/course/${course.id}`} className="block">
+                                            <Button className="h-12 w-full bg-indigo-600 font-bold text-white hover:bg-indigo-700">Хичээлд бүртгүүлэх</Button>
+                                        </Link>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -254,7 +260,7 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
                         <h3 className="text-xl font-bold mb-4 text-white">Хичээлүүд</h3>
                         <div className="flex flex-col gap-2">
                             {lessons.length > 0 ? (
-                                lessons.map((lesson: any, index: number) => {
+                                lessons.map((lesson, index) => {
                                     const isActive = lesson.id === currentLesson?.id
                                     const isCompleted = completedLessonIds.has(lesson.id)
                                     return (

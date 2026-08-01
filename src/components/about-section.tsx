@@ -1,84 +1,41 @@
-import { Target, Lightbulb, Users, Trophy, Calendar, CheckCircle2 } from 'lucide-react'
-import { getAppSettings } from '@/features/admin/actions/settings-actions.admin'
+import { BookOpen, CheckCircle2, Lightbulb, Target } from 'lucide-react'
 
-export async function AboutSection() {
-    const settings = await getAppSettings() || {}
-
+export function AboutSection({ courseCount }: { courseCount: number }) {
     return (
-        <section className="py-24 relative overflow-hidden bg-zinc-950">
-            {/* Background elements */}
-            <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-0 left-1/4 w-[600px] h-[600px] bg-purple-500/10 rounded-full blur-[150px] pointer-events-none" />
+        <section className="relative overflow-hidden bg-zinc-950 py-24">
+            <div className="pointer-events-none absolute right-1/4 top-0 h-[500px] w-[500px] rounded-full bg-indigo-500/10 blur-[120px]" />
+            <div className="pointer-events-none absolute bottom-0 left-1/4 h-[600px] w-[600px] rounded-full bg-purple-500/10 blur-[150px]" />
 
-            <div className="container mx-auto px-4 relative z-10">
-                <div className="text-center max-w-3xl mx-auto mb-20">
-                    <h2 className="text-4xl md:text-5xl font-black text-white mb-6 tracking-tight">
-                        {settings.about_title_main || 'Бидний'} <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">{settings.about_title_highlight || 'тухай'}</span>
-                    </h2>
-                    <p className="text-xl text-zinc-400 leading-relaxed whitespace-pre-wrap">
-                        {settings.about_subtitle || 'Бид хиймэл оюун ухааны боловсролыг хүн бүрт хүртээмжтэй болгох зорилготой. Бидний платформ нарийн төвөгтэй AI ойлголтуудыг бодит аппликейшн хөгжүүлэлттэй холбож өгдөг.'}
-                    </p>
+            <div className="container relative z-10 mx-auto px-4">
+                <div className="mx-auto mb-16 max-w-3xl text-center">
+                    <h2 className="mb-6 text-4xl font-black tracking-tight text-white md:text-5xl">Бидний тухай</h2>
+                    <p className="text-xl leading-relaxed text-zinc-400">Mind Academy нь AI-г ойлгож, бодит төсөл дээр хэрэглэхийг хүссэн суралцагчдад зориулсан онлайн сургалтын платформ юм.</p>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-12 lg:gap-20 mb-20">
-                    {/* Mission & Vision */}
-                    <div className="space-y-8">
-                        <div className="bg-zinc-900/50 border border-zinc-800/80 p-8 rounded-3xl backdrop-blur-md relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-150 duration-500" />
-                            <div className="flex items-center gap-4 mb-6 relative">
-                                <div className="p-3 bg-indigo-500/20 text-indigo-400 rounded-2xl">
-                                    <Target className="w-8 h-8" />
-                                </div>
-                                <h3 className="text-2xl font-bold text-white">{settings.about_goal_title || 'Бидний зорилго'}</h3>
-                            </div>
-                            <p className="text-zinc-300 leading-relaxed text-lg relative whitespace-pre-wrap">
-                                {settings.about_goal_desc || 'Дэлхий даяар 10,000 гаруй оюутнуудад хүчирхэг, өргөжүүлэх боломжтой AI аппликейшнийг эхнээс нь бичих практик ур чадварыг эзэмшүүлэх. Бид зөвхөн онолын ойлголтоос илүүтэйгээр практик сургалтанд төвлөрдөг.'}
-                            </p>
-                        </div>
+                <div className="grid gap-8 lg:grid-cols-3">
+                    <article className="rounded-3xl border border-zinc-800/80 bg-zinc-900/50 p-8 backdrop-blur-md">
+                        <div className="mb-6 w-fit rounded-2xl bg-indigo-500/20 p-3 text-indigo-400"><Target className="h-8 w-8" /></div>
+                        <h3 className="mb-3 text-2xl font-bold text-white">Бидний зорилго</h3>
+                        <p className="leading-relaxed text-zinc-300">AI-ийн суурь ойлголтыг алхам алхмаар тайлбарлаж, суралцагчдыг өөрийн бүтээлээ хийхэд чиглүүлэх.</p>
+                    </article>
 
-                        <div className="bg-zinc-900/50 border border-zinc-800/80 p-8 rounded-3xl backdrop-blur-md relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-150 duration-500" />
-                            <div className="flex items-center gap-4 mb-6 relative">
-                                <div className="p-3 bg-purple-500/20 text-purple-400 rounded-2xl">
-                                    <Lightbulb className="w-8 h-8" />
-                                </div>
-                                <h3 className="text-2xl font-bold text-white">{settings.about_vision_title || 'Бидний алсын хараа'}</h3>
-                            </div>
-                            <p className="text-zinc-300 leading-relaxed text-lg relative whitespace-pre-wrap">
-                                {settings.about_vision_desc || 'Аливаа хүн өмнөх туршлага, суурь мэдлэгээс үл хамааран хиймэл оюун ухааны хүчийг ашиглан утга учиртай асуудлуудыг шийдвэрлэж, шинэлэг програм хангамжийн шийдлүүдийг бүтээж чадах ирээдүйг цогцлоох.'}
-                            </p>
-                        </div>
-                    </div>
+                    <article className="rounded-3xl border border-zinc-800/80 bg-zinc-900/50 p-8 backdrop-blur-md">
+                        <div className="mb-6 w-fit rounded-2xl bg-purple-500/20 p-3 text-purple-400"><Lightbulb className="h-8 w-8" /></div>
+                        <h3 className="mb-3 text-2xl font-bold text-white">Суралцах арга</h3>
+                        <p className="leading-relaxed text-zinc-300">Суралцагч өөрийн хурдаар хичээлээ үзэж, ахицаа хянаж, шаардлагатай сэдэв рүүгээ дахин орох боломжтой.</p>
+                    </article>
 
-                    {/* Stats & Details */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 h-fit">
-                        <div className="bg-gradient-to-br from-indigo-500/10 to-transparent border border-indigo-500/20 p-8 rounded-3xl flex flex-col items-center justify-center text-center">
-                            <Users className="w-10 h-10 text-indigo-400 mb-4" />
-                            <h4 className="text-4xl font-black text-white mb-2">{settings.about_stats_students || '2,500+'}</h4>
-                            <p className="text-zinc-400 font-medium">Төгссөн суралцагч</p>
-                        </div>
-
-                        <div className="bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20 p-8 rounded-3xl flex flex-col items-center justify-center text-center">
-                            <Trophy className="w-10 h-10 text-purple-400 mb-4" />
-                            <h4 className="text-4xl font-black text-white mb-2">{settings.about_stats_experience || '10+'}</h4>
-                            <p className="text-zinc-400 font-medium">Жилийн туршлага</p>
-                        </div>
-
-                        <div className="bg-gradient-to-br from-pink-500/10 to-transparent border border-pink-500/20 p-8 rounded-3xl flex flex-col items-center justify-center text-center sm:col-span-2">
-                            <Calendar className="w-10 h-10 text-pink-400 mb-4" />
-                            <h4 className="text-4xl font-black text-white mb-2">{settings.about_stats_founded || '2024 онд үүсгэн байгуулагдсан'}</h4>
-                            <p className="text-zinc-400 font-medium">Орчин үеийн AI сургалтын хөтөлбөрийг эхлүүлэгч</p>
-                        </div>
-                    </div>
+                    <article className="rounded-3xl border border-indigo-500/20 bg-gradient-to-br from-indigo-500/10 to-transparent p-8">
+                        <div className="mb-6 w-fit rounded-2xl bg-pink-500/20 p-3 text-pink-400"><BookOpen className="h-8 w-8" /></div>
+                        <h3 className="mb-3 text-2xl font-bold text-white">Нээлттэй хичээлүүд</h3>
+                        <p className="text-5xl font-black text-white">{courseCount}</p>
+                        <p className="mt-2 leading-relaxed text-zinc-400">Одоогоор платформ дээр нийтлэгдсэн хичээлийн бодит тоо.</p>
+                    </article>
                 </div>
 
-                {/* Trust Indicators */}
-                <div className="flex flex-wrap justify-center gap-8 md:gap-16 pt-10 border-t border-white/5 opacity-60">
-                    {['Expert Mentorship', 'Project-Based Learning', 'Lifetime Access', 'Community Driven'].map((item) => (
-                        <div key={item} className="flex items-center gap-2 text-zinc-300 font-medium">
-                            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                            <span>{item}</span>
-                        </div>
+                <div className="mt-12 flex flex-wrap justify-center gap-x-10 gap-y-4 border-t border-white/5 pt-10 text-zinc-300">
+                    {['Онлайн хичээл', 'Ахицын хяналт', 'Аюулгүй суралцах орчин'].map((item) => (
+                        <div key={item} className="flex items-center gap-2 font-medium"><CheckCircle2 className="h-5 w-5 text-emerald-400" />{item}</div>
                     ))}
                 </div>
             </div>

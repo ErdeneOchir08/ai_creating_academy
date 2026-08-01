@@ -1,7 +1,7 @@
 import { getUserProgressDashboard } from '@/features/dashboard/actions/progress-dashboard-actions'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { CheckCircle2, PlayCircle, Trophy, Flame, ChevronRight } from 'lucide-react'
+import { PlayCircle, Trophy, Flame, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -20,9 +20,9 @@ export default async function ProgressDashboardPage() {
         <div className="p-8 max-w-6xl mx-auto space-y-10">
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
-                    <h1 className="text-3xl font-bold mb-2 text-white flex items-center gap-3">
+                    <h1 className="mb-2 flex flex-col items-start gap-2 text-2xl font-bold leading-tight text-white sm:flex-row sm:items-center sm:gap-3 sm:text-3xl">
                         Бүтээгчийн Профайл
-                        <Badge className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-black border-0 text-md px-3 py-1">
+                        <Badge className="shrink-0 whitespace-nowrap border-0 bg-gradient-to-r from-indigo-500 to-purple-500 px-3 py-1 text-sm font-black text-white sm:text-base">
                             Түвшин {gamification.currentLevel}
                         </Badge>
                     </h1>
@@ -38,15 +38,19 @@ export default async function ProgressDashboardPage() {
                         <Flame className="w-64 h-64 text-orange-500 blur-sm mix-blend-screen" />
                     </div>
 
-                    <CardHeader className="pb-2">
-                        <div className="flex justify-between items-end mb-2">
-                            <CardTitle className="text-2xl text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-pink-500 font-bold">
+                    <CardHeader className="p-5 pb-2 sm:p-6 sm:pb-2">
+                        <div className="mb-2 flex flex-col items-start gap-2 sm:flex-row sm:items-end sm:justify-between">
+                            <CardTitle className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-pink-500 sm:text-2xl">
                                 Нийт {gamification.totalXP.toLocaleString()} XP
                             </CardTitle>
-                            <span className="text-sm font-medium text-zinc-500 uppercase tracking-widest">{gamification.currentLevel + 1}-р түвшинд хүрэхэд {gamification.xpForNextLevel - gamification.xpIntoCurrentLevel} XP дутуу</span>
+                            <span className="text-xs font-medium text-zinc-500 sm:text-sm sm:uppercase sm:tracking-widest">
+                                {courses.length === 0
+                                    ? 'XP цуглуулж эхлээрэй'
+                                    : `${gamification.currentLevel + 1}-р түвшинд хүрэхэд ${gamification.xpForNextLevel - gamification.xpIntoCurrentLevel} XP дутуу`}
+                            </span>
                         </div>
                     </CardHeader>
-                    <CardContent className="space-y-4 pt-4 relative z-10">
+                    <CardContent className="relative z-10 space-y-4 pt-3">
                         <Progress value={gamification.levelPercentage} className="h-4 bg-zinc-900 rounded-full [&>div]:bg-gradient-to-r [&>div]:from-orange-500 [&>div]:to-pink-500 shadow-inner" />
                         <p className="text-sm text-zinc-400 text-right font-medium">
                             {gamification.xpIntoCurrentLevel} / {gamification.xpForNextLevel} XP
@@ -76,6 +80,8 @@ export default async function ProgressDashboardPage() {
                         <div className="flex flex-col sm:flex-row relative z-10 p-6 sm:p-8 gap-8 items-center">
                             <div className="w-full sm:w-64 aspect-video rounded-xl bg-zinc-950 overflow-hidden shrink-0 border border-zinc-800">
                                 {focalCourse.thumbnailUrl ? (
+                                    // Dynamic Supabase Storage URL.
+                                    // eslint-disable-next-line @next/next/no-img-element
                                     <img src={focalCourse.thumbnailUrl} alt={focalCourse.title} className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700" />
                                 ) : (
                                     <div className="w-full h-full bg-indigo-900/20 flex items-center justify-center" />

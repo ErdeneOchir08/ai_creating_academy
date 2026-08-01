@@ -71,8 +71,8 @@ export function BrandSettingsForm({ initialSettings }: { initialSettings: Settin
                 .getPublicUrl(filePath)
 
             setLogoUrl(publicUrl)
-        } catch (err: any) {
-            setErrorMsg(err.message || 'Лого хуулахад алдаа гарлаа')
+        } catch (err: unknown) {
+            setErrorMsg(err instanceof Error ? err.message : 'Лого хуулахад алдаа гарлаа')
         } finally {
             setIsUploading(false)
             if (e.target) e.target.value = '' // reset input
@@ -118,8 +118,8 @@ export function BrandSettingsForm({ initialSettings }: { initialSettings: Settin
             }
 
             setSuccessMsg('Брэндийн тохиргоо амжилттай хадгалагдлаа!')
-        } catch (err: any) {
-            setErrorMsg(err.message || 'Брэндийн тохиргоо хадгалахад алдаа гарлаа')
+        } catch (err: unknown) {
+            setErrorMsg(err instanceof Error ? err.message : 'Брэндийн тохиргоо хадгалахад алдаа гарлаа')
         } finally {
             setIsLoading(false)
         }
@@ -157,6 +157,8 @@ export function BrandSettingsForm({ initialSettings }: { initialSettings: Settin
                         <div className="flex items-center gap-6">
                             <div className="w-24 h-24 rounded-xl bg-zinc-950/50 border border-zinc-800 flex items-center justify-center overflow-hidden shrink-0">
                                 {logoUrl ? (
+                                    // Dynamic Supabase Storage URL used for the admin preview.
+                                    // eslint-disable-next-line @next/next/no-img-element
                                     <img src={logoUrl} alt="App Logo" className="w-full h-full object-contain p-2" />
                                 ) : (
                                     <ImageIcon className="h-8 w-8 text-zinc-700" />

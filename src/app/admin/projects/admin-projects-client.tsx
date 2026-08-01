@@ -11,7 +11,20 @@ import { createClient } from '@/lib/supabase/client'
 import { adminCreateStudentProject, adminDeleteStudentProject } from '@/features/admin/actions/project-actions.admin'
 import { Trash2, ImageIcon, Plus, Loader2 } from 'lucide-react'
 
-export function AdminProjectsClient({ initialProjects, courses }: { initialProjects: any[], courses: any[] }) {
+type StudentProject = {
+    id: string
+    student_name: string
+    project_title: string
+    image_url: string
+    courses: { title: string | null } | null
+}
+
+type CourseOption = {
+    id: string
+    title: string
+}
+
+export function AdminProjectsClient({ initialProjects, courses }: { initialProjects: StudentProject[]; courses: CourseOption[] }) {
     const [projects, setProjects] = useState(initialProjects)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [uploadingImage, setUploadingImage] = useState(false)

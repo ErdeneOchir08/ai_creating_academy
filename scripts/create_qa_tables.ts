@@ -1,13 +1,3 @@
-import { createClient } from '@supabase/supabase-js'
-import * as dotenv from 'dotenv'
-
-dotenv.config({ path: '.env.local' })
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY! // MUST BE SERVICE ROLE TO RUN RAW DDL
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
 async function createQATables() {
     const query = `
         -- Create questions table

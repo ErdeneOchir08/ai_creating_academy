@@ -1,13 +1,13 @@
-import { getCourseById, getCourseLessons } from '@/features/courses/actions/course-actions'
-import { checkPaymentStatus } from '@/features/payments/actions/payment-actions'
-import { getUserProgressDashboard } from '@/features/dashboard/actions/progress-dashboard-actions'
+import { getCourseBonusCourses, getCourseById, getCourseLessons } from '@/features/courses/actions/course-actions'
+import { checkPaymentStatus, getRejectedPaymentReason } from '@/features/payments/actions/payment-actions'
 import { CourseCurriculumList } from '@/components/course-curriculum-list'
 import { PaymentModal } from '@/features/payments/components/payment-modal'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, CheckCircle2, MonitorPlay, Users, Star } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Gift, MessageCircleQuestion, MonitorPlay } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/server'
+import { getPaymentConfiguration } from '@/features/admin/actions/settings-actions.admin'
 
 export default async function CourseSalesPage(props: { params: Promise<{ id: string }> }) {
     const { id } = await props.params
@@ -19,26 +19,27 @@ export default async function CourseSalesPage(props: { params: Promise<{ id: str
 
     // Redirect to the player if they are already enrolled
     const paymentStatus = await checkPaymentStatus(id)
+    const rejectionReason = paymentStatus === 'rejected' ? await getRejectedPaymentReason(id) : null
     if (paymentStatus === 'enrolled') {
         redirect(`/courses/${id}`)
     }
 
-    const lessons = await getCourseLessons(id)
+    const [lessons, bonusCourses] = await Promise.all([
+        getCourseLessons(id),
+        getCourseBonusCourses(id),
+    ])
+    const isPurchasable = lessons.length > 0
 
     // Determine if the user is authenticated (to show login vs payment modal)
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    let totalXP = 0
-    if (user) {
-        const progressDashboard = await getUserProgressDashboard()
-        totalXP = progressDashboard?.gamification.totalXP || 0
-    }
+    const paymentConfiguration = await getPaymentConfiguration()
 
     return (
         <div className="min-h-screen bg-[#09090b] text-white">
             {/* Ambient Backlight */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full lg:w-[800px] h-[300px] md:h-[400px] bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none" />
 
             <div className="container mx-auto px-4 py-8 relative z-10">
                 {/* Back Button */}
@@ -51,13 +52,9 @@ export default async function CourseSalesPage(props: { params: Promise<{ id: str
                     {/* Left Column: Course Details */}
                     <div className="lg:col-span-7 space-y-8">
                         <div>
-                            <div className="flex items-center gap-3 mb-6">
+                            <div className="mb-6">
                                 <span className="inline-flex items-center rounded-full bg-indigo-500/10 px-3 py-1 text-sm font-medium text-indigo-400 border border-indigo-500/20">
                                     Мастеркласс
-                                </span>
-                                <span className="flex items-center text-sm text-zinc-400">
-                                    <Star className="w-4 h-4 text-emerald-400 fill-emerald-400 mr-1" />
-                                    4.9 (120+ үнэлгээ)
                                 </span>
                             </div>
 
@@ -80,13 +77,38 @@ export default async function CourseSalesPage(props: { params: Promise<{ id: str
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
-                                <Users className="w-8 h-8 text-purple-400" />
+                                <MessageCircleQuestion className="w-8 h-8 text-purple-400" />
                                 <div>
-                                    <p className="font-bold">Нийгэмлэг</p>
-                                    <p className="text-sm text-zinc-500">Асуулт, хариулт</p>
+                                    <p className="font-bold">Асуулт, хариулт</p>
+                                    <p className="text-sm text-zinc-500">Хичээлийн хэсэг бүрт</p>
                                 </div>
                             </div>
+                            {bonusCourses.length > 0 && (
+                                <div className="flex items-center gap-3">
+                                    <Gift className="w-8 h-8 text-emerald-400" />
+                                    <div>
+                                        <p className="font-bold">{bonusCourses.length} дагалдах үнэгүй хичээл</p>
+                                        <p className="text-sm text-zinc-500">Төлбөр баталгаажмагц нээгдэнэ</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
+
+                        {bonusCourses.length > 0 && (
+                            <section className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
+                                <h2 className="mb-3 flex items-center gap-2 text-lg font-bold text-emerald-300">
+                                    <Gift className="h-5 w-5" /> Дагалдах үнэгүй хичээлүүд
+                                </h2>
+                                <ul className="space-y-2 text-zinc-300">
+                                    {bonusCourses.map((bonusCourse) => (
+                                        <li key={bonusCourse.id} className="flex items-center gap-2">
+                                            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+                                            {bonusCourse.title}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </section>
+                        )}
 
                         {/* Curriculum List */}
                         <div>
@@ -127,7 +149,11 @@ export default async function CourseSalesPage(props: { params: Promise<{ id: str
                                     </p>
                                 </div>
 
-                                {paymentStatus === 'pending' ? (
+                                {!isPurchasable ? (
+                                    <div className="w-full rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-center text-sm font-medium text-amber-200">
+                                        Энэ хичээлийн хөтөлбөр бэлэн болоогүй байна. Удахгүй дахин шалгана уу.
+                                    </div>
+                                ) : paymentStatus === 'pending' ? (
                                     <div className="w-full text-center py-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-yellow-500 font-bold">
                                         Төлбөр хүлээгдэх төлөвтэй байна
                                     </div>
@@ -139,14 +165,14 @@ export default async function CourseSalesPage(props: { params: Promise<{ id: str
                                         </Button>
                                     </Link>
                                 ) : (
-                                    <PaymentModal courseId={course.id} coursePrice={course.price_display} totalXP={totalXP} />
+                                    <PaymentModal courseId={course.id} coursePrice={course.price_display} paymentInstructions={paymentConfiguration.instructions} isTestMode={paymentConfiguration.isTestMode} rejectionReason={rejectionReason} />
                                 )}
 
                                 <div className="mt-6 space-y-3 shrink-0">
                                     {[
-                                        'Бүх видеог насан туршдаа үзэх эрх',
-                                        'Багштай шууд холбогдож асуулт асуух',
-                                        'Төгссөн батламж'
+                                        'Төлбөрөө баталгаажуулсны дараа хичээлд нэвтэрнэ',
+                                        'Хичээлийн хэсэг бүрт асуулт үлдээж болно',
+                                        'Сургалтын агуулга таны суралцах самбарт хадгалагдана'
                                     ].map((feature, i) => (
                                         <div key={i} className="flex items-center text-zinc-300 text-sm">
                                             <CheckCircle2 className="w-4 h-4 mr-3 text-emerald-400 shrink-0" />

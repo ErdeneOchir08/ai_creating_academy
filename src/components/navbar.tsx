@@ -1,39 +1,42 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
-import { Menu } from 'lucide-react'
+import { Facebook, Instagram, Menu } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { logout } from '@/features/auth/actions/auth-actions'
-import { getAppSettings } from '@/features/admin/actions/settings-actions.admin'
+import { getAcademyProfile } from '@/features/admin/actions/settings-actions.admin'
+import { PublicMobileNavigation } from '@/components/public-mobile-navigation'
 
 export async function Navbar() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    const settings = await getAppSettings() || {}
+    const profile = await getAcademyProfile()
+    const { data: roleRecord } = user
+        ? await supabase.from('user_roles').select('role').eq('user_id', user.id).maybeSingle()
+        : { data: null }
+    const isAdmin = roleRecord?.role === 'admin'
 
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container mx-auto flex h-16 items-center justify-between px-4">
                 <Link href="/" className="flex items-center gap-2">
-                    {settings.app_logo_url ? (
-                        <div className="h-8 w-8 rounded-md bg-zinc-950 overflow-hidden shrink-0 flex items-center justify-center p-1 border border-zinc-800">
-                            <img src={settings.app_logo_url} alt="Logo" className="w-full h-full object-contain" />
-                        </div>
-                    ) : (
-                        <span className="text-xl font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
-                            Mind Academy
-                        </span>
-                    )}
+                    <span className="text-xl font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
+                        {profile.displayName}
+                    </span>
                 </Link>
 
                 {/* Desktop Navigation */}
                 <nav className="hidden md:flex items-center gap-4">
+                    <div className="flex items-center gap-1 border-r border-zinc-800 pr-3">
+                        {profile.facebookUrl && <a href={profile.facebookUrl} target="_blank" rel="noreferrer" aria-label={`${profile.displayName} Facebook`} className="rounded-md p-2 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-white"><Facebook className="h-4 w-4" /></a>}
+                        {profile.instagramUrl && <a href={profile.instagramUrl} target="_blank" rel="noreferrer" aria-label={`${profile.displayName} Instagram`} className="rounded-md p-2 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-white"><Instagram className="h-4 w-4" /></a>}
+                    </div>
                     {user ? (
                         <>
                             <Link href="/dashboard" className="text-sm font-medium hover:text-primary transition-colors">
                                 Миний хичээлүүд
                             </Link>
-                            {user.role === 'admin' && (
+                            {isAdmin && (
                                 <Link href="/admin" className="text-sm font-medium hover:text-primary transition-colors text-indigo-400">
                                     Админ самбар
                                 </Link>
@@ -55,6 +58,7 @@ export async function Navbar() {
                 </nav>
 
                 {/* Mobile Navigation */}
+                <PublicMobileNavigation>
                 <div className="md:hidden flex items-center">
                     <Sheet>
                         <SheetTrigger asChild>
@@ -65,7 +69,7 @@ export async function Navbar() {
                         </SheetTrigger>
                         <SheetContent side="right" className="w-[80vw] sm:w-[350px] bg-zinc-950 border-zinc-800 text-white flex flex-col p-6">
                             <SheetTitle className="text-xl font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent mb-8">
-                                Mind Academy
+                                {profile.displayName}
                             </SheetTitle>
 
                             <div className="flex flex-col gap-6 w-full">
@@ -76,7 +80,7 @@ export async function Navbar() {
                                             <Link href="/dashboard" className="text-lg font-medium hover:text-indigo-400 transition-colors w-full">
                                                 Миний хичээлүүд
                                             </Link>
-                                            {user?.role === 'admin' && (
+                                            {isAdmin && (
                                                 <Link href="/admin" className="text-lg font-medium hover:text-indigo-400 transition-colors w-full">
                                                     Админ самбар
                                                 </Link>
@@ -104,10 +108,17 @@ export async function Navbar() {
                                         </Link>
                                     </div>
                                 )}
+                                {(profile.facebookUrl || profile.instagramUrl) && (
+                                    <div className="flex items-center gap-3 border-t border-zinc-800 pt-6">
+                                        {profile.facebookUrl && <a href={profile.facebookUrl} target="_blank" rel="noreferrer" aria-label={`${profile.displayName} Facebook`} className="rounded-md border border-zinc-800 p-2 text-zinc-300"><Facebook className="h-4 w-4" /></a>}
+                                        {profile.instagramUrl && <a href={profile.instagramUrl} target="_blank" rel="noreferrer" aria-label={`${profile.displayName} Instagram`} className="rounded-md border border-zinc-800 p-2 text-zinc-300"><Instagram className="h-4 w-4" /></a>}
+                                    </div>
+                                )}
                             </div>
                         </SheetContent>
                     </Sheet>
                 </div>
+                </PublicMobileNavigation>
             </div>
         </header>
     )

@@ -54,6 +54,9 @@ export function LoginForm() {
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
                             <Label htmlFor="password" className="text-zinc-300">Нууц үг</Label>
+                            <Link href="/forgot-password" className="text-xs font-medium text-indigo-400 transition-colors hover:text-indigo-300 hover:underline">
+                                Нууц үгээ мартсан уу?
+                            </Link>
                         </div>
                         <Input
                             id="password"

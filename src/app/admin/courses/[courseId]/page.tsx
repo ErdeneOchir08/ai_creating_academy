@@ -1,26 +1,32 @@
 import { getCourseById, getCourseLessons } from '@/features/courses/actions/course-actions'
-import { deleteLesson, reorderLesson } from '@/features/admin/actions/course-actions.admin'
+import { deleteLesson, reorderLesson, getAllAdminCourses } from '@/features/admin/actions/course-actions.admin'
 import { CreateLessonDialog } from '@/features/admin/components/create-lesson-dialog'
 import { EditLessonDialog } from '@/features/admin/components/edit-lesson-dialog'
 import { EditCourseDialog } from '@/features/admin/components/edit-course-dialog'
+import { CourseCategoryAssignment } from '@/features/admin/components/course-category-assignment'
+import { CourseBonusAssignment } from '@/features/admin/components/course-bonus-assignment'
+import { getAdminCategories, getCourseBonusIds, getCourseCategoryIds } from '@/features/admin/actions/category-actions.admin'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Trash2, GripVertical, PlayCircle, ChevronUp, ChevronDown } from 'lucide-react'
+import { ArrowLeft, Trash2, PlayCircle, ChevronUp, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 export default async function AdminCourseDetailsPage({
     params
 }: {
-    params: { courseId: string }
+    params: Promise<{ courseId: string }>
 }) {
-    // Wait for params in NextJS 15
-    const { courseId } = await Promise.resolve(params);
+    const { courseId } = await params
 
-    const [course, lessons] = await Promise.all([
+    const [course, lessons, categories, categoryIds, allCourses, bonusIds] = await Promise.all([
         getCourseById(courseId),
-        getCourseLessons(courseId)
+        getCourseLessons(courseId),
+        getAdminCategories(),
+        getCourseCategoryIds(courseId),
+        getAllAdminCourses(),
+        getCourseBonusIds(courseId),
     ])
 
     if (!course) {
@@ -28,6 +34,8 @@ export default async function AdminCourseDetailsPage({
     }
 
     const nextOrderIndex = lessons.length > 0 ? Math.max(...lessons.map((l: { order_index: number }) => l.order_index)) + 1 : 1
+    const videoLessonCount = lessons.filter((lesson: { video_url: string | null; provider_video_id: string | null; playback_status: string | null }) => Boolean(lesson.video_url || lesson.provider_video_id) && lesson.playback_status === 'ready').length
+    const isReadyForPublication = lessons.length > 0 && videoLessonCount > 0
 
     return (
         <div className="p-8 max-w-5xl mx-auto space-y-8">
@@ -53,6 +61,15 @@ export default async function AdminCourseDetailsPage({
             <div className="grid md:grid-cols-3 gap-8">
                 {/* Left Col: Lessons */}
                 <div className="md:col-span-2 space-y-4">
+                    <Card className={`border text-white ${isReadyForPublication ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-amber-500/30 bg-amber-500/5'}`}>
+                        <CardContent className="flex flex-col gap-1 p-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <p className="font-semibold">{isReadyForPublication ? 'Нийтлэхэд бэлэн' : 'Нийтлэхэд бэлэн биш'}</p>
+                                <p className="text-sm text-zinc-400">{lessons.length} хичээлээс {videoLessonCount} нь видео агуулгатай.</p>
+                            </div>
+                            {!isReadyForPublication && <p className="text-sm text-amber-200">Нийтлэхийн тулд дор хаяж нэг видео хичээл нэмнэ үү.</p>}
+                        </CardContent>
+                    </Card>
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-xl font-bold text-white">Хичээлийн хөтөлбөр</h2>
                         <CreateLessonDialog courseId={course.id} nextOrderIndex={nextOrderIndex} />
@@ -64,7 +81,7 @@ export default async function AdminCourseDetailsPage({
                                 Одоогоор хичээл нэмэгдээгүй байна. &quot;Хичээл нэмэх&quot; дээр дарж хөтөлбөрөө үүсгэж эхэлнэ үү.
                             </div>
                         ) : (
-                            lessons.map((lesson: { id: string; title: string; video_url: string; order_index: number }, index: number) => (
+                            lessons.map((lesson: { id: string; title: string; video_url: string | null; video_provider: 'youtube' | 'cloudflare' | null; provider_video_id: string | null; playback_status: string | null; order_index: number; is_preview: boolean }, index: number) => (
                                 <Card key={lesson.id} className="bg-zinc-950 border-zinc-800 text-white overflow-hidden group">
                                     <div className="flex items-center">
                                         <div className="p-2 sm:p-4 flex flex-col justify-center items-center gap-1 border-r border-zinc-800 bg-zinc-900/50 shrink-0 min-w-[3rem]">
@@ -92,10 +109,21 @@ export default async function AdminCourseDetailsPage({
                                                     {lesson.order_index}
                                                 </div>
                                                 <div>
-                                                    <p className="font-semibold text-lg">{lesson.title}</p>
-                                                    <a href={lesson.video_url} target="_blank" rel="noreferrer" className="text-xs text-zinc-500 hover:text-indigo-400 flex items-center gap-1 mt-1">
-                                                        <PlayCircle className="h-3 w-3" /> Гадаад холбоос
-                                                    </a>
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <p className="font-semibold text-lg">{lesson.title}</p>
+                                                        {lesson.is_preview && <Badge className="bg-indigo-500/15 text-indigo-300">Үнэгүй үзэх</Badge>}
+                                                        {lesson.video_provider === 'cloudflare' && lesson.playback_status === 'ready' && (
+                                                            <Badge className="bg-sky-500/15 text-sky-300">Cloudflare Stream · хамгаалагдсан</Badge>
+                                                        )}
+                                                        {lesson.video_provider === 'youtube' && lesson.video_url && (
+                                                            <Badge variant="outline" className="border-red-500/30 text-red-300">YouTube</Badge>
+                                                        )}
+                                                    </div>
+                                                    {lesson.video_url && (
+                                                        <a href={lesson.video_url} target="_blank" rel="noreferrer" className="mt-1 flex items-center gap-1 text-xs text-zinc-500 hover:text-indigo-400">
+                                                            <PlayCircle className="h-3 w-3" /> Гадаад холбоос
+                                                        </a>
+                                                    )}
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2">
@@ -135,10 +163,14 @@ export default async function AdminCourseDetailsPage({
                             </div>
                             <div>
                                 <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">Зураг</h3>
+                                {/* Dynamic storage URL; retain the original asset in the admin preview. */}
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src={course.thumbnail_url} alt="Cover" className="w-full h-auto aspect-video object-cover rounded-md border border-zinc-800 mt-2 bg-black" />
                             </div>
                         </CardContent>
                     </Card>
+                    <CourseCategoryAssignment courseId={course.id} categories={categories} initialCategoryIds={categoryIds} />
+                    <CourseBonusAssignment courseId={course.id} courses={allCourses} initialBonusIds={bonusIds} />
                     <EditCourseDialog course={course} />
                 </div>
             </div >

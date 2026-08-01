@@ -1,10 +1,16 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 
-export function ProjectShowcaseSlider({ projects }: { projects: any[] }) {
+type StudentProject = {
+    id: string
+    image_url: string
+    project_title: string
+    student_name: string
+}
+
+export function ProjectShowcaseSlider({ projects }: { projects: StudentProject[] }) {
     const scrollerRef = useRef<HTMLDivElement>(null)
-    const [start, setStart] = useState(false)
 
     useEffect(() => {
         if (!scrollerRef.current) return
@@ -18,7 +24,6 @@ export function ProjectShowcaseSlider({ projects }: { projects: any[] }) {
             }
         })
 
-        setStart(true)
     }, [])
 
     if (!projects || projects.length === 0) return null
@@ -41,10 +46,8 @@ export function ProjectShowcaseSlider({ projects }: { projects: any[] }) {
             <div className="flex w-full mt-10">
                 <div
                     ref={scrollerRef}
-                    className={`flex min-w-full shrink-0 gap-6 py-4 w-max flex-nowrap ${start ? 'animate-marquee' : ''}`}
-                    style={{
-                        animation: start ? 'marquee 40s linear infinite' : 'none'
-                    }}
+                    className="flex min-w-full w-max shrink-0 flex-nowrap gap-6 py-4 animate-marquee"
+                    style={{ animation: 'marquee 40s linear infinite' }}
                 >
                     {projects.map((project, idx) => (
                         <div

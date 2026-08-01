@@ -32,15 +32,17 @@ type CourseProps = {
 export function EditCourseDialog({ course }: { course: CourseProps }) {
     const [open, setOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
+    const [errorMessage, setErrorMessage] = useState('')
 
     async function onSubmit(formData: FormData) {
+        setErrorMessage('')
         setIsLoading(true)
         try {
             await updateCourse(course.id, formData)
             setOpen(false)
-        } catch (error) {
+        } catch (error: unknown) {
             console.error(error)
-            alert('Хичээл шинэчлэхэд алдаа гарлаа. Дахин оролдоно уу.')
+            setErrorMessage(error instanceof Error ? error.message : 'Хичээл шинэчлэхэд алдаа гарлаа. Дахин оролдоно уу.')
         } finally {
             setIsLoading(false)
         }
@@ -95,6 +97,12 @@ export function EditCourseDialog({ course }: { course: CourseProps }) {
                         <input type="checkbox" id="published" name="published" value="true" defaultChecked={course.published} className="rounded border-zinc-800 bg-zinc-900" />
                         <Label htmlFor="published">Нийтлэгдсэн</Label>
                     </div>
+
+                    {errorMessage && (
+                        <p className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+                            {errorMessage}
+                        </p>
+                    )}
 
                     <DialogFooter className="pt-4">
                         <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="text-zinc-400 hover:text-white">

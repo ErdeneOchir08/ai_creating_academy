@@ -1,184 +1,40 @@
-"use client"
+'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { Send, User, ShieldCheck } from 'lucide-react'
+import { useState, useTransition } from 'react'
+import { MessageSquareText, Send } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { postQuestion } from '@/features/qa/actions/qa-actions'
 
-type QAProps = {
-    courseId: string;
-    lessonId: string;
-    initialData: any[];
-}
+type Thread = { id: string; content: string; is_answered: boolean; created_at: string; profiles: { display_name: string | null } | { display_name: string | null }[] | null; answers: { id: string; content: string; created_at: string; profiles: { display_name: string | null } | { display_name: string | null }[] | null }[] }
 
-export function QASidebar({ courseId, lessonId, initialData }: QAProps) {
-    const [questions, setQuestions] = useState(initialData)
-    const [inputValue, setInputValue] = useState('')
-    const [isPosting, setIsPosting] = useState(false)
-    const [mounted, setMounted] = useState(false)
-    const messagesEndRef = useRef<HTMLDivElement>(null)
-    const isFirstRender = useRef(true)
+export function QASidebar({ courseId, lessonId, initialData }: { courseId: string; lessonId: string; initialData: Thread[] }) {
+    const router = useRouter()
+    const [content, setContent] = useState('')
+    const [message, setMessage] = useState<string | null>(null)
+    const [pending, startTransition] = useTransition()
+    const nameOf = (profile: Thread['profiles']) => Array.isArray(profile) ? profile[0]?.display_name : profile?.display_name
 
-    useEffect(() => {
-        setMounted(true)
-    }, [])
-
-    // Update local state if server data changes (e.g. on navigation or revalidation)
-    useEffect(() => {
-        setQuestions(initialData)
-    }, [initialData])
-
-    // Utility to scroll to bottom
-    const scrollToBottom = () => {
-        setTimeout(() => {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-        }, 100)
+    function submit(event: React.FormEvent<HTMLFormElement>) {
+        event.preventDefault()
+        if (!content.trim() || pending) return
+        const data = new FormData()
+        data.set('course_id', courseId); data.set('lesson_id', lessonId); data.set('content', content)
+        startTransition(async () => {
+            const result = await postQuestion(data)
+            if (result.error) setMessage(result.error)
+            else { setContent(''); setMessage('Асуулт илгээгдлээ.'); router.refresh() }
+        })
     }
 
-    async function handleSubmit(e: React.FormEvent) {
-        e.preventDefault()
-        if (!inputValue.trim() || isPosting) return
-
-        setIsPosting(true)
-        const currentContent = inputValue.trim()
-
-        try {
-            // Optimistic UI update
-            const tempQuestion = {
-                id: 'temp-' + Date.now(),
-                content: currentContent,
-                created_at: new Date().toISOString(),
-                profiles: { display_name: 'You', avatar_url: '' },
-                answers: []
-            }
-            setQuestions(prev => [tempQuestion, ...prev])
-            setInputValue('')
-            scrollToBottom()
-
-            // Construct FormData and post to server action
-            const formData = new FormData()
-            formData.append('content', currentContent)
-            formData.append('courseId', courseId)
-            formData.append('lessonId', lessonId)
-
-            await postQuestion(formData)
-
-            // Note: The actual revalidation is handled by the server action `revalidatePath`, 
-            // which will cause `initialData` to refresh and flow through the useEffect above.
-        } catch (error) {
-            console.error(error)
-            // Rollback optimistic update
-            setQuestions(initialData)
-            setInputValue(currentContent)
-            alert('Асуулт илгээхэд алдаа гарлаа. Дахин оролдоно уу.')
-        } finally {
-            setIsPosting(false)
-        }
-    }
-
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault()
-            handleSubmit(e)
-        }
-    }
-
-    return (
-        <div className="flex flex-col h-full bg-zinc-950 text-white w-full">
-            <div className="p-4 border-b border-zinc-800 bg-zinc-900/50">
-                <h2 className="font-semibold flex items-center gap-2">
-                    <User className="h-4 w-4 text-indigo-400" />
-                    Багшаас асуух
-                </h2>
-                <p className="text-xs text-zinc-400 mt-1">Асуулт асууж, багшаас шууд тусламж аваарай.</p>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-4 space-y-6 flex flex-col-reverse">
-                <div ref={messagesEndRef} />
-
-                {questions.length === 0 && (
-                    <div className="text-center text-zinc-500 py-10 my-auto">
-                        <p className="text-sm">Энэ хичээл дээр одоогоор асуулт гараагүй байна.</p>
-                        <p className="text-xs mt-2">Эхнийхийг нь та асуугаарай!</p>
-                    </div>
-                )}
-
-                {questions.map((q) => (
-                    <div key={q.id} className="space-y-3 bg-zinc-900/40 p-3 rounded-lg border border-zinc-800/50">
-                        {/* Question Bubble */}
-                        <div className="flex gap-3">
-                            <div className="h-8 w-8 shrink-0 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 text-xs font-bold overflow-hidden">
-                                {q.profiles?.avatar_url ? (
-                                    <img src={q.profiles.avatar_url} alt="" className="h-full w-full object-cover" />
-                                ) : (
-                                    <User className="h-4 w-4" />
-                                )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-baseline gap-2 mb-1">
-                                    <span className="font-medium text-sm text-zinc-200 truncate">
-                                        {q.profiles?.display_name || 'Оюутан'}
-                                    </span>
-                                    <span className="text-[10px] text-zinc-500 shrink-0">
-                                        {mounted ? new Date(q.created_at).toLocaleDateString() : ''}
-                                    </span>
-                                </div>
-                                <div className="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed">
-                                    {q.content}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Answers (Replies) */}
-                        {q.answers && q.answers.length > 0 && (
-                            <div className="pl-11 space-y-3 mt-2">
-                                {q.answers.map((ans: any) => (
-                                    <div key={ans.id} className="flex gap-3">
-                                        <div className="h-6 w-6 shrink-0 rounded-full bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center">
-                                            <ShieldCheck className="h-3 w-3" />
-                                        </div>
-                                        <div className="flex-1 min-w-0 bg-indigo-950/20 rounded-md p-2 border border-indigo-500/10">
-                                            <div className="flex items-baseline gap-2 mb-1">
-                                                <span className="font-medium text-xs text-indigo-300">
-                                                    Багш
-                                                </span>
-                                            </div>
-                                            <div className="text-sm text-zinc-300 whitespace-pre-wrap">
-                                                {ans.content}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                ))}
-            </div>
-
-            <div className="p-4 border-t border-zinc-800 bg-zinc-950">
-                <form onSubmit={handleSubmit} className="flex relative">
-                    <Textarea
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder="Багшаас асуулт асуух..."
-                        className="pr-12 resize-none bg-zinc-900 border-zinc-800 focus-visible:ring-indigo-500 rounded-xl min-h-[60px] max-h-[150px]"
-                        disabled={isPosting}
-                    />
-                    <Button
-                        type="submit"
-                        size="icon"
-                        disabled={!inputValue.trim() || isPosting}
-                        className="absolute bottom-2 right-2 h-8 w-8 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors disabled:bg-zinc-800 disabled:text-zinc-500"
-                    >
-                        <Send className="h-4 w-4" />
-                    </Button>
-                </form>
-                <div className="text-center mt-2">
-                    <span className="text-[10px] text-zinc-500">Илгээхийн тулд Enter дарж, шинэ мөр рүү шилжихийн тулд Shift+Enter дарна уу</span>
-                </div>
-            </div>
+    return <div className="flex h-full w-full flex-col bg-zinc-950 p-5 text-white">
+        <div className="mb-4 flex items-center gap-2"><MessageSquareText className="h-5 w-5 text-indigo-400" /><h2 className="font-semibold">Асуулт, хариулт</h2></div>
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+            {initialData.length === 0 ? <p className="py-8 text-center text-sm text-zinc-500">Энэ хичээл дээр асуулт алга. Эхний асуултаа асуугаарай.</p> : initialData.map(question => <article key={question.id} className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3">
+                <p className="text-sm text-zinc-200">{question.content}</p><p className="mt-2 text-xs text-zinc-500">{nameOf(question.profiles) || 'Суралцагч'}</p>
+                {question.answers.map(answer => <div key={answer.id} className="mt-3 border-l-2 border-indigo-500 pl-3 text-sm text-zinc-300"><p>{answer.content}</p><p className="mt-1 text-xs text-zinc-500">{nameOf(answer.profiles) || 'Mind Academy'}</p></div>)}
+            </article>)}
         </div>
-    )
+        <form onSubmit={submit} className="mt-4 border-t border-zinc-800 pt-4"><textarea value={content} onChange={event => setContent(event.target.value)} maxLength={2000} placeholder="Асуултаа бичнэ үү..." className="min-h-24 w-full rounded-xl border border-zinc-700 bg-zinc-900 p-3 text-sm outline-none focus:border-indigo-500" disabled={pending} />
+            {message && <p className="mt-2 text-xs text-zinc-400">{message}</p>}<button type="submit" disabled={pending || !content.trim()} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold hover:bg-indigo-500 disabled:opacity-50"><Send className="h-4 w-4" />{pending ? 'Илгээж байна...' : 'Асуулт илгээх'}</button></form>
+    </div>
 }
