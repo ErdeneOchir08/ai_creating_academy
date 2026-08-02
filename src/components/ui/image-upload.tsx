@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef } from 'react'
-import { UploadCloud, X, Image as ImageIcon } from 'lucide-react'
+import { UploadCloud, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface ImageUploadProps {
@@ -10,14 +10,22 @@ interface ImageUploadProps {
     onChange?: (file: File | null) => void
 }
 
+const acceptedImageTypes = new Set(['image/jpeg', 'image/png', 'image/webp'])
+const maxImageBytes = 5 * 1024 * 1024
+
 export function ImageUpload({ name, defaultValue, onChange }: ImageUploadProps) {
     const [previewUrl, setPreviewUrl] = useState<string | null>(defaultValue || null)
     const [isDragging, setIsDragging] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const handleFile = (file: File) => {
-        if (!file.type.startsWith('image/')) {
-            alert('Please select an image file.')
+        if (!acceptedImageTypes.has(file.type)) {
+            alert('Please select a JPG, PNG, or WebP image.')
+            return
+        }
+
+        if (file.size > maxImageBytes) {
+            alert('The image must be 5 MB or smaller.')
             return
         }
 

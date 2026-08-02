@@ -4,31 +4,28 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { updateLesson } from '@/features/admin/actions/course-actions.admin'
 import { Edit2 } from 'lucide-react'
 
-// Basic type for what we need from the lesson
-export function EditLessonDialog({ lesson, courseId }: { lesson: { id: string; title: string; video_url: string; order_index: number }, courseId: string }) {
+type Lesson = { id: string; title: string; video_url: string | null; video_provider: 'youtube' | 'cloudflare' | null; provider_video_id: string | null; order_index: number; is_preview: boolean }
+
+export function EditLessonDialog({ lesson, courseId }: { lesson: Lesson; courseId: string }) {
     const [open, setOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
+    const [errorMessage, setErrorMessage] = useState('')
+    const [videoProvider, setVideoProvider] = useState<'youtube' | 'cloudflare'>(lesson.video_provider === 'cloudflare' ? 'cloudflare' : 'youtube')
+    const [videoSource, setVideoSource] = useState(lesson.video_provider === 'cloudflare' ? lesson.provider_video_id || '' : lesson.video_url || '')
 
     async function onSubmit(formData: FormData) {
+        setErrorMessage('')
         setIsLoading(true)
         try {
             await updateLesson(lesson.id, courseId, formData)
             setOpen(false)
-        } catch (error) {
+        } catch (error: unknown) {
             console.error(error)
-            alert('Хичээл шинэчлэхэд алдаа гарлаа. Дахин оролдоно уу.')
+            setErrorMessage(error instanceof Error ? error.message : 'Хичээлийг засахад алдаа гарлаа.')
         } finally {
             setIsLoading(false)
         }
@@ -37,41 +34,44 @@ export function EditLessonDialog({ lesson, courseId }: { lesson: { id: string; t
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-zinc-500 hover:text-white hover:bg-zinc-800">
-                    <Edit2 className="h-4 w-4" />
-                </Button>
+                <Button variant="ghost" size="icon" className="text-zinc-500 hover:bg-zinc-800 hover:text-white"><Edit2 className="h-4 w-4" /></Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] bg-zinc-950 border-zinc-800 text-white">
+            <DialogContent className="sm:max-w-[425px] border-zinc-800 bg-zinc-950 text-white">
                 <DialogHeader>
                     <DialogTitle>Хичээл засах</DialogTitle>
-                    <DialogDescription className="text-zinc-400">
-                        Хичээлийн гарчиг болон видео холбоосыг шинэчлэх.
-                    </DialogDescription>
+                    <DialogDescription className="text-zinc-400">Хоосон видео холбоос хадгалбал одоогийн видеог салгана.</DialogDescription>
                 </DialogHeader>
-
                 <form action={onSubmit} className="space-y-4 py-4">
                     <div className="space-y-2">
-                        <Label htmlFor="title">Хичээлийн гарчиг <span className="text-red-500">*</span></Label>
-                        <Input id="title" name="title" required defaultValue={lesson.title} className="bg-zinc-900 border-zinc-800" />
+                        <Label htmlFor="title">Гарчиг <span className="text-red-500">*</span></Label>
+                        <Input id="title" name="title" required defaultValue={lesson.title} className="border-zinc-800 bg-zinc-900" />
                     </div>
-
                     <div className="space-y-2">
                         <Label htmlFor="video_url">Видео холбоос</Label>
-                        <Input id="video_url" name="video_url" placeholder="https://youtube.com/..." defaultValue={lesson.video_url || ''} className="bg-zinc-900 border-zinc-800" />
+                        <select id="video_provider" name="video_provider" value={videoProvider} onChange={(event) => {
+                            setVideoProvider(event.target.value as 'youtube' | 'cloudflare')
+                            setVideoSource('')
+                        }} className="mb-2 h-10 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 text-sm text-white">
+                            <option value="youtube">YouTube холбоос</option>
+                            <option value="cloudflare">Cloudflare Stream video ID</option>
+                        </select>
+                        <Input id="video_source" name="video_source" type={videoProvider === 'youtube' ? 'url' : 'text'} placeholder={videoProvider === 'youtube' ? 'https://youtube.com/...' : 'Cloudflare Stream video ID'} value={videoSource} onChange={(event) => setVideoSource(event.target.value)} className="border-zinc-800 bg-zinc-900" />
                     </div>
-
+                    <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-zinc-800 bg-zinc-900/60 p-3">
+                        <input id="is_preview" name="is_preview" type="checkbox" value="true" defaultChecked={lesson.is_preview} className="mt-1 h-4 w-4 accent-indigo-500" />
+                        <span>
+                            <span className="block text-sm font-medium text-white">Үнэгүй урьдчилж үзэх</span>
+                            <span className="block text-xs leading-5 text-zinc-400">Нэвтрэхгүй хэрэглэгчид энэ хичээлийн видеог үзэж болно. Видео холбоос заавал шаардлагатай.</span>
+                        </span>
+                    </label>
                     <div className="space-y-2">
-                        <Label htmlFor="order_index">Дарааллын дугаар</Label>
-                        <Input id="order_index" name="order_index" type="number" required defaultValue={lesson.order_index} className="bg-zinc-900 border-zinc-800 w-24" />
+                        <Label htmlFor="order_index">Дараалал <span className="text-red-500">*</span></Label>
+                        <Input id="order_index" name="order_index" type="number" min="1" required defaultValue={lesson.order_index} className="w-24 border-zinc-800 bg-zinc-900" />
                     </div>
-
-                    <DialogFooter className="pt-4">
-                        <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="text-zinc-400 hover:text-white">
-                            Болих
-                        </Button>
-                        <Button type="submit" disabled={isLoading} className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                            {isLoading ? 'Хадгалж байна...' : 'Өөрчлөлтийг хадгалах'}
-                        </Button>
+                    {errorMessage && <p className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">{errorMessage}</p>}
+                    <DialogFooter>
+                        <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="text-zinc-400 hover:text-white">Болих</Button>
+                        <Button type="submit" disabled={isLoading} className="bg-indigo-600 text-white hover:bg-indigo-700">{isLoading ? 'Хадгалж байна…' : 'Хадгалах'}</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>

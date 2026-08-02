@@ -21,9 +21,9 @@ export default async function SettingsPage() {
         .single()
 
     return (
-        <div className="p-8 max-w-4xl mx-auto space-y-8">
-            <header className="mb-8">
-                <h1 className="text-3xl font-bold text-white tracking-tight">Бүртгэлийн тохиргоо</h1>
+        <div className="mx-auto max-w-4xl space-y-8 p-5 sm:p-8">
+            <header className="mb-6 sm:mb-8">
+                <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Бүртгэлийн тохиргоо</h1>
                 <p className="text-zinc-400 mt-2">Хувийн мэдээлэл болон аюулгүй байдлын тохиргоогоо удирдах.</p>
             </header>
 

@@ -10,7 +10,7 @@ export default function DashboardLayout({
     children: React.ReactNode
 }) {
     return (
-        <div className="flex flex-col md:flex-row h-[calc(100vh-64px)] overflow-hidden relative bg-[#09090b]">
+        <div className="relative flex min-h-[calc(100vh-64px)] flex-col overflow-x-hidden bg-[#09090b] md:flex-row">
             {/* Ambient Background Glows */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden blur-[100px] opacity-20 pointer-events-none select-none z-0">
                 <div className="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 rounded-full bg-indigo-600/30 mix-blend-screen animate-pulse" style={{ animationDuration: '10s' }} />
@@ -22,7 +22,7 @@ export default function DashboardLayout({
                 <span className="font-bold text-white">Суралцагчийн Самбар</span>
                 <Sheet>
                     <SheetTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-9 w-9 text-zinc-400">
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-zinc-400" aria-label="Суралцагчийн цэсийг нээх">
                             <Menu className="h-5 w-5" />
                         </Button>
                     </SheetTrigger>
@@ -41,7 +41,7 @@ export default function DashboardLayout({
                 <StudentSidebar />
             </div>
 
-            <main className="flex-1 overflow-y-auto w-full relative z-10">
+            <main className="relative z-10 w-full min-w-0 flex-1">
                 {children}
             </main>
         </div>

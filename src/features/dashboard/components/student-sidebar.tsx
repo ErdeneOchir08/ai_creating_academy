@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BookOpen, PieChart, LogOut, Compass, Settings } from 'lucide-react'
+import { BookOpen, PieChart, LogOut, Compass, Settings, MessageSquareText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
@@ -18,6 +18,11 @@ const studentLinks = [
         icon: PieChart,
     },
     {
+        name: 'Миний асуултууд',
+        href: '/dashboard/questions',
+        icon: MessageSquareText,
+    },
+    {
         name: 'Тохиргоо',
         href: '/dashboard/settings',
         icon: Settings,
@@ -30,7 +35,7 @@ export function StudentSidebar({ isMobile = false }: { isMobile?: boolean }) {
     return (
         <aside className={cn(
             "bg-zinc-950/50 backdrop-blur-2xl border-white/5 flex flex-col h-full shadow-2xl",
-            isMobile ? "w-full border-r-0" : "w-64 border-r sticky top-0"
+            isMobile ? "w-full border-r-0" : "sticky top-0 h-[calc(100vh-64px)] w-64 border-r"
         )}>
             <div className="p-6 border-b border-zinc-800">
                 <Link href="/dashboard" className="flex flex-col gap-1 transition-transform hover:scale-105 active:scale-95 origin-left">

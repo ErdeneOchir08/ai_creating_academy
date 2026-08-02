@@ -1,13 +1,23 @@
-import { Outfit } from 'next/font/google'
 import './globals.css'
 import { Navbar } from '@/components/navbar'
+import { AcademyFooter } from '@/components/academy-footer'
+import { RouteFooter } from '@/components/route-footer'
 import NextTopLoader from 'nextjs-toploader'
+import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
+import type { Metadata } from 'next'
+import { getConfiguredSiteUrl } from '@/lib/site-url'
 
-const outfit = Outfit({ subsets: ['latin'] })
+const siteUrl = getConfiguredSiteUrl()
 
-export const metadata = {
-  title: 'AI Creator Academy',
-  description: 'Learn to build AI like a pro. A modern learning platform for young creators.',
+export const metadata: Metadata = {
+  metadataBase: siteUrl ? new URL(siteUrl) : undefined,
+  title: {
+    default: 'Mind Academy',
+    template: '%s | Mind Academy',
+  },
+  description: 'AI болон кодчиллын онлайн сургалтын платформ.',
+  robots: siteUrl ? { index: true, follow: true } : { index: false, follow: false },
 }
 
 export default function RootLayout({
@@ -16,8 +26,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="dark scroll-smooth">
-      <body className={`${outfit.className} min-h-screen bg-background text-foreground antialiased selection:bg-indigo-500/30 selection:text-white`} suppressHydrationWarning>
+    <html lang="mn" className="dark scroll-smooth">
+      <body className="min-h-screen bg-background text-foreground antialiased selection:bg-indigo-500/30 selection:text-white" suppressHydrationWarning>
         <NextTopLoader
           color="#6366f1"
           initialPosition={0.08}
@@ -33,6 +43,11 @@ export default function RootLayout({
         <main>
           {children}
         </main>
+        <RouteFooter>
+          <AcademyFooter />
+        </RouteFooter>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )

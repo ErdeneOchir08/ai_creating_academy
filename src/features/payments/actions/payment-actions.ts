@@ -1,108 +1,119 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { createClient } from '@/lib/supabase/server'
+import { sendPaymentSubmittedAlert } from '@/lib/telegram/notifications'
+import { validateImageFile } from '@/lib/uploads/image-validation'
 
 export async function submitPaymentRequest(courseId: string, formData: FormData) {
     const supabase = await createClient()
-
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error("Must be logged in to buy a course.")
+    if (!user) return { success: false, error: 'Төлбөрийн баримт илгээхийн өмнө нэвтэрнэ үү.' }
 
-    const file = formData.get('receipt') as File
-    if (!file || file.size === 0) {
-        return { success: false, error: 'No receipt file provided.' }
+    const receipt = formData.get('receipt')
+    if (!(receipt instanceof File) || receipt.size === 0) {
+        return { success: false, error: 'Төлбөрийн баримтын зургаа сонгоно уу.' }
     }
 
-    const discountId = formData.get('discountId') as string | null
-
-    // Mark discount as used if provided
-    if (discountId) {
-        await supabase
-            .from('xp_redemptions')
-            .update({ is_used: true })
-            .eq('id', discountId)
-            .eq('user_id', user.id)
+    let extension: string
+    try {
+        extension = await validateImageFile(receipt, 10 * 1024 * 1024)
+    } catch (error) {
+        return { success: false, error: error instanceof Error ? error.message : 'Зургийн файлыг шалгаж чадсангүй.' }
     }
 
-    // Upload to Supabase Storage
-    const fileExt = file.name.split('.').pop() || 'jpg'
-    const fileName = `${user.id}-${Date.now()}.${fileExt}`
+    const receiptPath = `${user.id}/${crypto.randomUUID()}.${extension}`
 
-    // We expect a bucket named 'receipts' to be created in Supabase
-    const { error: uploadError } = await supabase
-        .storage
-        .from('receipts')
-        .upload(fileName, file)
+    const { data: course, error: courseError } = await supabase
+        .from('courses')
+        .select('id, title, price_amount_mnt')
+        .eq('id', courseId)
+        .eq('published', true)
+        .maybeSingle()
+
+    if (courseError || !course) {
+        return { success: false, error: 'Энэ хичээл одоогоор төлбөр хүлээн авах боломжгүй байна.' }
+    }
+
+    const { data: enrollment, error: enrollmentError } = await supabase
+        .from('enrollments')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('course_id', courseId)
+        .eq('status', 'active')
+        .maybeSingle()
+
+    if (enrollmentError) {
+        console.error('Enrollment check failed before payment submission:', enrollmentError.message)
+        return { success: false, error: 'Элсэлтийн төлөвийг шалгаж чадсангүй. Дахин оролдоно уу.' }
+    }
+
+    if (enrollment) {
+        return { success: false, error: 'Та энэ хичээлд аль хэдийн элссэн байна.' }
+    }
+
+    const { data: pendingRequest, error: pendingRequestError } = await supabase
+        .from('payment_requests')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('course_id', courseId)
+        .eq('status', 'pending')
+        .maybeSingle()
+
+    if (pendingRequestError) {
+        console.error('Pending payment check failed before payment submission:', pendingRequestError.message)
+        return { success: false, error: 'Төлбөрийн хүсэлтийн төлөвийг шалгаж чадсангүй. Дахин оролдоно уу.' }
+    }
+
+    if (pendingRequest) {
+        return { success: false, error: 'Энэ хичээлийн төлбөрийн хүсэлт аль хэдийн хянагдаж байна.' }
+    }
+
+    const { error: uploadError } = await supabase.storage
+        .from('payment-receipts')
+        .upload(receiptPath, receipt, { contentType: receipt.type, upsert: false })
 
     if (uploadError) {
-        console.error('Error uploading receipt:', uploadError.message)
-        return { success: false, error: `Failed to upload receipt: ${uploadError.message}. Make sure the 'receipts' storage bucket exists.` }
+        console.error('Receipt upload failed:', uploadError.message)
+        return { success: false, error: 'Баримтыг байршуулж чадсангүй. Дахин оролдоно уу.' }
     }
 
-    // Get public URL
-    const { data: { publicUrl } } = supabase
-        .storage
-        .from('receipts')
-        .getPublicUrl(fileName)
+    const { error: paymentError } = await supabase.from('payment_requests').insert({
+        user_id: user.id,
+        course_id: courseId,
+        receipt_path: receiptPath,
+        amount_mnt: course.price_amount_mnt,
+        status: 'pending',
+    })
 
-    const { error } = await supabase
-        .from('payment_requests')
-        .insert({
-            course_id: courseId,
-            user_id: user.id,
-            proof_image_url: publicUrl,
-            status: 'pending'
-        })
-
-    if (error) {
-        console.error('Error submitting payment request:', error.message)
-        return { success: false, error: error.message }
+    if (paymentError) {
+        console.error('Payment request failed:', paymentError.message)
+        const { error: cleanupError } = await supabase.storage.from('payment-receipts').remove([receiptPath])
+        if (cleanupError) console.error('Receipt cleanup failed:', cleanupError.message)
+        return { success: false, error: paymentError.code === '23505'
+            ? 'Энэ хичээлийн төлбөрийн хүсэлт аль хэдийн хянагдаж байна.'
+            : 'Төлбөрийн хүсэлтийг илгээж чадсангүй. Дахин оролдоно уу.' }
     }
 
-    // Try to trigger Telegram notification
-    try {
-        // Fetch course details for name
-        const { data: courseData } = await supabase.from('courses').select('title').eq('id', courseId).single()
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('id', user.id)
+        .maybeSingle()
 
-        // Fetch settings using secure RPC so logged in students can trigger the notification
-        const { data: settingsData } = await supabase.rpc('get_app_settings_secure')
+    const adminUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim()
+        ? `${process.env.NEXT_PUBLIC_SITE_URL.trim().replace(/\/$/, '')}/admin/payments`
+        : undefined
+    const notification = await sendPaymentSubmittedAlert({
+        studentName: profile?.display_name || user.email || 'Суралцагч',
+        courseTitle: course.title,
+        adminUrl,
+    })
+    if (!notification.sent) console.error('Payment request saved but Telegram notification failed:', notification.error)
 
-        if (settingsData && courseData) {
-            const settings = settingsData.reduce((acc: any, row: any) => {
-                acc[row.id] = row.value
-                return acc
-            }, {})
-
-            const token = settings['telegram_bot_token']
-            const chatId = settings['telegram_chat_id']
-
-            if (token && chatId && token.trim() !== '' && chatId.trim() !== '') {
-                // Fetch profiles name
-                const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
-                const userName = profile?.full_name || user.email
-
-                const message = `🚨 <b>New Payment Request!</b> 💰\n\n<b>Student:</b> ${userName}\n<b>Course:</b> ${courseData.title}\n\n<a href="${publicUrl}">View Receipt Image</a>\n\n<i>Please check the Admin Dashboard to approve their access.</i>`
-
-                await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        chat_id: chatId,
-                        text: message,
-                        parse_mode: 'HTML'
-                    })
-                })
-            }
-        }
-    } catch (e) {
-        console.error("Failed to send telegram notification", e)
-        // We do not throw here, so the payment succeeds even if the notification fails
-    }
-
-    revalidatePath('/dashboard')
+    revalidatePath(`/course/${courseId}`)
+    revalidatePath('/dashboard/courses')
+    revalidatePath('/admin')
     revalidatePath('/admin/payments')
     return { success: true }
 }
@@ -112,25 +123,41 @@ export async function checkPaymentStatus(courseId: string) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
 
-    // First check if they are already enrolled
     const { data: enrollment } = await supabase
         .from('enrollments')
-        .select('*')
+        .select('id')
         .eq('user_id', user.id)
         .eq('course_id', courseId)
-        .single()
-
+        .eq('status', 'active')
+        .maybeSingle()
     if (enrollment) return 'enrolled'
 
-    // If not enrolled, check if there's a pending request
-    const { data: request } = await supabase
+    const { data: payment } = await supabase
         .from('payment_requests')
         .select('status')
         .eq('user_id', user.id)
         .eq('course_id', courseId)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single()
+        .maybeSingle()
 
-    return request?.status || 'none'
+    return payment?.status ?? 'none'
+}
+
+export async function getRejectedPaymentReason(courseId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+
+    const { data } = await supabase
+        .from('payment_requests')
+        .select('rejection_reason')
+        .eq('user_id', user.id)
+        .eq('course_id', courseId)
+        .eq('status', 'rejected')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+    return data?.rejection_reason?.trim() || null
 }

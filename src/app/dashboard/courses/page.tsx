@@ -1,5 +1,4 @@
 import { getEnrolledCourses, getPendingCourses, getStudentProfile } from '@/features/dashboard/actions/dashboard-actions'
-import { logout } from '@/features/auth/actions/auth-actions'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Play, Clock } from 'lucide-react'
@@ -11,9 +10,9 @@ export default async function DashboardCoursesPage() {
     const pendingCourses = await getPendingCourses()
 
     return (
-        <div className="p-8 max-w-6xl mx-auto">
-            <header className="mb-10">
-                <h1 className="text-3xl font-bold mb-2">Миний хичээлүүд</h1>
+        <div className="mx-auto max-w-6xl p-5 sm:p-8">
+            <header className="mb-8 sm:mb-10">
+                <h1 className="mb-2 text-2xl font-bold sm:text-3xl">Миний хичээлүүд</h1>
                 <p className="text-zinc-400">Тавтай морилно уу, {profile?.display_name || 'Суралцагч'}. Хичээлээ үргэлжлүүлээрэй!</p>
             </header>
 
@@ -24,12 +23,15 @@ export default async function DashboardCoursesPage() {
                         Идэвхтэй хичээлүүд <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-2 py-1 rounded-full">{enrollments.length}</span>
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {enrollments.map((enrollment: any) => {
+                        {enrollments.map((enrollment) => {
                             const course = enrollment.courses
+                            if (!course) return null
                             return (
                                 <Card key={enrollment.id} className="bg-zinc-900 border-zinc-800 text-white overflow-hidden group flex flex-col">
                                     <div className="aspect-video relative bg-zinc-800">
                                         {course.thumbnail_url ? (
+                                            // Dynamic Supabase Storage URL.
+                                            // eslint-disable-next-line @next/next/no-img-element
                                             <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="w-full h-full bg-gradient-to-br from-indigo-900 to-purple-900 flex items-center justify-center">
@@ -46,7 +48,10 @@ export default async function DashboardCoursesPage() {
                                     </div>
                                     <CardContent className="p-4 flex flex-col flex-1">
                                         <h3 className="font-semibold text-lg line-clamp-1">{course.title}</h3>
-                                        <p className="text-zinc-400 text-sm mt-1 mb-4 flex-1">Элссэн огноо: {new Date(enrollment.granted_at).toLocaleDateString()}</p>
+                                        <div className="mt-1 mb-4 flex-1 space-y-2">
+                                            {enrollment.grant_source === 'bonus' && <span className="inline-flex rounded-full border border-violet-500/30 bg-violet-500/10 px-2 py-1 text-xs font-semibold text-violet-300">Дагалдах үнэгүй хичээл</span>}
+                                            <p className="text-zinc-400 text-sm">Элссэн огноо: {new Date(enrollment.granted_at).toLocaleDateString()}</p>
+                                        </div>
                                         <div className="mt-auto pt-4 border-t border-zinc-800/50">
                                             <Link href={`/courses/${course.id}`} className="w-full">
                                                 <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/20 rounded-xl font-bold h-12 text-md">
@@ -69,12 +74,15 @@ export default async function DashboardCoursesPage() {
                         Зөвшөөрөл хүлээгдэж буй <span className="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 text-xs px-2 py-1 rounded-full">{pendingCourses.length}</span>
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {pendingCourses.map((request: any) => {
+                        {pendingCourses.map((request) => {
                             const course = request.courses
+                            if (!course) return null
                             return (
                                 <Card key={request.id} className="bg-zinc-950 border-zinc-800 text-white overflow-hidden opacity-75 flex flex-col">
                                     <div className="aspect-video relative bg-zinc-800">
                                         {course.thumbnail_url ? (
+                                            // Dynamic Supabase Storage URL.
+                                            // eslint-disable-next-line @next/next/no-img-element
                                             <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover grayscale" />
                                         ) : (
                                             <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center">
@@ -104,7 +112,7 @@ export default async function DashboardCoursesPage() {
             )}
 
             {(!enrollments || enrollments.length === 0) && (!pendingCourses || pendingCourses.length === 0) && (
-                <div className="text-center p-12 bg-zinc-900/50 rounded-xl border border-zinc-800">
+                <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 text-center sm:p-12">
                     <h3 className="text-xl font-semibold mb-2">Одоогоор хичээл алга</h3>
                     <p className="text-zinc-400 mb-6">Та ямар нэг хичээлд элсээгүй байна.</p>
                     <Link href="/#courses">

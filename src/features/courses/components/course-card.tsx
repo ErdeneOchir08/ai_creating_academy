@@ -26,6 +26,8 @@ export function CourseCard({ course }: { course: Course }) {
             <Card className="relative h-full flex flex-col overflow-hidden border border-zinc-800/50 bg-zinc-950/80 backdrop-blur-sm transition-all duration-500 transform group-hover/card:-translate-y-1 rounded-2xl">
                 <div className="relative aspect-video w-full overflow-hidden bg-zinc-900 border-b border-zinc-800/50">
                     {hasThumbnail ? (
+                        // Dynamic Supabase Storage URL.
+                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                             src={course.thumbnail_url}
                             alt={course.title}

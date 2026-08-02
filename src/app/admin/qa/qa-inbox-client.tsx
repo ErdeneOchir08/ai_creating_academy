@@ -1,14 +1,33 @@
 'use client'
 
 import { useState } from 'react'
-import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { MessageSquare, User, BookOpen, Clock, AlertCircle, CheckCircle2, Trash2 } from 'lucide-react'
+import { ArrowLeft, MessageSquare, User, BookOpen, AlertCircle, CheckCircle2, Trash2 } from 'lucide-react'
 import { AdminReplyForm } from '@/features/admin/qa/admin-reply-form'
 import { adminDeleteQuestion } from '@/features/admin/qa/qa-admin-actions'
 import Link from 'next/link'
 
-export function QAInboxClient({ initialQuestions }: { initialQuestions: any[] }) {
+type Profile = { display_name: string | null }
+type Relation<T> = T | T[] | null
+type Answer = { id: string; content: string; created_at: string; profiles?: Relation<Profile> }
+type Question = {
+    id: string
+    course_id: string
+    lesson_id: string
+    content: string
+    is_answered: boolean
+    created_at: string
+    profiles: Relation<Profile>
+    courses: Relation<{ id: string; title: string }>
+    lessons: Relation<{ id: string; title: string }>
+    answers: Answer[] | null
+}
+
+function firstRelated<T>(relation: Relation<T> | undefined): T | null {
+    return Array.isArray(relation) ? relation[0] ?? null : relation ?? null
+}
+
+export function QAInboxClient({ initialQuestions }: { initialQuestions: Question[] }) {
     const [questions, setQuestions] = useState(initialQuestions)
     const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(
         initialQuestions.length > 0 ? initialQuestions[0].id : null
@@ -27,13 +46,13 @@ export function QAInboxClient({ initialQuestions }: { initialQuestions: any[] })
     const selectedQuestion = questions.find(q => q.id === selectedQuestionId)
 
     // Callback when a teacher replies so we can update the UI instantly
-    const handleReplyPosted = (questionId: string, newAnswer: any) => {
+    const handleReplyPosted = (questionId: string, newAnswer: Answer) => {
         setQuestions(prev => prev.map(q => {
             if (q.id === questionId) {
                 return {
                     ...q,
                     is_answered: true,
-                    answers: [...(q.answers || []), newAnswer]
+                    answers: [...(q.answers ?? []), newAnswer]
                 }
             }
             return q
@@ -62,7 +81,7 @@ export function QAInboxClient({ initialQuestions }: { initialQuestions: any[] })
         <div className="flex h-[calc(100vh-64px)] w-full overflow-hidden bg-[#09090b]">
 
             {/* LEFT PANE: Thread List */}
-            <div className="w-full md:w-80 lg:w-[400px] border-r border-zinc-800 flex flex-col h-full bg-zinc-950/50 shrink-0">
+            <div className={`w-full md:w-80 lg:w-[400px] border-r border-zinc-800 flex-col h-full bg-zinc-950/50 shrink-0 ${selectedQuestion ? 'hidden md:flex' : 'flex'}`}>
                 <div className="p-4 border-b border-zinc-800 shrink-0 flex items-center justify-between">
                     <div>
                         <h2 className="font-bold text-white text-lg flex items-center gap-2">
@@ -108,8 +127,8 @@ export function QAInboxClient({ initialQuestions }: { initialQuestions: any[] })
                         <div className="flex flex-col">
                             {filteredQuestions.map((q) => {
                                 const isSelected = q.id === selectedQuestionId;
-                                const studentName = Array.isArray(q.profiles) ? (q.profiles[0] as any)?.display_name : (q.profiles as any)?.display_name || 'Оюутан'
-                                const courseName = Array.isArray(q.courses) ? (q.courses[0] as any)?.title : (q.courses as any)?.title || 'Хичээл'
+                                const studentName = firstRelated(q.profiles)?.display_name || 'Оюутан'
+                                const courseName = firstRelated(q.courses)?.title || 'Хичээл'
                                 const isUnread = !q.is_answered;
 
                                 return (
@@ -165,18 +184,18 @@ export function QAInboxClient({ initialQuestions }: { initialQuestions: any[] })
                                 <div className="flex items-start justify-between gap-4">
                                     <div>
                                         <h3 className="text-xl font-bold text-white mb-2">
-                                            Thread with {Array.isArray(selectedQuestion.profiles) ? (selectedQuestion.profiles[0] as any)?.display_name : (selectedQuestion.profiles as any)?.display_name || 'Student'}
+                                            Суралцагч: {firstRelated(selectedQuestion.profiles)?.display_name || 'Суралцагч'}
                                         </h3>
                                         <div className="flex flex-wrap items-center gap-3 text-sm text-zinc-400">
                                             <div className="flex items-center gap-1.5">
                                                 <BookOpen className="h-4 w-4 text-indigo-400" />
-                                                <span className="font-medium text-zinc-300">{Array.isArray(selectedQuestion.courses) ? (selectedQuestion.courses[0] as any)?.title : (selectedQuestion.courses as any)?.title || 'Course'}</span>
+                                                <span className="font-medium text-zinc-300">{firstRelated(selectedQuestion.courses)?.title || 'Хичээл'}</span>
                                             </div>
                                             {selectedQuestion.lessons && (
                                                 <>
                                                     <span className="text-zinc-600">•</span>
                                                     <span className="truncate">
-                                                        Lesson: {Array.isArray(selectedQuestion.lessons) ? (selectedQuestion.lessons[0] as any)?.title : (selectedQuestion.lessons as any).title}
+                                                        Хичээл: {firstRelated(selectedQuestion.lessons)?.title}
                                                     </span>
                                                     <span className="text-zinc-600">•</span>
                                                     <Link
@@ -184,7 +203,7 @@ export function QAInboxClient({ initialQuestions }: { initialQuestions: any[] })
                                                         target="_blank"
                                                         className="text-indigo-400 hover:text-indigo-300 hover:underline flex items-center gap-1"
                                                     >
-                                                        View Lesson Context
+                                                        Хичээлийн хуудас нээх
                                                     </Link>
                                                 </>
                                             )}
@@ -192,13 +211,13 @@ export function QAInboxClient({ initialQuestions }: { initialQuestions: any[] })
                                     </div>
                                     <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
                                         <Badge variant="outline" className={selectedQuestion.is_answered ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/5" : "border-indigo-500/30 text-indigo-400 bg-indigo-500/5"}>
-                                            {selectedQuestion.is_answered ? 'Resolved' : 'Needs Reply'}
+                                            {selectedQuestion.is_answered ? 'Хариулсан' : 'Хариу хүлээж буй'}
                                         </Badge>
                                         <button
                                             onClick={() => handleDelete(selectedQuestion.id)}
                                             disabled={isDeleting}
                                             className="text-zinc-500 hover:text-red-400 hover:bg-red-400/10 p-2 rounded-md transition-colors disabled:opacity-50"
-                                            title="Delete Thread"
+                                            title="Асуултыг устгах"
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </button>
@@ -216,7 +235,7 @@ export function QAInboxClient({ initialQuestions }: { initialQuestions: any[] })
                                     <div className="flex-1 space-y-1">
                                         <div className="flex items-center gap-2">
                                             <span className="font-semibold text-zinc-200">
-                                                {Array.isArray(selectedQuestion.profiles) ? (selectedQuestion.profiles[0] as any)?.display_name : (selectedQuestion.profiles as any)?.display_name || 'Student'}
+                                                {firstRelated(selectedQuestion.profiles)?.display_name || 'Суралцагч'}
                                             </span>
                                             <span className="text-xs text-zinc-500" suppressHydrationWarning>
                                                 {new Date(selectedQuestion.created_at).toLocaleString()}
@@ -229,7 +248,7 @@ export function QAInboxClient({ initialQuestions }: { initialQuestions: any[] })
                                 </div>
 
                                 {/* Teacher Replies */}
-                                {selectedQuestion.answers && selectedQuestion.answers.length > 0 && selectedQuestion.answers.map((ans: any) => (
+                                {selectedQuestion.answers && selectedQuestion.answers.length > 0 && selectedQuestion.answers.map((ans) => (
                                     <div key={ans.id} className="flex gap-4 max-w-3xl ml-auto flex-row-reverse">
                                         <div className="h-10 w-10 rounded-full bg-indigo-500/20 flex items-center justify-center shrink-0 border border-indigo-500/30">
                                             <span className="text-indigo-400 font-bold text-sm">A</span>
@@ -237,7 +256,7 @@ export function QAInboxClient({ initialQuestions }: { initialQuestions: any[] })
                                         <div className="flex-1 space-y-1 flex flex-col items-end">
                                             <div className="flex items-center gap-2 flex-row-reverse">
                                                 <span className="font-semibold text-indigo-300">
-                                                    You (Admin)
+                                                    Админ
                                                 </span>
                                                 <span className="text-xs text-indigo-500/50" suppressHydrationWarning>
                                                     {new Date(ans.created_at).toLocaleString()}
@@ -263,16 +282,58 @@ export function QAInboxClient({ initialQuestions }: { initialQuestions: any[] })
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center text-zinc-500">
                         <MessageSquare className="h-16 w-16 mb-4 opacity-20" />
-                        <p className="text-lg font-medium text-zinc-400">Select a thread</p>
-                        <p className="text-sm">Choose a conversation from the left to view and reply.</p>
+                        <p className="text-lg font-medium text-zinc-400">Асуулт сонгоно уу</p>
+                        <p className="text-sm">Зүүн жагсаалтаас асуулт сонгож хариулна уу.</p>
                     </div>
                 )}
             </div>
 
-            {/* Mobile Empty State */}
-            <div className="md:hidden flex-1 flex flex-col items-center justify-center text-zinc-500 p-8 text-center bg-zinc-950">
+            {selectedQuestion && (
+                <div className="flex min-w-0 flex-1 flex-col bg-zinc-950 md:hidden">
+                    <div className="flex items-center gap-3 border-b border-zinc-800 p-4">
+                        <button
+                            type="button"
+                            onClick={() => setSelectedQuestionId(null)}
+                            className="rounded-lg p-2 text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white"
+                            aria-label="Асуултын жагсаалт руу буцах"
+                        >
+                            <ArrowLeft className="h-5 w-5" />
+                        </button>
+                        <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold text-white">{firstRelated(selectedQuestion.profiles)?.display_name ?? 'Суралцагч'}</p>
+                            <p className="truncate text-xs text-zinc-500">{firstRelated(selectedQuestion.courses)?.title ?? 'Хичээл'}</p>
+                        </div>
+                        <Badge variant="outline" className={selectedQuestion.is_answered ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-400' : 'border-indigo-500/30 bg-indigo-500/5 text-indigo-400'}>
+                            {selectedQuestion.is_answered ? 'Хариулсан' : 'Хариулах'}
+                        </Badge>
+                    </div>
+
+                    <div className="flex-1 space-y-5 overflow-y-auto p-4">
+                        <div className="rounded-2xl rounded-tl-sm border border-zinc-700/50 bg-zinc-800/50 p-4">
+                            <p className="mb-2 text-xs text-zinc-500" suppressHydrationWarning>{new Date(selectedQuestion.created_at).toLocaleString()}</p>
+                            <p className="whitespace-pre-wrap text-sm leading-6 text-zinc-200">{selectedQuestion.content}</p>
+                        </div>
+                        {(selectedQuestion.answers ?? []).map((answer) => (
+                            <div key={answer.id} className="ml-6 rounded-2xl rounded-tr-sm bg-indigo-600 p-4 text-sm leading-6 text-white">
+                                <p className="mb-2 text-xs text-indigo-100/70" suppressHydrationWarning>{new Date(answer.created_at).toLocaleString()}</p>
+                                <p className="whitespace-pre-wrap">{answer.content}</p>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="border-t border-zinc-800 bg-zinc-950 p-4">
+                        <AdminReplyForm
+                            questionId={selectedQuestion.id}
+                            onReplyPosted={(answer) => handleReplyPosted(selectedQuestion.id, answer)}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Legacy mobile placeholder is replaced by the responsive conversation view above. */}
+            <div className="hidden">
                 <AlertCircle className="h-12 w-12 mb-4 opacity-20 mx-auto" />
-                <p className="text-zinc-400">Please use a tablet or desktop computer to view and reply to the Q&A Inbox.</p>
+                <p className="text-zinc-400">Асуултад хариулахын тулд таблет эсвэл компьютероор нэвтэрнэ үү.</p>
             </div>
         </div>
     )

@@ -2,46 +2,18 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, BookOpen, CreditCard, LogOut, MessageSquare, Settings, Star } from 'lucide-react'
+import { LayoutDashboard, Users, BookOpen, CreditCard, LogOut, Settings, MessageSquareText, Tags } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
 const adminLinks = [
-    {
-        name: 'Тойм',
-        href: '/admin',
-        icon: LayoutDashboard,
-    },
-    {
-        name: 'Хэрэглэгчид',
-        href: '/admin/users',
-        icon: Users,
-    },
-    {
-        name: 'Хичээлүүд',
-        href: '/admin/courses',
-        icon: BookOpen,
-    },
-    {
-        name: 'Бүтээлүүд',
-        href: '/admin/projects',
-        icon: Star,
-    },
-    {
-        name: 'Төлбөрүүд',
-        href: '/admin/payments',
-        icon: CreditCard,
-    },
-    {
-        name: 'Асуулт хариулт',
-        href: '/admin/qa',
-        icon: MessageSquare,
-    },
-    {
-        name: 'Тохиргоо',
-        href: '/admin/settings',
-        icon: Settings,
-    },
+    { name: 'Тойм', href: '/admin', icon: LayoutDashboard },
+    { name: 'Хэрэглэгчид', href: '/admin/users', icon: Users },
+    { name: 'Хичээлүүд', href: '/admin/courses', icon: BookOpen },
+    { name: 'Ангиллууд', href: '/admin/categories', icon: Tags },
+    { name: 'Төлбөрүүд', href: '/admin/payments', icon: CreditCard },
+    { name: 'Асуулт, хариулт', href: '/admin/qa', icon: MessageSquareText },
+    { name: 'Тохиргоо', href: '/admin/settings', icon: Settings },
 ]
 
 export function AdminSidebar({ isMobile = false }: { isMobile?: boolean }) {
@@ -49,17 +21,17 @@ export function AdminSidebar({ isMobile = false }: { isMobile?: boolean }) {
 
     return (
         <aside className={cn(
-            "bg-zinc-950/50 backdrop-blur-2xl border-white/5 flex flex-col h-full shadow-2xl",
-            isMobile ? "w-full border-r-0" : "w-64 border-r sticky top-0"
+            'flex h-full flex-col border-white/5 bg-zinc-950/50 shadow-2xl backdrop-blur-2xl',
+            isMobile ? 'w-full border-r-0' : 'sticky top-0 h-[calc(100vh-64px)] w-64 border-r',
         )}>
-            <div className="p-6 border-b border-zinc-800">
-                <Link href="/admin" className="flex flex-col gap-1 transition-transform hover:scale-105 active:scale-95 origin-left">
-                    <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">Админ Портал</span>
-                    <span className="text-xs text-zinc-500 font-medium">Mind Academy</span>
+            <div className="border-b border-zinc-800 p-6">
+                <Link href="/admin" className="flex origin-left flex-col gap-1 transition-transform hover:scale-105 active:scale-95">
+                    <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-xl font-bold text-transparent">Админ портал</span>
+                    <span className="text-xs font-medium text-zinc-500">Mind Academy</span>
                 </Link>
             </div>
 
-            <div className="flex-1 py-6 px-4 space-y-2 overflow-y-auto">
+            <div className="flex-1 space-y-2 overflow-y-auto px-4 py-6">
                 {adminLinks.map((link) => {
                     const Icon = link.icon
                     const isActive = pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/admin')
@@ -69,10 +41,10 @@ export function AdminSidebar({ isMobile = false }: { isMobile?: boolean }) {
                             key={link.href}
                             href={link.href}
                             className={cn(
-                                "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors",
+                                'flex items-center gap-3 rounded-md border px-3 py-2.5 text-sm font-medium transition-colors',
                                 isActive
-                                    ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shadow-inner"
-                                    : "text-zinc-400 hover:text-zinc-100 hover:bg-white/5 border border-transparent"
+                                    ? 'border-indigo-500/20 bg-indigo-500/10 text-indigo-400 shadow-inner'
+                                    : 'border-transparent text-zinc-400 hover:bg-white/5 hover:text-zinc-100',
                             )}
                         >
                             <Icon className="h-4 w-4" />
@@ -82,10 +54,10 @@ export function AdminSidebar({ isMobile = false }: { isMobile?: boolean }) {
                 })}
             </div>
 
-            <div className="p-4 border-t border-white/5">
-                <Button variant="ghost" className="w-full justify-start text-zinc-400 hover:text-white hover:bg-white/10 transition-all font-medium" asChild>
+            <div className="border-t border-white/5 p-4">
+                <Button variant="ghost" className="w-full justify-start font-medium text-zinc-400 transition-all hover:bg-white/10 hover:text-white" asChild>
                     <Link href="/dashboard">
-                        <LogOut className="h-4 w-4 mr-2" />
+                        <LogOut className="mr-2 h-4 w-4" />
                         Админаас гарах
                     </Link>
                 </Button>

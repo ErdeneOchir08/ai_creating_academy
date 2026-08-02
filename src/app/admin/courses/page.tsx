@@ -1,5 +1,6 @@
-import { getAllAdminCourses, deleteCourse } from '@/features/admin/actions/course-actions.admin'
+import { getAllAdminCourses } from '@/features/admin/actions/course-actions.admin'
 import { CreateCourseDialog } from '@/features/admin/components/create-course-dialog'
+import { CourseDeleteButton } from '@/features/admin/components/course-delete-button'
 import {
     Table,
     TableBody,
@@ -11,7 +12,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Edit, Trash2 } from 'lucide-react'
+import { Edit } from 'lucide-react'
 import Link from 'next/link'
 
 export default async function AdminCoursesPage() {
@@ -42,6 +43,7 @@ export default async function AdminCoursesPage() {
                                     <TableHead className="text-zinc-400">Гарчиг</TableHead>
                                     <TableHead className="text-zinc-400">Төлөв</TableHead>
                                     <TableHead className="text-zinc-400 text-center">Хичээлүүд</TableHead>
+                                    <TableHead className="text-zinc-400">Бэлэн байдал</TableHead>
                                     <TableHead className="text-zinc-400">Үнэ</TableHead>
                                     <TableHead className="text-zinc-400 text-right">Үйлдэл</TableHead>
                                 </TableRow>
@@ -49,12 +51,12 @@ export default async function AdminCoursesPage() {
                             <TableBody>
                                 {courses.length === 0 ? (
                                     <TableRow className="border-0 hover:bg-transparent">
-                                        <TableCell colSpan={5} className="h-24 text-center text-zinc-500">
+                                        <TableCell colSpan={6} className="h-24 text-center text-zinc-500">
                                             Хичээл олдсонгүй. Шинээр үүсгэнэ үү!
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    courses.map((course: any) => (
+                                    courses.map((course) => (
                                         <TableRow key={course.id} className="border-zinc-800 hover:bg-zinc-800/50">
                                             <TableCell className="font-medium">
                                                 <Link href={`/admin/courses/${course.id}`} className="hover:text-indigo-400 transition-colors">
@@ -69,7 +71,18 @@ export default async function AdminCoursesPage() {
                                                 )}
                                             </TableCell>
                                             <TableCell className="text-center text-zinc-300">
-                                                {course.lessons?.[0]?.count || 0}
+                                                {course.lesson_count}
+                                            </TableCell>
+                                            <TableCell>
+                                                {course.is_ready_for_publication ? (
+                                                    <Badge className="bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20">Нийтлэхэд бэлэн</Badge>
+                                                ) : course.published ? (
+                                                    <Badge className="bg-amber-500/10 text-amber-300 hover:bg-amber-500/20">Засвар шаардлагатай</Badge>
+                                                ) : course.lesson_count === 0 ? (
+                                                    <Badge variant="outline" className="border-zinc-700 text-zinc-400">Хичээл нэмнэ үү</Badge>
+                                                ) : (
+                                                    <Badge variant="outline" className="border-zinc-700 text-zinc-400">Видео нэмнэ үү</Badge>
+                                                )}
                                             </TableCell>
                                             <TableCell className="text-zinc-300">
                                                 {course.price_display}
@@ -82,14 +95,7 @@ export default async function AdminCoursesPage() {
                                                         </Link>
                                                     </Button>
 
-                                                    <form action={async () => {
-                                                        'use server';
-                                                        await deleteCourse(course.id)
-                                                    }}>
-                                                        <Button type="submit" variant="ghost" size="icon" className="text-red-400 hover:text-red-300 hover:bg-red-950/50">
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </form>
+                                                    <CourseDeleteButton courseId={course.id} courseTitle={course.title} />
                                                 </div>
                                             </TableCell>
                                         </TableRow>

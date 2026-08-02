@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Ticket, Lock, Sparkles, Plus } from 'lucide-react'
+import { Ticket, Lock, Sparkles } from 'lucide-react'
 import { redeemXpForDiscount } from '../actions/reward-actions'
 
 type RewardRedemptionStoreProps = {

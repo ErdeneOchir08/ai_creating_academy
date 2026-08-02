@@ -2,6 +2,40 @@
 
 import { createClient } from '@/lib/supabase/server'
 
+type DashboardCourse = {
+    id: string
+    title: string
+    description: string
+    thumbnail_path: string | null
+}
+
+type CourseRelation = DashboardCourse | DashboardCourse[] | null
+type EnrollmentRow = {
+    id: string
+    granted_at: string
+    grant_source: string | null
+    courses: CourseRelation
+}
+type PendingPaymentRow = {
+    id: string
+    created_at: string
+    courses: CourseRelation
+}
+
+function withCourseThumbnail<T extends { courses: CourseRelation }>(
+    supabase: Awaited<ReturnType<typeof createClient>>,
+    record: T,
+) {
+    const course = Array.isArray(record.courses) ? record.courses[0] : record.courses
+    if (!course) return { ...record, courses: null }
+
+    const thumbnail_url = course.thumbnail_path
+        ? supabase.storage.from('course-media').getPublicUrl(course.thumbnail_path).data.publicUrl
+        : null
+
+    return { ...record, courses: { ...course, thumbnail_url } }
+}
+
 export async function getEnrolledCourses() {
     const supabase = await createClient()
 
@@ -15,21 +49,23 @@ export async function getEnrolledCourses() {
         .select(`
       id,
       granted_at,
-      courses (
+      grant_source,
+      courses!enrollments_course_id_fkey (
         id,
         title,
         description,
-        thumbnail_url
+        thumbnail_path
       )
     `)
         .eq('user_id', user.id)
+        .eq('status', 'active')
 
     if (error) {
         console.error('Error fetching enrollments:', error.message)
         return []
     }
 
-    return data
+    return ((data ?? []) as EnrollmentRow[]).map((record) => withCourseThumbnail(supabase, record))
 }
 
 export async function getPendingCourses() {
@@ -44,11 +80,11 @@ export async function getPendingCourses() {
         .select(`
       id,
       created_at,
-      courses (
+      courses!payment_requests_course_id_fkey (
         id,
         title,
         description,
-        thumbnail_url
+        thumbnail_path
       )
     `)
         .eq('user_id', user.id)
@@ -59,7 +95,7 @@ export async function getPendingCourses() {
         return []
     }
 
-    return data
+    return ((data ?? []) as PendingPaymentRow[]).map((record) => withCourseThumbnail(supabase, record))
 }
 
 export async function getStudentProfile() {

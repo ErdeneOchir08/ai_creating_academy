@@ -2,165 +2,96 @@
 
 import { createClient } from '@/lib/supabase/server'
 
+type ProgressLesson = {
+    id: string
+    title: string
+    position: number
+}
+
+type ProgressCourse = {
+    id: string
+    title: string
+    thumbnail_path: string | null
+    lessons: ProgressLesson[] | null
+}
+
+type ProgressEnrollment = {
+    course_id: string
+    courses: ProgressCourse | ProgressCourse[] | null
+}
+
+type CompletedLesson = {
+    lesson_id: string
+    completed_at: string
+}
+
 export async function getUserProgressDashboard() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-
     if (!user) return null
 
-    // 1. Get all courses the user is enrolled in
-    const { data: enrollments, error: enrollError } = await supabase
-        .from('enrollments')
-        .select(`
-            course_id,
-            courses (
-                id,
-                title,
-                thumbnail_url,
-                lessons ( id, title, order_index )
-            )
-        `)
-        .eq('user_id', user.id)
+    const [{ data: enrollments, error: enrollmentError }, { data: completed, error: progressError }] = await Promise.all([
+        supabase
+            .from('enrollments')
+            .select('course_id, courses(id, title, thumbnail_path, lessons(id, title, position))')
+            .eq('user_id', user.id)
+            .eq('status', 'active'),
+        supabase
+            .from('lesson_progress')
+            .select('lesson_id, completed_at')
+            .eq('user_id', user.id)
+            .order('completed_at', { ascending: false }),
+    ])
 
-    if (enrollError || !enrollments) {
-        console.error('Error fetching enrollments for progress:', enrollError)
+    if (enrollmentError || progressError) {
+        console.error('Unable to load course progress:', enrollmentError?.message || progressError?.message)
         return null
     }
 
-    // 2. Get all completed lessons for this user, ordered by completion date
-    const { data: completedLessons, error: progressError } = await supabase
-        .from('user_progress')
-        .select('lesson_id, completed_at, lessons(course_id)')
-        .eq('user_id', user.id)
-        .eq('completed', true)
-        .order('completed_at', { ascending: false })
+    const completedLessonIds = new Set(
+        ((completed ?? []) as CompletedLesson[]).map((item) => item.lesson_id),
+    )
+    const courseSummaries = ((enrollments ?? []) as ProgressEnrollment[]).map((enrollment) => {
+        const course = Array.isArray(enrollment.courses) ? enrollment.courses[0] : enrollment.courses
+        if (!course) return null
 
-    if (progressError) {
-        console.error('Error fetching completed lessons:', progressError)
-        return null
-    }
-
-    const completedSet = new Set(completedLessons.map(p => p.lesson_id))
-
-    // 2.5 Get XP Redemptions
-    const { data: redemptions, error: redemptionError } = await supabase
-        .from('xp_redemptions')
-        .select('xp_amount_spent')
-        .eq('user_id', user.id)
-
-    let spentXP = 0
-    if (!redemptionError && redemptions) {
-        spentXP = redemptions.reduce((acc, curr) => acc + curr.xp_amount_spent, 0)
-    }
-
-    // Gamification Calculations
-    const XP_PER_LESSON = 100
-    const XP_PER_COURSE = 500
-    const XP_PER_LEVEL = 1000
-
-    let totalXP = 0
-    let totalCompletedLessons = completedSet.size
-
-    // 3. Calculate progress for each course and find the "Next Lesson"
-    const parsedCourses = enrollments.map((en: any) => {
-        const course = en.courses
-
-        // Sort lessons by position to find the correct next lesson
-        const sortedLessons = course.lessons ? [...course.lessons].sort((a, b) => (a.order_index || 0) - (b.order_index || 0)) : []
-        const totalLessons = sortedLessons.length
-
-        let completedCount = 0
-        let nextLessonId = null
-        let nextLessonTitle = null
-
-        if (totalLessons > 0) {
-            completedCount = sortedLessons.filter((l: any) => completedSet.has(l.id)).length
-
-            // Find the first lesson that is NOT completed
-            const nextLesson = sortedLessons.find((l: any) => !completedSet.has(l.id))
-            if (nextLesson) {
-                nextLessonId = nextLesson.id
-                nextLessonTitle = nextLesson.title
-            }
-        }
-
-        const percentage = totalLessons === 0 ? 0 : Math.round((completedCount / totalLessons) * 100)
-
-        // Award Course Completion Bonus XP
-        if (percentage === 100) {
-            totalXP += XP_PER_COURSE
-        }
+        const lessons = [...(course.lessons ?? [])].sort((a, b) => a.position - b.position)
+        const completedLessons = lessons.filter((lesson) => completedLessonIds.has(lesson.id)).length
+        const nextLesson = lessons.find((lesson) => !completedLessonIds.has(lesson.id))
+        const thumbnailUrl = course.thumbnail_path
+            ? supabase.storage.from('course-media').getPublicUrl(course.thumbnail_path).data.publicUrl
+            : null
 
         return {
             courseId: course.id,
             title: course.title,
-            thumbnailUrl: course.thumbnail_url,
-            totalLessons,
-            completedLessons: completedCount,
-            percentage,
-            nextLessonId,
-            nextLessonTitle
+            thumbnailUrl,
+            totalLessons: lessons.length,
+            completedLessons,
+            percentage: lessons.length === 0 ? 0 : Math.round((completedLessons / lessons.length) * 100),
+            nextLessonId: nextLesson?.id ?? null,
+            nextLessonTitle: nextLesson?.title ?? null,
         }
     })
+    const courses = courseSummaries.filter((course): course is NonNullable<typeof course> => course !== null)
 
-    // Add Lesson XP
-    totalXP += (totalCompletedLessons * XP_PER_LESSON)
+    const focalCourse = courses.find((course) => course.percentage < 100) ?? courses[0] ?? null
+    const totalCompletedLessons = completedLessonIds.size
 
-    // Calculate Raw Earned XP before spending
-    const rawXP = totalXP
-
-    // Deduct Spent XP
-    totalXP = Math.max(0, totalXP - spentXP)
-
-    // Calculate Level based on Raw XP (so they don't lose levels when spending)
-    const currentLevel = Math.floor(rawXP / XP_PER_LEVEL) + 1
-    const xpIntoCurrentLevel = rawXP % XP_PER_LEVEL
-    const xpForNextLevel = XP_PER_LEVEL
-    const levelPercentage = Math.round((xpIntoCurrentLevel / xpForNextLevel) * 100)
-
-    // Find the single "Continue Learning" focal course
-    // Let's use the most recently interacted with course that is NOT 100% complete
-    let focalCourse = null
-    const incompleteCourses = parsedCourses.filter(p => p.percentage < 100 && p.percentage > 0)
-
-    if (incompleteCourses.length > 0 && completedLessons.length > 0) {
-        // Find the course ID of the most recently completed lesson
-        const lastCompletedLesson = completedLessons[0]
-
-        let targetCourseId = null
-        if (lastCompletedLesson.lessons) {
-            if (Array.isArray(lastCompletedLesson.lessons)) {
-                targetCourseId = lastCompletedLesson.lessons[0]?.course_id
-            } else {
-                targetCourseId = (lastCompletedLesson.lessons as any).course_id
-            }
-        }
-
-        if (targetCourseId) {
-            const mappedCourse = incompleteCourses.find(c => c.courseId === targetCourseId)
-            if (mappedCourse) {
-                focalCourse = mappedCourse
-            } else {
-                focalCourse = incompleteCourses[0]
-            }
-        }
-    } else if (parsedCourses.length > 0) {
-        // Just grab any uncompleted course, or the first one if all are done
-        focalCourse = incompleteCourses[0] || parsedCourses[0]
-    }
-
+    // Keep the existing dashboard contract while the optional rewards system is
+    // intentionally out of the launch scope.
     return {
-        courses: parsedCourses,
+        courses,
         gamification: {
-            totalXP,
-            rawXP,
-            spentXP,
-            currentLevel,
-            xpIntoCurrentLevel,
-            xpForNextLevel,
-            levelPercentage,
-            totalCompletedLessons
+            totalXP: 0,
+            rawXP: 0,
+            spentXP: 0,
+            currentLevel: 1,
+            xpIntoCurrentLevel: 0,
+            xpForNextLevel: 0,
+            levelPercentage: 0,
+            totalCompletedLessons,
         },
-        focalCourse
+        focalCourse,
     }
 }

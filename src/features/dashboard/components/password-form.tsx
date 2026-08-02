@@ -18,9 +18,17 @@ function SubmitPasswordButton() {
 
 export function PasswordForm() {
     const [message, setMessage] = useState<{ type: 'error' | 'success', text: string } | null>(null)
+    const [confirmation, setConfirmation] = useState('')
 
     async function handleAction(formData: FormData) {
         setMessage(null)
+        const password = String(formData.get('password') ?? '')
+
+        if (password !== confirmation) {
+            setMessage({ type: 'error', text: 'Нууц үг хоорондоо таарахгүй байна.' })
+            return
+        }
+
         const result = await updatePassword(formData)
 
         if (result?.error) {
@@ -40,11 +48,27 @@ export function PasswordForm() {
                     name="password"
                     type="password"
                     required
-                    minLength={6}
+                    minLength={8}
+                    autoComplete="new-password"
                     className="bg-zinc-900 border-zinc-700 focus-visible:ring-indigo-500 text-white"
                     placeholder="••••••••"
                 />
                 <p className="text-xs text-zinc-500">Доод тал нь 6 тэмдэгт байх ёстой.</p>
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="password_confirmation" className="text-zinc-300">Нууц үгээ давтана уу</Label>
+                <Input
+                    id="password_confirmation"
+                    name="password_confirmation"
+                    type="password"
+                    required
+                    minLength={8}
+                    autoComplete="new-password"
+                    value={confirmation}
+                    onChange={(event) => setConfirmation(event.target.value)}
+                    className="bg-zinc-900 border-zinc-700 focus-visible:ring-indigo-500 text-white"
+                />
             </div>
 
             {message && (
