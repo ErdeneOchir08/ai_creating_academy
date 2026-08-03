@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, BookOpen, CreditCard, LogOut, Settings, MessageSquareText, Tags, FileSignature, CalendarRange } from 'lucide-react'
+import { LayoutDashboard, Users, BookOpen, CreditCard, LogOut, Settings, MessageSquareText, Tags, FileSignature, CalendarRange, ClipboardList } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
@@ -12,6 +12,7 @@ const adminLinks = [
     { name: 'Хичээлүүд', href: '/admin/courses', icon: BookOpen },
     { name: 'Ангиллууд', href: '/admin/categories', icon: Tags },
     { name: 'Хөтөлбөрүүд', href: '/admin/programs', icon: CalendarRange },
+    { name: 'Элсэлтийн өргөдлүүд', href: '/admin/applications', icon: ClipboardList },
     { name: 'Гэрээнүүд', href: '/admin/contracts', icon: FileSignature },
     { name: 'Төлбөрүүд', href: '/admin/payments', icon: CreditCard },
     { name: 'Асуулт, хариулт', href: '/admin/qa', icon: MessageSquareText },
