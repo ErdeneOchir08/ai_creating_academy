@@ -31,6 +31,9 @@ export async function Navbar() {
                         {profile.facebookUrl && <a href={profile.facebookUrl} target="_blank" rel="noreferrer" aria-label={`${profile.displayName} Facebook`} className="rounded-md p-2 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-white"><Facebook className="h-4 w-4" /></a>}
                         {profile.instagramUrl && <a href={profile.instagramUrl} target="_blank" rel="noreferrer" aria-label={`${profile.displayName} Instagram`} className="rounded-md p-2 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-white"><Instagram className="h-4 w-4" /></a>}
                     </div>
+                    <Link href="/programs" className="text-sm font-medium hover:text-primary transition-colors">
+                        Элсэлт
+                    </Link>
                     {user ? (
                         <>
                             <Link href="/dashboard" className="text-sm font-medium hover:text-primary transition-colors">
@@ -77,6 +80,9 @@ export async function Navbar() {
                                     <>
                                         <div className="flex flex-col gap-4">
                                             <p className="text-sm text-zinc-400 border-b border-zinc-800 pb-2">Үндсэн цэс</p>
+                                            <Link href="/programs" className="text-lg font-medium hover:text-indigo-400 transition-colors w-full">
+                                                Элсэлт
+                                            </Link>
                                             <Link href="/dashboard" className="text-lg font-medium hover:text-indigo-400 transition-colors w-full">
                                                 Миний хичээлүүд
                                             </Link>
@@ -96,6 +102,9 @@ export async function Navbar() {
                                     </>
                                 ) : (
                                     <div className="flex flex-col gap-4 mt-4 w-full">
+                                        <Link href="/programs" className="w-full">
+                                            <Button variant="ghost" className="w-full justify-start">Элсэлт</Button>
+                                        </Link>
                                         <Link href="/login" className="w-full">
                                             <Button variant="outline" className="w-full border-zinc-800 text-foreground hover:bg-zinc-900 hover:text-white">
                                                 Нэвтрэх

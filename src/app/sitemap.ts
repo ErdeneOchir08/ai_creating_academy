@@ -5,10 +5,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const siteUrl = getConfiguredSiteUrl()
   if (!siteUrl) return []
 
-  return [{
-    url: siteUrl,
-    lastModified: new Date(),
-    changeFrequency: 'weekly',
-    priority: 1,
-  }]
+  const lastModified = new Date()
+
+  return [
+    {
+      url: siteUrl,
+      lastModified,
+      changeFrequency: 'weekly',
+      priority: 1,
+    },
+    {
+      url: `${siteUrl}/programs`,
+      lastModified,
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
+  ]
 }
