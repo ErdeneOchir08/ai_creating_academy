@@ -61,6 +61,61 @@ export const approvedApplicationContractSnapshotSchema = z.object({
 
 export type ApprovedApplicationContractSnapshot = z.infer<typeof approvedApplicationContractSnapshotSchema>
 
+const contractSnapshotApplicationDetailsSchema = z.object({
+    contact_email: z.string(),
+    status: z.literal('approved'),
+    submitted_at: z.string(),
+    reviewed_at: z.string(),
+    created_at: z.string(),
+    updated_at: z.string(),
+})
+
+const contractSnapshotProgramDetailsSchema = z.object({
+    program: z.object({
+        id: z.string().uuid(),
+        name: z.string(),
+        description: z.string(),
+    }),
+    cohort: z.object({
+        id: z.string().uuid(),
+        name: z.string(),
+        delivery_mode: z.enum(['online', 'offline', 'hybrid']),
+        capacity: z.number().int().positive().nullable(),
+        tuition_amount_mnt: z.number().int().nonnegative().nullable(),
+        payment_plan: z.string(),
+        schedule_summary: z.string(),
+        location: z.string(),
+        registration_opens_at: z.string().nullable(),
+        registration_closes_at: z.string().nullable(),
+        starts_on: z.string().nullable(),
+        ends_on: z.string().nullable(),
+    }),
+})
+
+const contractSnapshotAcademyDetailsSchema = z.object({
+    display_name: z.string().nullable(),
+    short_description: z.string().nullable(),
+    public_email: z.string().nullable(),
+    phone: z.string().nullable(),
+    address: z.string().nullable(),
+    business_hours: z.string().nullable(),
+    website_url: z.string().nullable(),
+})
+
+export const adminApprovedApplicationContractSnapshotSchema = approvedApplicationContractSnapshotSchema.extend({
+    applicant_user_id: z.string().uuid(),
+    cohort_id: z.string().uuid(),
+    contract_version_id: z.string().uuid(),
+    required_variable_keys: z.array(z.string().regex(/^[a-z][a-z0-9_]*$/)),
+    application_answers: z.record(z.string(), z.string()),
+    application_details: contractSnapshotApplicationDetailsSchema,
+    program_details: contractSnapshotProgramDetailsSchema,
+    academy_details: contractSnapshotAcademyDetailsSchema,
+    created_by: z.string().uuid(),
+})
+
+export type AdminApprovedApplicationContractSnapshot = z.infer<typeof adminApprovedApplicationContractSnapshotSchema>
+
 export function parseOpenCohorts(value: unknown) {
     return z.array(openCohortSchema).parse(value)
 }
@@ -71,6 +126,10 @@ export function parseCohortApplicationForm(value: unknown) {
 
 export function parseApprovedApplicationContractSnapshot(value: unknown) {
     return approvedApplicationContractSnapshotSchema.parse(value)
+}
+
+export function parseAdminApprovedApplicationContractSnapshot(value: unknown) {
+    return adminApprovedApplicationContractSnapshotSchema.parse(value)
 }
 
 export function renderApprovedContractSnapshot(
