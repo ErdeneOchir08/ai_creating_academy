@@ -1,7 +1,8 @@
 'use client'
 
+import Link from 'next/link'
 import { useMemo, useState, useTransition } from 'react'
-import { CheckCircle2, Clock3, FileCheck2, Mail, Search, TriangleAlert, XCircle } from 'lucide-react'
+import { CheckCircle2, Clock3, FileCheck2, FileSearch2, Mail, Search, TriangleAlert, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -143,8 +144,17 @@ export function CohortApplicationInbox({
 
                             {application.status === 'approved' && application.contract_snapshot && (
                                 <div className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-200">
-                                    <p className="flex items-center gap-2 font-medium"><FileCheck2 className="h-4 w-4" />Гэрээний эх хувь түгжигдсэн</p>
-                                    <p className="mt-1 text-xs text-emerald-100/60">Үүссэн: {formatContractSnapshotDate(application.contract_snapshot.created_at)}</p>
+                                    <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                                        <div>
+                                            <p className="flex items-center gap-2 font-medium"><FileCheck2 className="h-4 w-4" />Гэрээний эх хувь түгжигдсэн</p>
+                                            <p className="mt-1 text-xs text-emerald-100/60">Үүссэн: {formatContractSnapshotDate(application.contract_snapshot.created_at)}</p>
+                                        </div>
+                                        <Button asChild size="sm" variant="outline" className="border-emerald-500/30 bg-zinc-950/50 text-emerald-200 hover:bg-emerald-500/10 hover:text-emerald-100">
+                                            <Link href={`/admin/applications/${application.id}`}>
+                                                <FileSearch2 className="mr-2 h-4 w-4" />Түгжигдсэн эхийг шалгах
+                                            </Link>
+                                        </Button>
+                                    </div>
                                     {application.contract_snapshot.unresolved_variable_keys.length > 0 && (
                                         <p className="mt-2 flex items-start gap-2 text-xs text-amber-200">
                                             <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />

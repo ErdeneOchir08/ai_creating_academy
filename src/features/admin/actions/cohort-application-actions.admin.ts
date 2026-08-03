@@ -2,7 +2,10 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-import type { CohortApplicationStatus } from '@/features/programs/domain/cohort-application'
+import {
+    parseAdminApprovedApplicationContractSnapshot,
+    type CohortApplicationStatus,
+} from '@/features/programs/domain/cohort-application'
 
 type Relation<T> = T | T[] | null
 
@@ -109,6 +112,53 @@ export async function getAdminCohortApplications() {
     return {
         applications,
         variableLabels: Object.fromEntries((variablesResult.data ?? []).map((variable) => [variable.key, variable.label_mn])),
+    }
+}
+
+export async function getAdminCohortApplicationSnapshot(applicationId: string) {
+    assertUuid(applicationId)
+    const supabase = await requireAdmin()
+    const [snapshotResult, variablesResult] = await Promise.all([
+        supabase
+            .from('cohort_application_contract_snapshots')
+            .select(`
+                id,
+                application_id,
+                applicant_user_id,
+                cohort_id,
+                contract_version_id,
+                contract_title,
+                contract_version_number,
+                contract_content,
+                required_variable_keys,
+                unresolved_variable_keys,
+                resolved_values,
+                application_answers,
+                application_details,
+                program_details,
+                academy_details,
+                created_by,
+                created_at
+            `)
+            .eq('application_id', applicationId)
+            .maybeSingle(),
+        supabase
+            .from('contract_variables')
+            .select('key, label_mn'),
+    ])
+
+    if (snapshotResult.error || variablesResult.error) {
+        console.error('Unable to load contract snapshot audit:', snapshotResult.error?.message ?? variablesResult.error?.message)
+        throw new Error('Гэрээний түгжигдсэн эхийг уншиж чадсангүй.')
+    }
+
+    return {
+        snapshot: snapshotResult.data
+            ? parseAdminApprovedApplicationContractSnapshot(snapshotResult.data)
+            : null,
+        variableLabels: Object.fromEntries(
+            (variablesResult.data ?? []).map((variable) => [variable.key, variable.label_mn]),
+        ),
     }
 }
 
