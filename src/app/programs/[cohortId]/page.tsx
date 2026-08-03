@@ -4,20 +4,28 @@ import { CalendarDays, FileText, MapPin, Monitor, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/server'
 import { getOpenCohortApplicationForm } from '@/features/programs/actions/cohort-application-actions'
+import { ApprovedContractSnapshot } from '@/features/programs/components/approved-contract-snapshot'
 import { CohortApplicationEditor } from '@/features/programs/components/cohort-application-form'
+import { getMyApprovedContractSnapshot } from '@/features/programs/queries/approved-contract-snapshot-query'
 
 const deliveryLabels = { online: 'Цахим', offline: 'Танхим', hybrid: 'Хосолсон' } as const
 
 export default async function ProgramApplicationPage({ params }: { params: Promise<{ cohortId: string }> }) {
     const { cohortId } = await params
-    const cohort = await getOpenCohortApplicationForm(cohortId)
+    const [cohort, supabase] = await Promise.all([
+        getOpenCohortApplicationForm(cohortId),
+        createClient(),
+    ])
     if (!cohort) notFound()
 
-    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    const { data: profile } = user
-        ? await supabase.from('profiles').select('display_name').eq('id', user.id).maybeSingle()
-        : { data: null }
+    const [profileResult, contractSnapshot] = user
+        ? await Promise.all([
+            supabase.from('profiles').select('display_name').eq('id', user.id).maybeSingle(),
+            getMyApprovedContractSnapshot(cohortId),
+        ])
+        : [{ data: null }, null] as const
+    const profile = profileResult.data
 
     return (
         <div className="min-h-[calc(100vh-64px)] bg-zinc-950 px-4 py-10 text-white">
@@ -38,7 +46,11 @@ export default async function ProgramApplicationPage({ params }: { params: Promi
 
                         <div className="mt-8">
                             {user ? (
-                                <CohortApplicationEditor cohort={cohort} profileName={profile?.display_name ?? null} />
+                                <CohortApplicationEditor
+                                    cohort={cohort}
+                                    profileName={profile?.display_name ?? null}
+                                    hasContractSnapshot={contractSnapshot !== null}
+                                />
                             ) : (
                                 <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/10 p-6">
                                     <h2 className="text-xl font-semibold">Өргөдөл гаргахын тулд нэвтэрнэ үү.</h2>
@@ -47,6 +59,11 @@ export default async function ProgramApplicationPage({ params }: { params: Promi
                                         <Button asChild className="bg-indigo-600 hover:bg-indigo-700"><Link href="/login">Нэвтрэх</Link></Button>
                                         <Button asChild variant="outline"><Link href="/register">Бүртгүүлэх</Link></Button>
                                     </div>
+                                </div>
+                            )}
+                            {contractSnapshot && (
+                                <div className="mt-6">
+                                    <ApprovedContractSnapshot snapshot={contractSnapshot} />
                                 </div>
                             )}
                         </div>

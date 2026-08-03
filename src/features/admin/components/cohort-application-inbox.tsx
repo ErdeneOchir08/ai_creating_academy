@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState, useTransition } from 'react'
-import { CheckCircle2, Clock3, Mail, Search, XCircle } from 'lucide-react'
+import { CheckCircle2, Clock3, FileCheck2, Mail, Search, TriangleAlert, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -10,6 +10,7 @@ import {
     type AdminCohortApplication,
 } from '@/features/admin/actions/cohort-application-actions.admin'
 import type { CohortApplicationStatus } from '@/features/programs/domain/cohort-application'
+import { formatContractSnapshotDate } from '@/features/programs/domain/cohort-application'
 
 const tabs: Array<{ value: 'all' | CohortApplicationStatus; label: string }> = [
     { value: 'all', label: 'Бүгд' },
@@ -138,6 +139,25 @@ export function CohortApplicationInbox({
 
                             {application.status === 'rejected' && application.rejection_reason && (
                                 <p className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-sm text-amber-200">Шалтгаан: {application.rejection_reason}</p>
+                            )}
+
+                            {application.status === 'approved' && application.contract_snapshot && (
+                                <div className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-200">
+                                    <p className="flex items-center gap-2 font-medium"><FileCheck2 className="h-4 w-4" />Гэрээний эх хувь түгжигдсэн</p>
+                                    <p className="mt-1 text-xs text-emerald-100/60">Үүссэн: {formatContractSnapshotDate(application.contract_snapshot.created_at)}</p>
+                                    {application.contract_snapshot.unresolved_variable_keys.length > 0 && (
+                                        <p className="mt-2 flex items-start gap-2 text-xs text-amber-200">
+                                            <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                                            Дутуу мэдээлэл: {application.contract_snapshot.unresolved_variable_keys.map((key) => variableLabels[key] ?? key).join(', ')}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
+                            {application.status === 'approved' && !application.contract_snapshot && (
+                                <p className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-200">
+                                    Гэрээний түгжигдсэн эх үүсээгүй байна. Өгөгдлийн бүрэн бүтэн байдлыг шалгана уу.
+                                </p>
                             )}
                         </article>
                     ))}
