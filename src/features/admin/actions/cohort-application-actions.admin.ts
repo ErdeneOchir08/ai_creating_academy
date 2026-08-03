@@ -24,8 +24,13 @@ type RawApplication = {
         program: Relation<{ name: string }>
     }>
     contract: Relation<{ title: string; version_number: number }>
+    contract_snapshot: Relation<{
+        id: string
+        created_at: string
+        unresolved_variable_keys: string[]
+    }>
 }
-export type AdminCohortApplication = Omit<RawApplication, 'applicant' | 'cohort' | 'contract'> & {
+export type AdminCohortApplication = Omit<RawApplication, 'applicant' | 'cohort' | 'contract' | 'contract_snapshot'> & {
     applicant: { display_name: string | null } | null
     cohort: {
         id: string
@@ -34,6 +39,11 @@ export type AdminCohortApplication = Omit<RawApplication, 'applicant' | 'cohort'
         program: { name: string } | null
     } | null
     contract: { title: string; version_number: number } | null
+    contract_snapshot: {
+        id: string
+        created_at: string
+        unresolved_variable_keys: string[]
+    } | null
 }
 
 function first<T>(value: Relation<T>) {
@@ -69,13 +79,15 @@ export async function getAdminCohortApplications() {
                     id, name, tuition_amount_mnt,
                     program:training_programs!training_cohorts_program_id_fkey ( name )
                 ),
-                contract:contract_template_versions!cohort_applications_contract_version_id_fkey ( title, version_number )
+                contract:contract_template_versions!cohort_applications_contract_version_id_fkey ( title, version_number ),
+                contract_snapshot:cohort_application_contract_snapshots!cohort_application_contract_snapshots_application_id_fkey (
+                    id, created_at, unresolved_variable_keys
+                )
             `)
             .order('updated_at', { ascending: false }),
         supabase
             .from('contract_variables')
-            .select('key, label_mn')
-            .eq('category', 'participant'),
+            .select('key, label_mn'),
     ])
 
     if (applicationsResult.error || variablesResult.error) {
@@ -90,6 +102,7 @@ export async function getAdminCohortApplications() {
             applicant: first(application.applicant),
             cohort: cohort ? { ...cohort, program: first(cohort.program) } : null,
             contract: first(application.contract),
+            contract_snapshot: first(application.contract_snapshot),
         }
     }) as AdminCohortApplication[]
 

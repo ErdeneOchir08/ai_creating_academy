@@ -48,12 +48,47 @@ export type OpenCohort = z.infer<typeof openCohortSchema>
 export type CohortApplicationForm = z.infer<typeof cohortApplicationFormSchema>
 export type CohortApplicationField = z.infer<typeof applicationFieldSchema>
 
+export const approvedApplicationContractSnapshotSchema = z.object({
+    id: z.string().uuid(),
+    application_id: z.string().uuid(),
+    contract_title: z.string().min(1),
+    contract_version_number: z.number().int().positive(),
+    contract_content: z.string(),
+    unresolved_variable_keys: z.array(z.string().regex(/^[a-z][a-z0-9_]*$/)),
+    resolved_values: z.record(z.string(), z.string()),
+    created_at: z.string(),
+})
+
+export type ApprovedApplicationContractSnapshot = z.infer<typeof approvedApplicationContractSnapshotSchema>
+
 export function parseOpenCohorts(value: unknown) {
     return z.array(openCohortSchema).parse(value)
 }
 
 export function parseCohortApplicationForm(value: unknown) {
     return cohortApplicationFormSchema.parse(value)
+}
+
+export function parseApprovedApplicationContractSnapshot(value: unknown) {
+    return approvedApplicationContractSnapshotSchema.parse(value)
+}
+
+export function renderApprovedContractSnapshot(
+    content: string,
+    resolvedValues: Record<string, string>,
+) {
+    return content.replace(/\{\{([a-z][a-z0-9_]*)\}\}/g, (_token, key: string) => {
+        const value = resolvedValues[key]?.trim()
+        return value || `⟦${key}⟧`
+    })
+}
+
+export function formatContractSnapshotDate(value: string) {
+    return new Intl.DateTimeFormat('mn-MN', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+        timeZone: 'Asia/Ulaanbaatar',
+    }).format(new Date(value))
 }
 
 export function answersFromFormData(formData: FormData) {

@@ -22,9 +22,11 @@ const statusLabels = {
 export function CohortApplicationEditor({
     cohort,
     profileName,
+    hasContractSnapshot,
 }: {
     cohort: CohortApplicationForm
     profileName: string | null
+    hasContractSnapshot: boolean
 }) {
     const formRef = useRef<HTMLFormElement>(null)
     const [pending, startTransition] = useTransition()
@@ -80,9 +82,9 @@ export function CohortApplicationEditor({
                         <Undo2 className="mr-2 h-4 w-4" />Өргөдлийг буцаан татах
                     </Button>
                 )}
-                {application.status === 'approved' && (
-                    <p className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-200">
-                        Өргөдөл зөвшөөрөгдсөн. Дараагийн гэрээ баталгаажуулах, төлбөрийн алхам тусдаа нээгдэнэ.
+                {application.status === 'approved' && !hasContractSnapshot && (
+                    <p className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">
+                        Өргөдөл зөвшөөрөгдсөн боловч гэрээний түгжигдсэн эх олдсонгүй. Админтай холбогдоно уу.
                     </p>
                 )}
                 {!cohort.is_accepting_applications && application.status !== 'approved' && (

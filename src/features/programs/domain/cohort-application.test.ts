@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { answersFromFormData, parseCohortApplicationForm, parseOpenCohorts } from './cohort-application'
+import {
+    answersFromFormData,
+    parseApprovedApplicationContractSnapshot,
+    parseCohortApplicationForm,
+    parseOpenCohorts,
+    renderApprovedContractSnapshot,
+} from './cohort-application'
 
 const cohort = {
     cohort_id: '7fd98a63-0415-4d45-a26d-6ea9bd436f15',
@@ -46,5 +52,21 @@ describe('cohort application domain', () => {
         const formData = new FormData()
         formData.set('answer:../../role', 'admin')
         expect(() => answersFromFormData(formData)).toThrow('Өргөдлийн талбар буруу байна.')
+    })
+
+    it('parses and renders an immutable approved contract snapshot', () => {
+        const snapshot = parseApprovedApplicationContractSnapshot({
+            id: '83791d9e-07cd-41ca-972c-896964ccf47f',
+            application_id: 'af4c1761-d3cd-44d4-bff0-00ca9a6d8be6',
+            contract_title: 'TeenCoder сургалтын гэрээ',
+            contract_version_number: 2,
+            contract_content: 'Суралцагч: {{student_name}}\nТөлөөлөгч: {{academy_representative}}',
+            unresolved_variable_keys: ['academy_representative'],
+            resolved_values: { student_name: 'Бат Болд' },
+            created_at: '2026-08-03T07:00:00.000Z',
+        })
+
+        expect(renderApprovedContractSnapshot(snapshot.contract_content, snapshot.resolved_values))
+            .toBe('Суралцагч: Бат Болд\nТөлөөлөгч: ⟦academy_representative⟧')
     })
 })
