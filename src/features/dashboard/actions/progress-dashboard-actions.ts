@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { PROGRESS_ENROLLMENT_SELECT } from './progress-dashboard-query'
 
 type ProgressLesson = {
     id: string
@@ -17,7 +18,7 @@ type ProgressCourse = {
 
 type ProgressEnrollment = {
     course_id: string
-    courses: ProgressCourse | ProgressCourse[] | null
+    course: ProgressCourse | ProgressCourse[] | null
 }
 
 type CompletedLesson = {
@@ -28,12 +29,12 @@ type CompletedLesson = {
 export async function getUserProgressDashboard() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return null
+    if (!user) return { status: 'unauthenticated' as const }
 
     const [{ data: enrollments, error: enrollmentError }, { data: completed, error: progressError }] = await Promise.all([
         supabase
             .from('enrollments')
-            .select('course_id, courses(id, title, thumbnail_path, lessons(id, title, position))')
+            .select(PROGRESS_ENROLLMENT_SELECT)
             .eq('user_id', user.id)
             .eq('status', 'active'),
         supabase
@@ -45,14 +46,14 @@ export async function getUserProgressDashboard() {
 
     if (enrollmentError || progressError) {
         console.error('Unable to load course progress:', enrollmentError?.message || progressError?.message)
-        return null
+        return { status: 'error' as const }
     }
 
     const completedLessonIds = new Set(
         ((completed ?? []) as CompletedLesson[]).map((item) => item.lesson_id),
     )
     const courseSummaries = ((enrollments ?? []) as ProgressEnrollment[]).map((enrollment) => {
-        const course = Array.isArray(enrollment.courses) ? enrollment.courses[0] : enrollment.courses
+        const course = Array.isArray(enrollment.course) ? enrollment.course[0] : enrollment.course
         if (!course) return null
 
         const lessons = [...(course.lessons ?? [])].sort((a, b) => a.position - b.position)
@@ -81,17 +82,20 @@ export async function getUserProgressDashboard() {
     // Keep the existing dashboard contract while the optional rewards system is
     // intentionally out of the launch scope.
     return {
-        courses,
-        gamification: {
-            totalXP: 0,
-            rawXP: 0,
-            spentXP: 0,
-            currentLevel: 1,
-            xpIntoCurrentLevel: 0,
-            xpForNextLevel: 0,
-            levelPercentage: 0,
-            totalCompletedLessons,
+        status: 'success' as const,
+        data: {
+            courses,
+            gamification: {
+                totalXP: 0,
+                rawXP: 0,
+                spentXP: 0,
+                currentLevel: 1,
+                xpIntoCurrentLevel: 0,
+                xpForNextLevel: 0,
+                levelPercentage: 0,
+                totalCompletedLessons,
+            },
+            focalCourse,
         },
-        focalCourse,
     }
 }

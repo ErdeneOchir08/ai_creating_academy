@@ -6,13 +6,21 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 export default async function ProgressDashboardPage() {
-    const data = await getUserProgressDashboard()
+    const result = await getUserProgressDashboard()
 
-    if (!data) return (
+    if (result.status === 'unauthenticated') return (
         <div className="p-8 max-w-6xl mx-auto flex items-center justify-center min-h-[60vh]">
             <p className="text-zinc-500">Та ахицаа харахын тулд нэвтэрч орно уу.</p>
         </div>
     )
+
+    if (result.status === 'error') return (
+        <div className="p-8 max-w-6xl mx-auto flex items-center justify-center min-h-[60vh]">
+            <p className="text-zinc-500">Ахицын мэдээллийг ачаалж чадсангүй. Түр хүлээгээд дахин оролдоно уу.</p>
+        </div>
+    )
+
+    const data = result.data
 
     const { courses, gamification, focalCourse } = data
 

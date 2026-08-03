@@ -13,12 +13,12 @@ export async function redeemXpForDiscount(xpCost: number, discountPercentage: nu
     }
 
     // Verify they have enough XP
-    const progressData = await getUserProgressDashboard()
-    if (!progressData) {
+    const progressResult = await getUserProgressDashboard()
+    if (progressResult.status !== 'success') {
         return { error: 'Could not fetch progress data' }
     }
 
-    const { totalXP } = progressData.gamification
+    const { totalXP } = progressResult.data.gamification
 
     if (totalXP < xpCost) {
         return { error: 'Not enough XP for this reward' }
