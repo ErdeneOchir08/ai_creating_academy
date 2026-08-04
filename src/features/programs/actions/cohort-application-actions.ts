@@ -69,14 +69,24 @@ export async function saveCohortApplicationDraft(cohortId: string, formData: For
 }
 
 export async function submitCohortApplication(cohortId: string, formData: FormData) {
+    const contractAcknowledged = formData.get('contract_acknowledged') === 'on'
+    if (!contractAcknowledged) {
+        throw new Error('Гэрээний хувилбартай танилцсанаа баталгаажуулна уу.')
+    }
+
     const applicationId = await saveDraft(cohortId, formData)
     const supabase = await createClient()
-    const { error } = await supabase.rpc('submit_cohort_application', { p_application_id: applicationId })
+    const { error } = await supabase.rpc('submit_cohort_application', {
+        p_application_id: applicationId,
+        p_contract_acknowledged: contractAcknowledged,
+    })
 
     if (error) {
         console.error('Unable to submit cohort application:', error.message)
         throw new Error(error.message.includes('missing')
             ? 'Гэрээнд шаардагдах бүх мэдээллийг бүрэн оруулна уу.'
+            : error.message.includes('acknowledgement')
+                ? 'Гэрээний хувилбартай танилцсанаа баталгаажуулна уу.'
             : 'Өргөдлийг илгээж чадсангүй.')
     }
 

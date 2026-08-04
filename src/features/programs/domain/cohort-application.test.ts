@@ -6,6 +6,7 @@ import {
     parseCohortApplicationForm,
     parseOpenCohorts,
     renderApprovedContractSnapshot,
+    renderContractApplicationPreview,
 } from './cohort-application'
 
 const cohort = {
@@ -35,11 +36,22 @@ describe('cohort application domain', () => {
             ...cohort,
             contract_title: 'TeenCoder сургалтын гэрээ',
             contract_version_number: 1,
+            contract_content: 'Суралцагч: {{student_name}}',
+            contract_preview_values: { program_name: 'TeenCoder' },
             is_accepting_applications: true,
             fields: [{ key: 'student_name', label: 'Суралцагчийн нэр', description: '' }],
             my_application: null,
         })
         expect(parsed.fields[0].key).toBe('student_name')
+    })
+
+    it('renders a contract preview from cohort context and the current application answers', () => {
+        expect(renderContractApplicationPreview(
+            'Хөтөлбөр: {{program_name}}\nСуралцагч: {{student_name}}\nОгноо: {{contract_date}}',
+            { program_name: 'TeenCoder', contract_date: 'Зөвшөөрсөн өдөр' },
+            { student_name: 'Бат Болд' },
+            [{ key: 'student_name', label: 'Суралцагчийн нэр', description: '' }],
+        )).toBe('Хөтөлбөр: TeenCoder\nСуралцагч: Бат Болд\nОгноо: Зөвшөөрсөн өдөр')
     })
 
     it('extracts only answer-prefixed form fields', () => {
@@ -93,6 +105,7 @@ describe('cohort application domain', () => {
                 contact_email: 'student@example.com',
                 status: 'approved',
                 submitted_at: '2026-08-03T06:00:00.000Z',
+                contract_acknowledged_at: '2026-08-03T05:59:00.000Z',
                 reviewed_at: '2026-08-03T07:00:00.000Z',
                 created_at: '2026-08-03T05:00:00.000Z',
                 updated_at: '2026-08-03T07:00:00.000Z',

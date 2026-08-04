@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useTransition } from 'react'
+import { useDeferredValue, useMemo, useRef, useState, useTransition } from 'react'
 import { CheckCircle2, FileText, Save, Send, Undo2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,7 +9,10 @@ import {
     submitCohortApplication,
     withdrawCohortApplication,
 } from '@/features/programs/actions/cohort-application-actions'
-import type { CohortApplicationForm } from '@/features/programs/domain/cohort-application'
+import {
+    renderContractApplicationPreview,
+    type CohortApplicationForm,
+} from '@/features/programs/domain/cohort-application'
 
 const statusLabels = {
     draft: 'Ноорог',
@@ -33,6 +36,20 @@ export function CohortApplicationEditor({
     const [message, setMessage] = useState<string | null>(null)
     const [error, setError] = useState<string | null>(null)
     const application = cohort.my_application
+    const [answers, setAnswers] = useState<Record<string, string>>(() => Object.fromEntries(
+        cohort.fields.map((field) => [
+            field.key,
+            application?.answers[field.key] ?? (field.key === 'student_name' ? profileName ?? '' : ''),
+        ]),
+    ))
+    const [contractAcknowledged, setContractAcknowledged] = useState(false)
+    const deferredAnswers = useDeferredValue(answers)
+    const contractPreview = useMemo(() => renderContractApplicationPreview(
+        cohort.contract_content,
+        cohort.contract_preview_values,
+        deferredAnswers,
+        cohort.fields,
+    ), [cohort.contract_content, cohort.contract_preview_values, cohort.fields, deferredAnswers])
     const editable = cohort.is_accepting_applications
         && (!application || ['draft', 'rejected', 'withdrawn'].includes(application.status))
 
@@ -72,6 +89,12 @@ export function CohortApplicationEditor({
                         </div>
                     ))}
                 </dl>
+                {application.contract_acknowledged_at && (
+                    <p className="rounded-xl border border-indigo-500/20 bg-indigo-500/10 p-4 text-sm text-indigo-200">
+                        Гэрээний v{cohort.contract_version_number} хувилбартай танилцсаныг{' '}
+                        {new Date(application.contract_acknowledged_at).toLocaleString('mn-MN')} үед баталгаажуулсан.
+                    </p>
+                )}
                 {application.status === 'submitted' && cohort.is_accepting_applications && (
                     <Button
                         type="button"
@@ -124,8 +147,6 @@ export function CohortApplicationEditor({
             ) : (
                 <div className="grid gap-5 sm:grid-cols-2">
                     {cohort.fields.map((field) => {
-                        const saved = application?.answers[field.key]
-                        const defaultValue = saved ?? (field.key === 'student_name' ? profileName ?? '' : '')
                         return (
                             <label key={field.key} className="space-y-2 text-sm text-zinc-300">
                                 <span className="font-medium">{field.label}</span>
@@ -133,7 +154,11 @@ export function CohortApplicationEditor({
                                     name={`answer:${field.key}`}
                                     required
                                     maxLength={500}
-                                    defaultValue={defaultValue}
+                                    value={answers[field.key] ?? ''}
+                                    onChange={(event) => setAnswers((current) => ({
+                                        ...current,
+                                        [field.key]: event.target.value,
+                                    }))}
                                     autoComplete={field.key === 'signer_phone' ? 'tel' : 'off'}
                                     className="border-zinc-700 bg-zinc-900"
                                 />
@@ -143,6 +168,35 @@ export function CohortApplicationEditor({
                     })}
                 </div>
             )}
+
+            <details className="rounded-2xl border border-zinc-800 bg-zinc-900/40">
+                <summary className="cursor-pointer px-5 py-4 text-sm font-medium text-zinc-200">
+                    Гэрээний v{cohort.contract_version_number} хувилбарыг урьдчилан харах
+                </summary>
+                <div className="border-t border-zinc-800 px-5 py-5">
+                    <p className="mb-4 text-xs leading-relaxed text-zinc-500">
+                        Доорх эх нь энэ элсэлтэд оноосон хувилбар. Гэрээний дугаар болон огноо өргөдлийг админ зөвшөөрөх үед автоматаар үүснэ.
+                    </p>
+                    <pre className="max-h-[32rem] overflow-auto whitespace-pre-wrap break-words rounded-xl bg-zinc-950 p-4 font-sans text-sm leading-7 text-zinc-300">
+                        {contractPreview}
+                    </pre>
+                </div>
+            </details>
+
+            <label className="flex items-start gap-3 rounded-xl border border-indigo-500/20 bg-indigo-500/10 p-4 text-sm text-indigo-100">
+                <input
+                    type="checkbox"
+                    name="contract_acknowledged"
+                    required
+                    checked={contractAcknowledged}
+                    onChange={(event) => setContractAcknowledged(event.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-zinc-600 bg-zinc-900 accent-indigo-500"
+                />
+                <span>
+                    Би дээрх {cohort.contract_title} гэрээний v{cohort.contract_version_number} хувилбартай танилцаж,
+                    оруулсан мэдээллээр гэрээний эх бэлтгэгдэхийг зөвшөөрч байна. Энэ нь одоогоор гарын үсэг зурсан гэсэн үг биш.
+                </span>
+            </label>
 
             <div className="flex flex-wrap gap-3 border-t border-zinc-800 pt-5">
                 <Button

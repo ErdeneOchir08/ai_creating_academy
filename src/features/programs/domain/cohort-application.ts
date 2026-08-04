@@ -15,6 +15,7 @@ const savedApplicationSchema = z.object({
     answers: z.record(z.string(), z.string()),
     rejection_reason: z.string().nullable(),
     submitted_at: z.string().nullable(),
+    contract_acknowledged_at: z.string().nullable(),
     updated_at: z.string(),
 })
 
@@ -39,6 +40,8 @@ export const cohortApplicationFormSchema = openCohortSchema.omit({ cohort_id: tr
     cohort_id: z.string().uuid(),
     contract_title: z.string(),
     contract_version_number: z.number().int().positive(),
+    contract_content: z.string(),
+    contract_preview_values: z.record(z.string(), z.string()),
     is_accepting_applications: z.boolean(),
     fields: z.array(applicationFieldSchema),
     my_application: savedApplicationSchema.nullable(),
@@ -67,6 +70,7 @@ const contractSnapshotApplicationDetailsSchema = z.object({
     contact_email: z.string(),
     status: z.literal('approved'),
     submitted_at: z.string(),
+    contract_acknowledged_at: z.string(),
     reviewed_at: z.string(),
     created_at: z.string(),
     updated_at: z.string(),
@@ -148,6 +152,21 @@ export function renderApprovedContractSnapshot(
     return content.replace(/\{\{([a-z][a-z0-9_]*)\}\}/g, (_token, key: string) => {
         const value = resolvedValues[key]?.trim()
         return value || `⟦${key}⟧`
+    })
+}
+
+export function renderContractApplicationPreview(
+    content: string,
+    previewValues: Record<string, string>,
+    answers: Record<string, string>,
+    fields: CohortApplicationField[],
+) {
+    const labels = Object.fromEntries(fields.map((field) => [field.key, field.label]))
+    const values = { ...previewValues, ...answers }
+
+    return content.replace(/\{\{([a-z][a-z0-9_]*)\}\}/g, (_token, key: string) => {
+        const value = values[key]?.trim()
+        return value || `⟦${labels[key] ?? key}⟧`
     })
 }
 
