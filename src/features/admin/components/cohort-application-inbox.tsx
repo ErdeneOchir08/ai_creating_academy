@@ -44,6 +44,8 @@ export function CohortApplicationInbox({
         const haystack = [
             application.applicant?.display_name,
             application.contact_email,
+            application.signer_name,
+            application.signer_email,
             application.cohort?.name,
             application.cohort?.program?.name,
             ...Object.values(application.answers),
@@ -117,6 +119,28 @@ export function CohortApplicationInbox({
                                 ))}
                             </dl>
 
+                            {application.signed_at && (
+                                <div className="mt-5 rounded-xl border border-indigo-500/20 bg-indigo-500/10 p-4">
+                                    <div className="flex items-center gap-2 text-sm font-medium text-indigo-200">
+                                        <FileCheck2 className="h-4 w-4" />Гэрээний зөвшөөрөл баталгаажсан
+                                    </div>
+                                    <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
+                                        <SigningValue
+                                            label="Гэрээ байгуулсан тал"
+                                            value={application.signer_role === 'self' ? 'Суралцагч өөрөө' : 'Эцэг, эх / хууль ёсны асран хамгаалагч'}
+                                        />
+                                        <SigningValue label="Овог нэр" value={application.signer_name} />
+                                        <SigningValue label="И-мэйл" value={application.signer_email} />
+                                        <SigningValue label="Утас" value={application.signer_phone} />
+                                        <SigningValue label="Төрсөн огноо" value={application.student_birth_date} />
+                                        <SigningValue
+                                            label="Баталгаажуулалт"
+                                            value={application.signature_method === 'email_otp' ? 'И-мэйл код' : 'Баталгаажсан бүртгэл'}
+                                        />
+                                    </dl>
+                                </div>
+                            )}
+
                             <div className="mt-5 flex flex-wrap items-center gap-4 border-t border-zinc-800 pt-4 text-xs text-zinc-600">
                                 <span className="flex items-center gap-1"><Clock3 className="h-3.5 w-3.5" />Илгээсэн: {application.submitted_at ? new Date(application.submitted_at).toLocaleString('mn-MN') : '—'}</span>
                                 <span>
@@ -178,6 +202,15 @@ export function CohortApplicationInbox({
                     ))}
                 </div>
             )}
+        </div>
+    )
+}
+
+function SigningValue({ label, value }: { label: string; value: string | null | undefined }) {
+    return (
+        <div>
+            <dt className="text-xs text-indigo-200/50">{label}</dt>
+            <dd className="mt-0.5 break-words text-indigo-100">{value || '—'}</dd>
         </div>
     )
 }

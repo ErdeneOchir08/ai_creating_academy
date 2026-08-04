@@ -107,8 +107,24 @@ export function ContractSnapshotAudit({
                 <h2 className="text-xl font-semibold text-white">Өргөдлийн үеийн мэдээлэл</h2>
                 <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     <AuditValue label="Холбоо барих и-мэйл" value={application.contact_email} />
+                    <AuditValue label="Суралцагчийн төрсөн огноо" value={application.student_birth_date} />
+                    <AuditValue
+                        label="Гэрээ байгуулсан тал"
+                        value={application.signer_role === 'self' ? 'Суралцагч өөрөө' : 'Эцэг, эх / хууль ёсны асран хамгаалагч'}
+                    />
+                    <AuditValue label="Гарын үсэг зурсан хүний нэр" value={application.signer_name} />
+                    <AuditValue label="Гарын үсэг зурсан хүний и-мэйл" value={application.signer_email} />
+                    <AuditValue label="Гарын үсэг зурсан хүний утас" value={application.signer_phone} />
+                    <AuditValue label="Гарын үсэг зурсан хүний регистр" value={application.signer_registration_number} />
+                    <AuditValue label="Суралцагчтай хамаарах холбоо" value={application.signer_relationship} />
                     <AuditValue label="Илгээсэн" value={formatContractSnapshotDate(application.submitted_at)} />
-                    <AuditValue label="Гэрээтэй танилцсан" value={formatContractSnapshotDate(application.contract_acknowledged_at)} />
+                    <AuditValue label="Гэрээг зөвшөөрсөн" value={formatContractSnapshotDate(application.signed_at)} />
+                    <AuditValue
+                        label="Баталгаажуулалтын арга"
+                        value={application.signature_method === 'email_otp' ? 'И-мэйл код' : 'Баталгаажсан бүртгэл'}
+                    />
+                    <AuditValue label="И-мэйл баталгаажсан" value={formatContractSnapshotDate(application.signer_email_verified_at)} />
+                    <AuditValue label="Зөвшөөрлийн өгүүлбэрийн хувилбар" value={application.signature_statement_version} />
                     <AuditValue label="Зөвшөөрсөн" value={formatContractSnapshotDate(application.reviewed_at)} />
                     {Object.entries(snapshot.application_answers).map(([key, value]) => (
                         <AuditValue key={key} label={variableLabels[key] ?? key} value={value} />
@@ -149,6 +165,10 @@ export function ContractSnapshotAudit({
                     <AuditValue label="Дансны дугаар" value={academy.bank_account_number} />
                     <AuditValue label="Данс эзэмшигч" value={academy.bank_account_holder} />
                 </dl>
+                <div className="mt-3 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-zinc-600">Зөвшөөрсөн өгүүлбэр</p>
+                    <p className="mt-2 text-sm leading-relaxed text-zinc-200">{application.signature_statement}</p>
+                </div>
             </section>
 
             <details className="rounded-2xl border border-zinc-800 bg-zinc-950">

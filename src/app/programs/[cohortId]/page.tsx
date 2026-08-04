@@ -7,6 +7,7 @@ import { getOpenCohortApplicationForm } from '@/features/programs/actions/cohort
 import { ApprovedContractSnapshot } from '@/features/programs/components/approved-contract-snapshot'
 import { CohortApplicationEditor } from '@/features/programs/components/cohort-application-form'
 import { getMyApprovedContractSnapshot } from '@/features/programs/queries/approved-contract-snapshot-query'
+import { getUlaanbaatarDate } from '@/features/programs/domain/contract-signing'
 
 const deliveryLabels = { online: 'Цахим', offline: 'Танхим', hybrid: 'Хосолсон' } as const
 
@@ -49,6 +50,8 @@ export default async function ProgramApplicationPage({ params }: { params: Promi
                                 <CohortApplicationEditor
                                     cohort={cohort}
                                     profileName={profile?.display_name ?? null}
+                                    userEmail={user.email ?? ''}
+                                    currentDate={getUlaanbaatarDate()}
                                     hasContractSnapshot={contractSnapshot !== null}
                                 />
                             ) : (
