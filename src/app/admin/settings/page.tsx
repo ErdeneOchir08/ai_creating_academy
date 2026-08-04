@@ -2,11 +2,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { PaymentSettingsForm } from '@/features/admin/components/payment-settings-form'
 import { TelegramNotificationSettings } from '@/features/admin/components/telegram-notification-settings'
 import { AcademyProfileForm } from '@/features/admin/components/academy-profile-form'
-import { getAcademyProfile, getPaymentConfiguration, getTelegramNotificationStatus } from '@/features/admin/actions/settings-actions.admin'
+import { ContractIssuerProfileForm } from '@/features/admin/components/contract-issuer-profile-form'
+import { getAcademyProfile, getContractIssuerProfile, getPaymentConfiguration, getTelegramNotificationStatus } from '@/features/admin/actions/settings-actions.admin'
 
 export default async function AdminSettingsPage() {
-    const [profile, configuration, telegram] = await Promise.all([
+    const [profile, contractIssuer, configuration, telegram] = await Promise.all([
         getAcademyProfile(),
+        getContractIssuerProfile(),
         getPaymentConfiguration(),
         getTelegramNotificationStatus(),
     ])
@@ -25,6 +27,18 @@ export default async function AdminSettingsPage() {
                 </CardHeader>
                 <CardContent>
                     <AcademyProfileForm profile={profile} />
+                </CardContent>
+            </Card>
+
+            <Card className="border-zinc-800 bg-zinc-950 text-white">
+                <CardHeader>
+                    <CardTitle>Гэрээ байгуулагчийн мэдээлэл</CardTitle>
+                    <CardDescription className="text-zinc-400">
+                        Гэрээний хуулийн этгээд, төлөөлөгч болон төлбөр хүлээн авах банкны мэдээллийг удирдана.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ContractIssuerProfileForm profile={contractIssuer} />
                 </CardContent>
             </Card>
 

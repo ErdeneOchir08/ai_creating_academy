@@ -1,6 +1,5 @@
 import { FileCheck2, TriangleAlert } from 'lucide-react'
 import {
-    formatContractSnapshotDate,
     renderApprovedContractSnapshot,
     type ApprovedApplicationContractSnapshot,
 } from '@/features/programs/domain/cohort-application'
@@ -20,7 +19,7 @@ export function ApprovedContractSnapshot({
                 <div>
                     <h3 className="font-semibold text-emerald-100">Гэрээний эх хувь түгжигдсэн</h3>
                     <p className="mt-1 text-sm text-emerald-100/70">
-                        {snapshot.contract_title} · v{snapshot.contract_version_number} · {formatContractSnapshotDate(snapshot.created_at)}
+                        {snapshot.contract_title} · № {snapshot.contract_number} · {snapshot.contract_date} · v{snapshot.contract_version_number}
                     </p>
                     <p className="mt-2 text-xs leading-relaxed text-zinc-500">
                         Энэ нь өргөдөл зөвшөөрөгдөх үеийн өөрчлөгдөхгүй эх хувь. Одоогоор гарын үсэг зурсан эсвэл төлбөр баталгаажсан гэсэн утга агуулахгүй.
