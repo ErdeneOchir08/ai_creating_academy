@@ -3,6 +3,11 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { isTelegramConfigured, sendTelegramMessage } from '@/lib/telegram/notifications'
+import {
+    contractIssuerProfileFromFormData,
+    contractIssuerProfileSchema,
+    type ContractIssuerProfile,
+} from '@/features/admin/domain/contract-issuer'
 
 export type PaymentConfiguration = {
     instructions: string
@@ -140,6 +145,61 @@ export async function updateAcademyProfile(formData: FormData) {
     revalidatePath('/', 'layout')
     revalidatePath('/admin/settings')
     return { success: 'Академийн мэдээлэл шинэчлэгдлээ.' }
+}
+
+export async function getContractIssuerProfile(): Promise<ContractIssuerProfile> {
+    const supabase = await requireAdmin()
+    const { data, error } = await supabase
+        .from('contract_issuer_profile')
+        .select('legal_name, representative_name, phone, address, bank_name, bank_account_number, bank_account_holder')
+        .eq('id', true)
+        .single()
+
+    if (error || !data) {
+        console.error('Unable to load contract issuer profile:', error?.message)
+        throw new Error('Гэрээ байгуулагчийн мэдээллийг ачаалж чадсангүй.')
+    }
+
+    return contractIssuerProfileSchema.parse({
+        legalName: data.legal_name,
+        representativeName: data.representative_name,
+        phone: data.phone,
+        address: data.address,
+        bankName: data.bank_name,
+        bankAccountNumber: data.bank_account_number,
+        bankAccountHolder: data.bank_account_holder,
+    })
+}
+
+export async function updateContractIssuerProfile(formData: FormData) {
+    const supabase = await requireAdmin()
+
+    try {
+        const profile = contractIssuerProfileFromFormData(formData)
+        const { error } = await supabase
+            .from('contract_issuer_profile')
+            .update({
+                legal_name: profile.legalName,
+                representative_name: profile.representativeName,
+                phone: profile.phone,
+                address: profile.address,
+                bank_name: profile.bankName,
+                bank_account_number: profile.bankAccountNumber,
+                bank_account_holder: profile.bankAccountHolder,
+                updated_at: new Date().toISOString(),
+            })
+            .eq('id', true)
+
+        if (error) {
+            console.error('Unable to update contract issuer profile:', error.message)
+            return { error: 'Гэрээ байгуулагчийн мэдээллийг хадгалж чадсангүй. Дахин оролдоно уу.' }
+        }
+    } catch {
+        return { error: 'Гэрээ байгуулагчийн бүх талбарыг зөв, бүрэн бөглөнө үү.' }
+    }
+
+    revalidatePath('/admin/settings')
+    return { success: 'Гэрээ байгуулагчийн мэдээлэл шинэчлэгдлээ.' }
 }
 
 async function requireAdmin() {

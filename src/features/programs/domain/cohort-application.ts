@@ -53,6 +53,8 @@ export const approvedApplicationContractSnapshotSchema = z.object({
     application_id: z.string().uuid(),
     contract_title: z.string().min(1),
     contract_version_number: z.number().int().positive(),
+    contract_number: z.string().regex(/^[0-9]{2}\/[1-9][0-9]*$/),
+    contract_date: z.string().date(),
     contract_content: z.string(),
     unresolved_variable_keys: z.array(z.string().regex(/^[a-z][a-z0-9_]*$/)),
     resolved_values: z.record(z.string(), z.string()),
@@ -100,6 +102,13 @@ const contractSnapshotAcademyDetailsSchema = z.object({
     address: z.string().nullable(),
     business_hours: z.string().nullable(),
     website_url: z.string().nullable(),
+    legal_name: z.string(),
+    representative_name: z.string(),
+    contract_phone: z.string(),
+    contract_address: z.string(),
+    bank_name: z.string(),
+    bank_account_number: z.string(),
+    bank_account_holder: z.string(),
 })
 
 export const adminApprovedApplicationContractSnapshotSchema = approvedApplicationContractSnapshotSchema.extend({

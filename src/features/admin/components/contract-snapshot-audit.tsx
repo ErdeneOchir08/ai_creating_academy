@@ -60,7 +60,7 @@ export function ContractSnapshotAudit({
                         </div>
                         <h1 className="mt-3 text-3xl font-bold text-white sm:text-4xl">{snapshot.contract_title}</h1>
                         <p className="mt-2 text-zinc-400">
-                            Хувилбар {snapshot.contract_version_number} · Түгжигдсэн {formatContractSnapshotDate(snapshot.created_at)}
+                            № {snapshot.contract_number} · {snapshot.contract_date} · Хувилбар {snapshot.contract_version_number}
                         </p>
                     </div>
                     <div className="rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-zinc-400">
@@ -140,6 +140,13 @@ export function ContractSnapshotAudit({
                     <AuditValue label="Хаяг" value={academy.address} />
                     <AuditValue label="Цагийн хуваарь" value={academy.business_hours} />
                     <AuditValue label="Вэб хуудас" value={academy.website_url} />
+                    <AuditValue label="Гэрээ байгуулагч" value={academy.legal_name} />
+                    <AuditValue label="Эрх бүхий төлөөлөгч" value={academy.representative_name} />
+                    <AuditValue label="Гэрээний утас" value={academy.contract_phone} />
+                    <AuditValue label="Гэрээний хаяг" value={academy.contract_address} />
+                    <AuditValue label="Банк" value={academy.bank_name} />
+                    <AuditValue label="Дансны дугаар" value={academy.bank_account_number} />
+                    <AuditValue label="Данс эзэмшигч" value={academy.bank_account_holder} />
                 </dl>
             </section>
 

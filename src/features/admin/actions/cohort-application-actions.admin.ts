@@ -129,6 +129,8 @@ export async function getAdminCohortApplicationSnapshot(applicationId: string) {
                 contract_version_id,
                 contract_title,
                 contract_version_number,
+                contract_number,
+                contract_date,
                 contract_content,
                 required_variable_keys,
                 unresolved_variable_keys,
@@ -175,6 +177,9 @@ export async function reviewCohortApplication(applicationId: string, decision: '
         console.error('Unable to review cohort application:', error.message)
         if (error.message.includes('capacity')) throw new Error('Энэ ээлжийн зөвшөөрөгдсөн суралцагчийн тоо суудлын хязгаарт хүрсэн байна.')
         if (error.message.includes('reason')) throw new Error('Буцаах шалтгааныг оруулна уу.')
+        if (error.message.includes('Contract variables are unresolved')) {
+            throw new Error('Гэрээний шаардлагатай мэдээлэл бүрэн биш байна. Хөтөлбөр, ээлж болон гэрээ байгуулагчийн тохиргоог шалгана уу.')
+        }
         throw new Error('Өргөдлийн шийдвэрийг хадгалж чадсангүй.')
     }
 

@@ -19,6 +19,8 @@ export async function getMyApprovedContractSnapshot(cohortId: string) {
             application_id,
             contract_title,
             contract_version_number,
+            contract_number,
+            contract_date,
             contract_content,
             unresolved_variable_keys,
             resolved_values,
