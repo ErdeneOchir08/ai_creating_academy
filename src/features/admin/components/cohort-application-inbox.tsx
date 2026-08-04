@@ -119,6 +119,11 @@ export function CohortApplicationInbox({
 
                             <div className="mt-5 flex flex-wrap items-center gap-4 border-t border-zinc-800 pt-4 text-xs text-zinc-600">
                                 <span className="flex items-center gap-1"><Clock3 className="h-3.5 w-3.5" />Илгээсэн: {application.submitted_at ? new Date(application.submitted_at).toLocaleString('mn-MN') : '—'}</span>
+                                <span>
+                                    Гэрээтэй танилцсан: {application.contract_acknowledged_at
+                                        ? new Date(application.contract_acknowledged_at).toLocaleString('mn-MN')
+                                        : '—'}
+                                </span>
                                 {application.cohort?.tuition_amount_mnt != null && <span>Төлбөр: ₮ {application.cohort.tuition_amount_mnt.toLocaleString()}</span>}
                             </div>
 

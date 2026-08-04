@@ -108,6 +108,7 @@ export function ContractSnapshotAudit({
                 <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     <AuditValue label="Холбоо барих и-мэйл" value={application.contact_email} />
                     <AuditValue label="Илгээсэн" value={formatContractSnapshotDate(application.submitted_at)} />
+                    <AuditValue label="Гэрээтэй танилцсан" value={formatContractSnapshotDate(application.contract_acknowledged_at)} />
                     <AuditValue label="Зөвшөөрсөн" value={formatContractSnapshotDate(application.reviewed_at)} />
                     {Object.entries(snapshot.application_answers).map(([key, value]) => (
                         <AuditValue key={key} label={variableLabels[key] ?? key} value={value} />

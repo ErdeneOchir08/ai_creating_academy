@@ -15,6 +15,7 @@ type RawApplication = {
     contact_email: string
     answers: Record<string, string>
     submitted_at: string | null
+    contract_acknowledged_at: string | null
     reviewed_at: string | null
     rejection_reason: string | null
     created_at: string
@@ -75,7 +76,7 @@ export async function getAdminCohortApplications() {
         supabase
             .from('cohort_applications')
             .select(`
-                id, status, contact_email, answers, submitted_at, reviewed_at,
+                id, status, contact_email, answers, submitted_at, contract_acknowledged_at, reviewed_at,
                 rejection_reason, created_at, updated_at,
                 applicant:profiles!cohort_applications_applicant_user_id_fkey ( display_name ),
                 cohort:training_cohorts!cohort_applications_cohort_id_fkey (
