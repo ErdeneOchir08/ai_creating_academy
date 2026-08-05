@@ -14,8 +14,20 @@ type RawApplication = {
     status: CohortApplicationStatus
     contact_email: string
     answers: Record<string, string>
+    student_birth_date: string | null
+    signer_role: 'self' | 'guardian' | null
+    signer_name: string | null
+    signer_email: string | null
+    signer_phone: string | null
+    signer_registration_number: string | null
+    signer_relationship: string | null
     submitted_at: string | null
     contract_acknowledged_at: string | null
+    signed_at: string | null
+    signature_method: 'authenticated_account' | 'email_otp' | null
+    signer_email_verified_at: string | null
+    signature_statement: string | null
+    signature_statement_version: string | null
     reviewed_at: string | null
     rejection_reason: string | null
     created_at: string
@@ -76,7 +88,11 @@ export async function getAdminCohortApplications() {
         supabase
             .from('cohort_applications')
             .select(`
-                id, status, contact_email, answers, submitted_at, contract_acknowledged_at, reviewed_at,
+                id, status, contact_email, answers,
+                student_birth_date, signer_role, signer_name, signer_email, signer_phone,
+                signer_registration_number, signer_relationship,
+                submitted_at, contract_acknowledged_at, signed_at, signature_method,
+                signer_email_verified_at, signature_statement, signature_statement_version, reviewed_at,
                 rejection_reason, created_at, updated_at,
                 applicant:profiles!cohort_applications_applicant_user_id_fkey ( display_name ),
                 cohort:training_cohorts!cohort_applications_cohort_id_fkey (
