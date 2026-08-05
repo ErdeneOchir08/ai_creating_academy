@@ -51,13 +51,16 @@ export function CohortApplicationEditor({
     userEmail,
     currentDate,
     hasContractSnapshot,
+    mode = 'live',
 }: {
     cohort: CohortApplicationForm
     profileName: string | null
     userEmail: string
     currentDate: string
     hasContractSnapshot: boolean
+    mode?: 'live' | 'admin-preview'
 }) {
+    const previewOnly = mode === 'admin-preview'
     const router = useRouter()
     const formRef = useRef<HTMLFormElement>(null)
     const [pending, startTransition] = useTransition()
@@ -126,7 +129,7 @@ export function CohortApplicationEditor({
         previewAnswers,
         cohort.fields,
     ), [cohort.contract_content, cohort.contract_preview_values, cohort.fields, previewAnswers])
-    const editable = cohort.is_accepting_applications
+    const editable = previewOnly || cohort.is_accepting_applications
         && (!application || ['draft', 'rejected', 'withdrawn'].includes(application.status))
 
     function resetFeedback() {
@@ -140,6 +143,7 @@ export function CohortApplicationEditor({
     }
 
     function saveDraft() {
+        if (previewOnly) return
         resetFeedback()
         setVerification(null)
         startTransition(async () => {
@@ -153,6 +157,7 @@ export function CohortApplicationEditor({
     }
 
     function submitContract() {
+        if (previewOnly) return
         resetFeedback()
         startTransition(async () => {
             try {
@@ -175,7 +180,7 @@ export function CohortApplicationEditor({
     }
 
     function withdraw() {
-        if (!application) return
+        if (previewOnly || !application) return
         resetFeedback()
         startTransition(async () => {
             try {
@@ -242,7 +247,19 @@ export function CohortApplicationEditor({
     }
 
     return (
-        <form ref={formRef} className="space-y-7 rounded-2xl border border-zinc-800 bg-zinc-950 p-5 sm:p-6">
+        <form
+            ref={formRef}
+            onSubmit={(event) => event.preventDefault()}
+            className="space-y-7 rounded-2xl border border-zinc-800 bg-zinc-950 p-5 sm:p-6"
+        >
+            {previewOnly && (
+                <div role="status" className="rounded-xl border border-sky-500/30 bg-sky-500/10 p-4 text-sm text-sky-100">
+                    <p className="font-semibold">Админы урьдчилсан харагдац</p>
+                    <p className="mt-1 leading-relaxed text-sky-100/75">
+                        Энэ маягтад оруулсан мэдээлэл хадгалагдахгүй, өргөдөл үүсэхгүй, и-мэйл эсвэл баталгаажуулах код илгээгдэхгүй.
+                    </p>
+                </div>
+            )}
             <div className="flex items-start gap-3">
                 <FileText className="mt-0.5 h-5 w-5 shrink-0 text-indigo-400" />
                 <div>
@@ -462,7 +479,7 @@ export function CohortApplicationEditor({
                 </label>
             </section>
 
-            {verification && (
+            {!previewOnly && verification && (
                 <section className="space-y-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5">
                     <div className="flex items-start gap-3">
                         <MailCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
@@ -510,24 +527,30 @@ export function CohortApplicationEditor({
                 </section>
             )}
 
-            <div className="flex flex-wrap gap-3 border-t border-zinc-800 pt-5">
-                <Button type="button" variant="outline" disabled={pending} onClick={saveDraft}>
-                    <Save className="mr-2 h-4 w-4" />Ноорог хадгалах
-                </Button>
-                {!verification && (
-                    <Button
-                        type="button"
-                        disabled={pending || !signerRole || !hasRequiredStudentIdentity}
-                        className="bg-indigo-600 hover:bg-indigo-700"
-                        onClick={() => {
-                            if (formRef.current?.reportValidity()) submitContract()
-                        }}
-                    >
-                        <ShieldCheck className="mr-2 h-4 w-4" />
-                        {pending ? 'Баталгаажуулж байна…' : 'Гэрээг зөвшөөрөх'}
+            {previewOnly ? (
+                <div className="rounded-xl border border-dashed border-zinc-700 bg-zinc-900/40 p-4 text-sm text-zinc-400">
+                    Бодит хэрэглэгчийн орчинд энд “Ноорог хадгалах” болон “Гэрээг зөвшөөрөх” үйлдлүүд харагдана. Урьдчилсан харагдацад эдгээр үйлдлийг зориуд идэвхгүй болгосон.
+                </div>
+            ) : (
+                <div className="flex flex-wrap gap-3 border-t border-zinc-800 pt-5">
+                    <Button type="button" variant="outline" disabled={pending} onClick={saveDraft}>
+                        <Save className="mr-2 h-4 w-4" />Ноорог хадгалах
                     </Button>
-                )}
-            </div>
+                    {!verification && (
+                        <Button
+                            type="button"
+                            disabled={pending || !signerRole || !hasRequiredStudentIdentity}
+                            className="bg-indigo-600 hover:bg-indigo-700"
+                            onClick={() => {
+                                if (formRef.current?.reportValidity()) submitContract()
+                            }}
+                        >
+                            <ShieldCheck className="mr-2 h-4 w-4" />
+                            {pending ? 'Баталгаажуулж байна…' : 'Гэрээг зөвшөөрөх'}
+                        </Button>
+                    )}
+                </div>
+            )}
             {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
             {message && <p role="status" className="text-sm text-emerald-400">{message}</p>}
         </form>

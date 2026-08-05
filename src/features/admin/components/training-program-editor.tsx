@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { Archive, ArrowLeft, CalendarDays, FileSignature, PencilLine, Plus, Trash2 } from 'lucide-react'
+import { Archive, ArrowLeft, CalendarDays, CheckCircle2, Eye, FileSignature, ListChecks, PencilLine, Plus, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -207,21 +207,20 @@ export function TrainingProgramEditor({ program, contracts }: { program: Trainin
                 </CardContent>
             </Card>
 
-            {!program.is_archived && (
-                <Card className="border-zinc-800 bg-zinc-950 text-white">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Plus className="h-5 w-5 text-indigo-400" />Шинэ элсэлтийн ноорог</CardTitle>
-                        <CardDescription className="text-zinc-500">Ноорогт огноо, үнэ, хуваарь болон яг ашиглах нийтлэгдсэн гэрээний хувилбарыг сонгоно.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {!contracts.some((contract) => contract.is_assignable) && <p className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">Нийтлэгдсэн идэвхтэй гэрээ алга. Ноорог үүсгэж болох боловч элсэлт нээхээс өмнө <Link href="/admin/contracts" className="underline">гэрээний сангаас</Link> хувилбар нийтэлнэ үү.</p>}
-                        <form onSubmit={addCohort} className="space-y-5">
-                            <CohortFields contracts={contracts} />
-                            <div className="flex justify-end"><Button disabled={!!pending} className="bg-indigo-600 hover:bg-indigo-700"><Plus className="mr-2 h-4 w-4" />{pending === 'new-cohort' ? 'Үүсгэж байна…' : 'Ноорог үүсгэх'}</Button></div>
-                        </form>
-                    </CardContent>
-                </Card>
-            )}
+            <Card className="border-indigo-500/20 bg-indigo-500/5 text-white">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><ListChecks className="h-5 w-5 text-indigo-400" />Элсэлт бэлтгэх дараалал</CardTitle>
+                    <CardDescription className="text-zinc-400">Нэг элсэлтийг дараах дарааллаар бэлтгэнэ. Аль нэг алхам дутуу бол суралцагчдад харагдахгүй.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ol className="grid gap-3 text-sm text-zinc-300 md:grid-cols-2">
+                        <li className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4"><strong className="block text-white">1. Элсэлтийн мэдээлэл</strong><span className="mt-1 block text-zinc-500">Үнэ, хугацаа, хуваарь, байршлыг ноорогт хадгална.</span></li>
+                        <li className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4"><strong className="block text-white">2. Маягт ба гэрээг шалгах</strong><span className="mt-1 block text-zinc-500">Админы урьдчилсан харагдацаар насанд хүрсэн болон хүүхдийн хувилбарыг шалгана.</span></li>
+                        <li className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4"><strong className="block text-white">3. Гэрээг батлах</strong><span className="mt-1 block text-zinc-500">Шалгасан гэрээг нийтэлж түгжээд тухайн элсэлтэд сонгоно.</span></li>
+                        <li className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4"><strong className="block text-white">4. Элсэлт нээх</strong><span className="mt-1 block text-zinc-500">Зөвхөн бүх мэдээллээ шалгасны дараа суралцагчдад нээнэ.</span></li>
+                    </ol>
+                </CardContent>
+            </Card>
 
             <section className="space-y-4">
                 <div>
@@ -248,6 +247,30 @@ export function TrainingProgramEditor({ program, contracts }: { program: Trainin
                                     <p><span className="block text-xs text-zinc-600">Төлбөр</span>{cohort.tuition_amount_mnt == null ? 'Тодорхойгүй' : `₮ ${cohort.tuition_amount_mnt.toLocaleString()}`}</p>
                                     <p className="sm:col-span-2"><span className="block text-xs text-zinc-600">Гэрээ</span>{contract ? `${contract.template_name} · v${contract.version_number}` : cohort.contract_version_id ? 'Ашиглалтаас гарсан хувилбар' : 'Сонгоогүй'}</p>
                                 </div>
+
+                                {cohort.status === 'draft' && (
+                                    <div className={`rounded-xl border p-4 ${contract ? 'border-emerald-500/25 bg-emerald-500/5' : 'border-amber-500/25 bg-amber-500/5'}`}>
+                                        <div className="flex items-start gap-3">
+                                            {contract ? <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" /> : <FileSignature className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />}
+                                            <div className="min-w-0 flex-1">
+                                                <p className="font-semibold text-white">{contract ? 'Дараагийн алхам: маягтыг эцэслэн шалгах' : 'Дараагийн алхам: гэрээний нооргийг шалгах'}</p>
+                                                <p className="mt-1 text-sm leading-relaxed text-zinc-400">
+                                                    {contract
+                                                        ? 'Нийтлэгдсэн гэрээ сонгогдсон. Элсэлт нээхийн өмнө суралцагч болон асран хамгаалагчийн харагдацыг шалгана уу.'
+                                                        : 'Одоогоор гэрээ сонгоогүй тул элсэлт нээгдэхгүй. Урьдчилсан харагдацаар бодит нооргийг шалгаад, зөв болсон үед гэрээний сангаас нийтэлнэ.'}
+                                                </p>
+                                                <div className="mt-3 flex flex-wrap gap-2">
+                                                    <Button asChild variant="outline">
+                                                        <Link href={`/admin/programs/${program.id}/cohorts/${cohort.id}/preview`}>
+                                                            <Eye className="mr-2 h-4 w-4" />Маягт, гэрээг урьдчилан харах
+                                                        </Link>
+                                                    </Button>
+                                                    {!contract && <Button asChild variant="ghost"><Link href="/admin/contracts"><FileSignature className="mr-2 h-4 w-4" />Гэрээний сан</Link></Button>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {cohort.status === 'draft' && (
                                     <details className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-4">
@@ -283,6 +306,22 @@ export function TrainingProgramEditor({ program, contracts }: { program: Trainin
                     )
                 })}
             </section>
+
+            {!program.is_archived && (
+                <details className="rounded-xl border border-zinc-800 bg-zinc-950 text-white">
+                    <summary className="cursor-pointer list-none p-6">
+                        <span className="flex items-center gap-2 text-lg font-semibold"><Plus className="h-5 w-5 text-indigo-400" />Шинэ элсэлт үүсгэх</span>
+                        <span className="mt-2 block text-sm text-zinc-500">Одоо байгаа элсэлтээс тусдаа шинэ элсэлтийн мөчлөг хэрэгтэй үед нээнэ.</span>
+                    </summary>
+                    <div className="border-t border-zinc-800 p-6">
+                        {!contracts.some((contract) => contract.is_assignable) && <p className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">Нийтлэгдсэн идэвхтэй гэрээ алга. Ноорог үүсгэж болох боловч элсэлт нээхээс өмнө <Link href="/admin/contracts" className="underline">гэрээний сангаас</Link> хувилбар нийтэлнэ үү.</p>}
+                        <form onSubmit={addCohort} className="space-y-5">
+                            <CohortFields contracts={contracts} />
+                            <div className="flex justify-end"><Button disabled={!!pending} className="bg-indigo-600 hover:bg-indigo-700"><Plus className="mr-2 h-4 w-4" />{pending === 'new-cohort' ? 'Үүсгэж байна…' : 'Ноорог үүсгэх'}</Button></div>
+                        </form>
+                    </div>
+                </details>
+            )}
 
             <p className="flex items-center gap-2 text-xs text-zinc-600"><FileSignature className="h-4 w-4" />Нийтлэгдсэн гэрээний хувилбар өөрчлөгдөхгүй бөгөөд элсэлт бүр яг сонгосон хувилбараа хадгална.</p>
         </div>
