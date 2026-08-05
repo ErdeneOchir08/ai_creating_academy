@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { Archive, ArrowLeft, CalendarDays, FileSignature, PencilLine, Plus, Trash2 } from 'lucide-react'
+import { Archive, ArrowLeft, CalendarDays, Eye, FileSignature, PencilLine, Plus, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -248,6 +248,12 @@ export function TrainingProgramEditor({ program, contracts }: { program: Trainin
                                     <p><span className="block text-xs text-zinc-600">Төлбөр</span>{cohort.tuition_amount_mnt == null ? 'Тодорхойгүй' : `₮ ${cohort.tuition_amount_mnt.toLocaleString()}`}</p>
                                     <p className="sm:col-span-2"><span className="block text-xs text-zinc-600">Гэрээ</span>{contract ? `${contract.template_name} · v${contract.version_number}` : cohort.contract_version_id ? 'Ашиглалтаас гарсан хувилбар' : 'Сонгоогүй'}</p>
                                 </div>
+
+                                <Button asChild variant="outline">
+                                    <Link href={`/admin/programs/${program.id}/cohorts/${cohort.id}/preview`}>
+                                        <Eye className="mr-2 h-4 w-4" />Элсэлтийн маягтыг урьдчилан харах
+                                    </Link>
+                                </Button>
 
                                 {cohort.status === 'draft' && (
                                     <details className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-4">
