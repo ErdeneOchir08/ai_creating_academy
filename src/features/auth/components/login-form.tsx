@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { withReturnPath } from '@/lib/auth/return-path'
 import Link from 'next/link'
 
 function SubmitButton() {
@@ -22,7 +23,7 @@ function SubmitButton() {
     )
 }
 
-export function LoginForm() {
+export function LoginForm({ returnPath }: { returnPath: string | null }) {
     const [error, setError] = useState<string | null>(null)
 
     async function clientAction(formData: FormData) {
@@ -40,6 +41,7 @@ export function LoginForm() {
             </CardHeader>
             <form action={clientAction}>
                 <CardContent className="space-y-5">
+                    {returnPath && <input type="hidden" name="next" value={returnPath} />}
                     <div className="space-y-2">
                         <Label htmlFor="email" className="text-zinc-300">И-мэйл хаяг</Label>
                         <Input
@@ -76,7 +78,7 @@ export function LoginForm() {
                     <SubmitButton />
                     <div className="text-sm text-center text-zinc-400 w-full">
                         Бүртгэлгүй юу?{' '}
-                        <Link href="/register" className="text-indigo-400 hover:text-indigo-300 hover:underline font-medium transition-colors">
+                        <Link href={withReturnPath('/register', returnPath)} className="text-indigo-400 hover:text-indigo-300 hover:underline font-medium transition-colors">
                             Үнэгүй бүртгүүлэх
                         </Link>
                     </div>

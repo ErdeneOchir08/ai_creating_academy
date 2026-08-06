@@ -26,7 +26,15 @@ export function getSignerRole(studentBirthDate: string, currentDate: string): Si
         throw new Error('Суралцагчийн төрсөн огноо ирээдүйд байж болохгүй.')
     }
 
-    const eighteenthBirthday = { ...birth, year: birth.year + 18 }
+    const eighteenthYear = birth.year + 18
+    // PostgreSQL clamps `date + interval '18 years'` to the final day of the
+    // target month. Mirror that behavior for February 29 births so the client,
+    // Server Action and database never assign different signer roles.
+    const eighteenthBirthday = {
+        year: eighteenthYear,
+        month: birth.month,
+        day: Math.min(birth.day, daysInMonth(eighteenthYear, birth.month)),
+    }
     return compareCalendarDates(eighteenthBirthday, current) <= 0 ? 'self' : 'guardian'
 }
 
@@ -66,4 +74,8 @@ function compareCalendarDates(
     right: { year: number; month: number; day: number },
 ) {
     return left.year - right.year || left.month - right.month || left.day - right.day
+}
+
+function daysInMonth(year: number, month: number) {
+    return new Date(Date.UTC(year, month, 0)).getUTCDate()
 }

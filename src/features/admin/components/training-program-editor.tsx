@@ -18,11 +18,18 @@ import {
     updateTrainingCohortDraft,
     updateTrainingCohortPaymentDeadline,
     updateTrainingProgram,
+    type OfferingCourseOption,
     type PublishedContractOption,
     type TrainingCohort,
     type TrainingProgramDetail,
 } from '@/features/admin/actions/training-program-actions.admin'
-import { allowedCohortTransitions, type CohortStatus } from '@/features/programs/domain/training-program'
+import {
+    allowedCohortTransitions,
+    getCohortOpeningReadiness,
+    type CohortOpeningIssue,
+    type CohortStatus,
+    type ContractPolicy,
+} from '@/features/programs/domain/training-program'
 
 const statusLabels: Record<CohortStatus, string> = {
     draft: 'Ноорог',
@@ -42,12 +49,47 @@ const transitionLabels: Partial<Record<CohortStatus, string>> = {
 }
 
 const deliveryLabels = { online: 'Онлайн', offline: 'Танхим', hybrid: 'Хосолсон' } as const
+const contractPolicyLabels: Record<ContractPolicy, string> = {
+    required: 'Гэрээ шаардлагатай',
+    none: 'Гэрээ шаардлагагүй',
+}
 
 function statusClass(status: CohortStatus) {
     if (status === 'open') return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
     if (status === 'draft') return 'border-amber-500/30 bg-amber-500/10 text-amber-300'
     if (status === 'cancelled') return 'border-red-500/30 bg-red-500/10 text-red-300'
     return 'border-zinc-700 bg-zinc-900 text-zinc-300'
+}
+
+const openingIssueContent: Record<CohortOpeningIssue, { title: string; description: string }> = {
+    program_archived: {
+        title: 'Дараагийн алхам: хөтөлбөрийг архиваас гаргах',
+        description: 'Архивласан хөтөлбөрийн элсэлтийг суралцагчдад нээх боломжгүй.',
+    },
+    unsupported_delivery_mode: {
+        title: 'Дараагийн алхам: сургалтын хэлбэр сонгох',
+        description: 'Шинэ нэгдсэн урсгалд онлайн эсвэл танхимын сургалтын хэлбэр сонгоно уу.',
+    },
+    course_not_ready: {
+        title: 'Дараагийн алхам: бэлэн видео хичээл сонгох',
+        description: 'Холбосон хичээл нийтлэгдсэн бөгөөд дор хаяж нэг бэлэн видео агуулгатай байх ёстой.',
+    },
+    contract_not_assignable: {
+        title: 'Дараагийн алхам: гэрээний хувилбар сонгох',
+        description: 'Гэрээ шаардлагатай тул идэвхтэй нийтлэгдсэн гэрээний хувилбар сонгоно уу.',
+    },
+    contract_not_allowed: {
+        title: 'Дараагийн алхам: гэрээний тохиргоог цэвэрлэх',
+        description: 'Гэрээ шаардлагагүй сонголтод гэрээний хувилбар холбоотой байж болохгүй. Нооргийг дахин хадгална уу.',
+    },
+    tuition_not_configured: {
+        title: 'Дараагийн алхам: сургалтын төлбөр тохируулах',
+        description: 'Сургалтын бодит төлбөрийн дүнг 0-ээс их бүхэл тоогоор оруулна уу.',
+    },
+    payment_deadline_not_configured: {
+        title: 'Дараагийн алхам: төлөх хугацаа тохируулах',
+        description: 'Төлбөртэй элсэлтэд өргөдөл зөвшөөрснөөс хойш төлөх хоногийг заавал тохируулна.',
+    },
 }
 
 function localDateTime(value: string | null) {
@@ -66,7 +108,22 @@ function normalizedFormData(form: HTMLFormElement) {
     return data
 }
 
-function CohortFields({ cohort, contracts }: { cohort?: TrainingCohort; contracts: PublishedContractOption[] }) {
+function CohortFields({
+    cohort,
+    contracts,
+    courses,
+}: {
+    cohort?: TrainingCohort
+    contracts: PublishedContractOption[]
+    courses: OfferingCourseOption[]
+}) {
+    const isLegacyCheckout = cohort?.checkout_version === 1
+    const [contractPolicy, setContractPolicy] = useState<ContractPolicy | ''>(
+        isLegacyCheckout ? 'required' : cohort?.contract_policy ?? '',
+    )
+    const [contractVersionId, setContractVersionId] = useState(cohort?.contract_version_id ?? '')
+    const needsDeliveryChoice = !cohort || (!isLegacyCheckout && cohort.delivery_mode === 'hybrid')
+    const deliveryDefaultValue = needsDeliveryChoice ? '' : cohort?.delivery_mode ?? ''
     const selectableContracts = contracts.filter((contract) => contract.is_assignable || contract.id === cohort?.contract_version_id)
     return (
         <div className="grid gap-4 md:grid-cols-2">
@@ -74,28 +131,87 @@ function CohortFields({ cohort, contracts }: { cohort?: TrainingCohort; contract
                 <span>Элсэлтийн нэр</span>
                 <Input name="name" required maxLength={160} defaultValue={cohort?.name} placeholder="Жишээ: TeenCoder 2026 намрын элсэлт" className="border-zinc-700 bg-zinc-900" />
             </label>
+            {isLegacyCheckout ? (
+                <input type="hidden" name="course_id" value="" />
+            ) : (
+                <label className="space-y-2 text-sm text-zinc-300 md:col-span-2">
+                    <span>Видео хичээлийн багц</span>
+                    <select name="course_id" defaultValue={cohort?.course_id ?? ''} className="h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 text-sm">
+                        <option value="">Одоогоор сонгохгүй</option>
+                        {courses.map((course) => (
+                            <option key={course.id} value={course.id}>
+                                {course.title}{course.is_ready_for_offering ? ' · бэлэн' : course.published ? ' · бэлэн видео дутуу' : ' · ноорог'}
+                            </option>
+                        ))}
+                    </select>
+                    <span className="block text-xs leading-relaxed text-zinc-500">Энэ элсэлт батлагдсаны дараа суралцагчид нээгдэх видео хичээлийг сонгоно. Нэг хичээл олон элсэлттэй байж болно.</span>
+                    <span className="block rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs leading-relaxed text-amber-200">
+                        Ноорог дээр хичээл сонгох нь буцааж өөрчлөх боломжтой. Хэрэв сонгосон хичээл шинэ элсэлтийн урсгалд хараахан шилжээгүй бол анхны нээлтээр хуучин шууд төлбөрийн урсгал бүрмөсөн хаагдаж, цаашид зөвхөн элсэлтийн сонголтоор бүртгэнэ.
+                    </span>
+                </label>
+            )}
             <label className="space-y-2 text-sm text-zinc-300">
                 <span>Сургалтын хэлбэр</span>
-                <select name="delivery_mode" defaultValue={cohort?.delivery_mode ?? 'offline'} className="h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 text-sm">
+                <select name="delivery_mode" required defaultValue={deliveryDefaultValue} className="h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 text-sm">
+                    {needsDeliveryChoice && <option value="" disabled>{cohort ? 'Онлайн эсвэл танхим сонгох' : 'Сургалтын хэлбэр сонгох'}</option>}
                     <option value="offline">Танхим</option>
                     <option value="online">Онлайн</option>
-                    <option value="hybrid">Хосолсон</option>
+                    {isLegacyCheckout && <option value="hybrid">Хосолсон · хуучин урсгал</option>}
                 </select>
             </label>
             <label className="space-y-2 text-sm text-zinc-300">
-                <span>Гэрээний нийтлэгдсэн хувилбар</span>
-                <select name="contract_version_id" defaultValue={cohort?.contract_version_id ?? ''} className="h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 text-sm">
-                    <option value="">Одоогоор сонгохгүй</option>
-                    {selectableContracts.map((contract) => <option key={contract.id} value={contract.id}>{contract.template_name} · v{contract.version_number} · {contract.title}{contract.is_assignable ? '' : ' · ашиглалтаас гарсан'}</option>)}
-                </select>
+                <span>Гэрээ шаардах эсэх</span>
+                {isLegacyCheckout ? (
+                    <>
+                        <input type="hidden" name="contract_policy" value="required" />
+                        <span className="flex h-10 items-center rounded-md border border-zinc-700 bg-zinc-900 px-3 text-sm">
+                            Одоогийн гэрээтэй урсгал
+                        </span>
+                    </>
+                ) : (
+                    <select
+                        name="contract_policy"
+                        required
+                        value={contractPolicy}
+                        onChange={(event) => {
+                            const nextPolicy = event.target.value as ContractPolicy
+                            setContractPolicy(nextPolicy)
+                            if (nextPolicy === 'none') setContractVersionId('')
+                        }}
+                        className="h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 text-sm"
+                    >
+                        {!cohort && <option value="" disabled>Гэрээний бодлого сонгох</option>}
+                        <option value="required">Гэрээ шаардлагатай</option>
+                        <option value="none">Гэрээ шаардлагагүй</option>
+                    </select>
+                )}
+                <span className="block text-xs leading-relaxed text-zinc-500">
+                    {isLegacyCheckout
+                        ? 'Энэ элсэлт одоо ажиллаж буй гэрээ, төлбөрийн урсгалаа өөрчлөхгүй хадгална.'
+                        : contractPolicy === ''
+                            ? 'Суралцагч төлбөр төлөхөөс өмнө гэрээ зөвшөөрөх шаардлагатай эсэхийг сонгоно уу.'
+                            : contractPolicy === 'required'
+                            ? 'Суралцагч төлбөрийн баримт илгээхээс өмнө сонгосон гэрээг зөвшөөрнө.'
+                            : 'Суралцагч гэрээгүйгээр төлбөрийн баримтаа шууд илгээнэ.'}
+                </span>
             </label>
+            {contractPolicy === 'required' && (
+                <label className="space-y-2 text-sm text-zinc-300 md:col-span-2">
+                    <span>Гэрээний нийтлэгдсэн хувилбар</span>
+                    <select name="contract_version_id" value={contractVersionId} onChange={(event) => setContractVersionId(event.target.value)} className="h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 text-sm">
+                        <option value="">Одоогоор сонгохгүй</option>
+                        {selectableContracts.map((contract) => <option key={contract.id} value={contract.id}>{contract.template_name} · v{contract.version_number} · {contract.title}{contract.is_assignable ? '' : ' · ашиглалтаас гарсан'}</option>)}
+                    </select>
+                </label>
+            )}
+            {contractPolicy === 'none' && <input type="hidden" name="contract_version_id" value="" />}
             <label className="space-y-2 text-sm text-zinc-300">
                 <span>Суудлын тоо</span>
                 <Input name="capacity" type="number" min={1} step={1} defaultValue={cohort?.capacity ?? ''} placeholder="Жишээ: 20" className="border-zinc-700 bg-zinc-900" />
             </label>
             <label className="space-y-2 text-sm text-zinc-300">
                 <span>Сургалтын төлбөр (₮)</span>
-                <Input name="tuition_amount_mnt" type="number" min={0} step={1} defaultValue={cohort?.tuition_amount_mnt ?? ''} placeholder="Жишээ: 450000" className="border-zinc-700 bg-zinc-900" />
+                <Input name="tuition_amount_mnt" type="number" min={isLegacyCheckout ? 0 : 1} step={1} defaultValue={cohort?.tuition_amount_mnt ?? ''} placeholder="Жишээ: 450000" className="border-zinc-700 bg-zinc-900" />
             </label>
             <label className="space-y-2 text-sm text-zinc-300 md:col-span-2">
                 <span>Өргөдөл зөвшөөрснөөс хойш төлөх хугацаа (хоног)</span>
@@ -134,7 +250,15 @@ function CohortFields({ cohort, contracts }: { cohort?: TrainingCohort; contract
     )
 }
 
-export function TrainingProgramEditor({ program, contracts }: { program: TrainingProgramDetail; contracts: PublishedContractOption[] }) {
+export function TrainingProgramEditor({
+    program,
+    contracts,
+    courses,
+}: {
+    program: TrainingProgramDetail
+    contracts: PublishedContractOption[]
+    courses: OfferingCourseOption[]
+}) {
     const router = useRouter()
     const [pending, setPending] = useState('')
     const [error, setError] = useState('')
@@ -220,10 +344,10 @@ export function TrainingProgramEditor({ program, contracts }: { program: Trainin
                 </CardHeader>
                 <CardContent>
                     <ol className="grid gap-3 text-sm text-zinc-300 md:grid-cols-2">
-                        <li className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4"><strong className="block text-white">1. Элсэлтийн мэдээлэл</strong><span className="mt-1 block text-zinc-500">Үнэ, хугацаа, хуваарь, байршлыг ноорогт хадгална.</span></li>
-                        <li className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4"><strong className="block text-white">2. Маягт ба гэрээг шалгах</strong><span className="mt-1 block text-zinc-500">Админы урьдчилсан харагдацаар насанд хүрсэн болон хүүхдийн хувилбарыг шалгана.</span></li>
-                        <li className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4"><strong className="block text-white">3. Гэрээг батлах</strong><span className="mt-1 block text-zinc-500">Шалгасан гэрээг нийтэлж түгжээд тухайн элсэлтэд сонгоно.</span></li>
-                        <li className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4"><strong className="block text-white">4. Элсэлт нээх</strong><span className="mt-1 block text-zinc-500">Зөвхөн бүх мэдээллээ шалгасны дараа суралцагчдад нээнэ.</span></li>
+                        <li className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4"><strong className="block text-white">1. Хичээл ба элсэлт</strong><span className="mt-1 block text-zinc-500">Видео хичээл, онлайн/танхим хэлбэр, үнэ, хугацаа, хуваарь, байршлыг ноорогт хадгална.</span></li>
+                        <li className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4"><strong className="block text-white">2. Гэрээний бодлого</strong><span className="mt-1 block text-zinc-500">Гэрээ шаардлагатай эсэхийг сонгоно. Шаардлагатай бол нийтлэгдсэн идэвхтэй хувилбар холбоно.</span></li>
+                        <li className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4"><strong className="block text-white">3. Урсгалыг шалгах</strong><span className="mt-1 block text-zinc-500">Гэрээтэй бол гэрээний маягт, гэрээгүй бол шууд төлбөрийн урсгалыг шалгана.</span></li>
+                        <li className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4"><strong className="block text-white">4. Элсэлт нээх</strong><span className="mt-1 block text-zinc-500">Хичээл, төлбөр болон шаардлагатай гэрээ бүрэн бэлэн үед суралцагчдад нээнэ.</span></li>
                     </ol>
                 </CardContent>
             </Card>
@@ -235,6 +359,21 @@ export function TrainingProgramEditor({ program, contracts }: { program: Trainin
                 </div>
                 {program.cohorts.length === 0 ? <div className="rounded-xl border border-dashed border-zinc-800 p-10 text-center text-zinc-500">Одоогоор элсэлт үүсгээгүй байна.</div> : program.cohorts.map((cohort) => {
                     const contract = contracts.find((item) => item.id === cohort.contract_version_id)
+                    const linkedCourse = courses.find((item) => item.id === cohort.course_id)
+                    const courseIsReady = linkedCourse?.is_ready_for_offering === true
+                    const isLegacyCheckout = cohort.checkout_version === 1
+                    const openingReadiness = getCohortOpeningReadiness({
+                        checkoutVersion: cohort.checkout_version,
+                        deliveryMode: cohort.delivery_mode,
+                        contractPolicy: cohort.contract_policy,
+                        hasContractVersion: cohort.contract_version_id !== null,
+                        contractVersionIsAssignable: contract?.is_assignable === true,
+                        courseIsReady: isLegacyCheckout || courseIsReady,
+                        tuitionAmountMnt: cohort.tuition_amount_mnt,
+                        paymentDueDays: cohort.payment_due_days,
+                        programIsArchived: program.is_archived,
+                    })
+                    const canOpen = openingReadiness.isReady
                     const transitions = allowedCohortTransitions[cohort.status]
                     return (
                         <Card key={cohort.id} className="border-zinc-800 bg-zinc-950 text-white">
@@ -252,7 +391,9 @@ export function TrainingProgramEditor({ program, contracts }: { program: Trainin
                                     <p><span className="block text-xs text-zinc-600">Суудал</span>{cohort.capacity ?? 'Тодорхойгүй'}</p>
                                     <p><span className="block text-xs text-zinc-600">Төлбөр</span>{cohort.tuition_amount_mnt == null ? 'Тодорхойгүй' : `₮ ${cohort.tuition_amount_mnt.toLocaleString()}`}</p>
                                     <p><span className="block text-xs text-zinc-600">Төлөх хугацаа</span>{cohort.payment_due_days == null ? 'Тохируулаагүй' : `${cohort.payment_due_days} хоног`}</p>
-                                    <p className="sm:col-span-2"><span className="block text-xs text-zinc-600">Гэрээ</span>{contract ? `${contract.template_name} · v${contract.version_number}` : cohort.contract_version_id ? 'Ашиглалтаас гарсан хувилбар' : 'Сонгоогүй'}</p>
+                                    <p className="sm:col-span-2"><span className="block text-xs text-zinc-600">Ашиглах урсгал</span>{isLegacyCheckout ? 'Одоогийн баталгаажсан урсгал' : 'Шинэ нэгдсэн урсгал'}</p>
+                                    {!isLegacyCheckout && <p className="sm:col-span-2"><span className="block text-xs text-zinc-600">Видео хичээл</span>{linkedCourse?.title ?? 'Сонгоогүй'}</p>}
+                                    <p className="sm:col-span-2"><span className="block text-xs text-zinc-600">Гэрээ</span>{contractPolicyLabels[cohort.contract_policy]}{cohort.contract_policy === 'required' ? ` · ${contract?.is_assignable ? `${contract.template_name} · v${contract.version_number}` : contract ? `${contract.template_name} · v${contract.version_number} · ашиглалтаас гарсан` : cohort.contract_version_id ? 'ашиглалтаас гарсан хувилбар' : 'хувилбар сонгоогүй'}` : ''}</p>
                                 </div>
 
                                 {cohort.status !== 'draft' && ['open', 'closed'].includes(cohort.status) && (
@@ -272,15 +413,23 @@ export function TrainingProgramEditor({ program, contracts }: { program: Trainin
                                 )}
 
                                 {cohort.status === 'draft' && (
-                                    <div className={`rounded-xl border p-4 ${contract ? 'border-emerald-500/25 bg-emerald-500/5' : 'border-amber-500/25 bg-amber-500/5'}`}>
+                                    <div className={`rounded-xl border p-4 ${canOpen ? 'border-emerald-500/25 bg-emerald-500/5' : 'border-amber-500/25 bg-amber-500/5'}`}>
                                         <div className="flex items-start gap-3">
-                                            {contract ? <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" /> : <FileSignature className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />}
+                                            {canOpen ? <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" /> : <FileSignature className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />}
                                             <div className="min-w-0 flex-1">
-                                                <p className="font-semibold text-white">{contract ? 'Дараагийн алхам: маягтыг эцэслэн шалгах' : 'Дараагийн алхам: гэрээний нооргийг шалгах'}</p>
+                                                <p className="font-semibold text-white">
+                                                    {openingReadiness.isReady
+                                                        ? isLegacyCheckout
+                                                            ? 'Дараагийн алхам: маягтыг эцэслэн шалгах'
+                                                            : 'Элсэлт нээхэд бэлэн'
+                                                        : openingIssueContent[openingReadiness.issues[0]!].title}
+                                                </p>
                                                 <p className="mt-1 text-sm leading-relaxed text-zinc-400">
-                                                    {contract
-                                                        ? 'Нийтлэгдсэн гэрээ сонгогдсон. Элсэлт нээхийн өмнө суралцагч болон асран хамгаалагчийн харагдацыг шалгана уу.'
-                                                        : 'Одоогоор гэрээ сонгоогүй тул элсэлт нээгдэхгүй. Урьдчилсан харагдацаар бодит нооргийг шалгаад, зөв болсон үед гэрээний сангаас нийтэлнэ.'}
+                                                    {openingReadiness.isReady
+                                                        ? isLegacyCheckout
+                                                            ? 'Нийтлэгдсэн гэрээ, төлбөрийн нөхцөл бэлэн байна. Элсэлт нээхийн өмнө суралцагч болон асран хамгаалагчийн харагдацыг шалгана уу.'
+                                                            : `Видео хичээл, ${cohort.contract_policy === 'required' ? 'гэрээ, ' : ''}төлбөрийн нөхцөл бүрэн бэлэн байна.`
+                                                        : openingIssueContent[openingReadiness.issues[0]!].description}
                                                 </p>
                                                 <div className="mt-3 flex flex-wrap gap-2">
                                                     <Button asChild variant="outline">
@@ -288,7 +437,7 @@ export function TrainingProgramEditor({ program, contracts }: { program: Trainin
                                                             <Eye className="mr-2 h-4 w-4" />Маягт, гэрээг урьдчилан харах
                                                         </Link>
                                                     </Button>
-                                                    {!contract && <Button asChild variant="ghost"><Link href="/admin/contracts"><FileSignature className="mr-2 h-4 w-4" />Гэрээний сан</Link></Button>}
+                                                    {cohort.contract_policy === 'required' && !contract?.is_assignable && <Button asChild variant="ghost"><Link href="/admin/contracts"><FileSignature className="mr-2 h-4 w-4" />Гэрээний сан</Link></Button>}
                                                 </div>
                                             </div>
                                         </div>
@@ -299,7 +448,7 @@ export function TrainingProgramEditor({ program, contracts }: { program: Trainin
                                     <details className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-4">
                                         <summary className="cursor-pointer text-sm font-medium text-zinc-200">Ноорог засах</summary>
                                         <form onSubmit={(event) => { event.preventDefault(); void saveCohort(cohort, event.currentTarget) }} className="mt-5 space-y-5">
-                                            <CohortFields cohort={cohort} contracts={contracts} />
+                                            <CohortFields key={`${cohort.id}:${cohort.updated_at}`} cohort={cohort} contracts={contracts} courses={courses} />
                                             <div className="flex flex-wrap justify-between gap-3">
                                                 <Button type="button" variant="ghost" disabled={!!pending} onClick={() => {
                                                     if (confirm(`“${cohort.name}” нооргийг устгах уу?`)) void run(cohort.id, () => deleteTrainingCohortDraft(cohort.id, program.id))
@@ -313,15 +462,19 @@ export function TrainingProgramEditor({ program, contracts }: { program: Trainin
                                 {transitions.length > 0 && (
                                     <div className="flex flex-wrap items-center gap-2 border-t border-zinc-800 pt-4">
                                         {transitions.map((next) => (
-                                            <Button key={next} variant={next === 'cancelled' ? 'ghost' : 'outline'} disabled={!!pending || (next === 'open' && !cohort.contract_version_id)} onClick={() => {
-                                                if (next !== 'cancelled' || confirm(`“${cohort.name}” элсэлтийг цуцлах уу? Энэ үйлдлийг буцаах боломжгүй.`)) {
-                                                    void run(`${cohort.id}-${next}`, () => changeTrainingCohortStatus(cohort.id, program.id, next))
-                                                }
+                                            <Button key={next} variant={next === 'cancelled' ? 'ghost' : 'outline'} disabled={!!pending || (next === 'open' && !canOpen)} onClick={() => {
+                                                const confirmed = next === 'cancelled'
+                                                    ? confirm(`“${cohort.name}” элсэлтийг цуцлах уу? Энэ үйлдлийг буцаах боломжгүй.`)
+                                                    : next === 'open' && cohort.checkout_version === 2
+                                                        ? confirm(`“${cohort.name}” элсэлтийг нээх үү?\n\nХэрэв “${linkedCourse?.title ?? 'сонгосон хичээл'}” хичээл шинэ урсгалд хараахан шилжээгүй бол энэ нээлтээр бүрмөсөн шилжинэ. Шилжсэн хичээлийн хуучин шууд төлбөрийн урсгалыг дараа нь дахин нээхгүй.`)
+                                                        : true
+                                                if (!confirmed) return
+                                                void run(`${cohort.id}-${next}`, () => changeTrainingCohortStatus(cohort.id, program.id, next))
                                             }} className={next === 'cancelled' ? 'text-zinc-400 hover:text-red-400' : ''}>
                                                 {next === 'open' ? <CalendarDays className="mr-2 h-4 w-4" /> : null}{transitionLabels[next]}
                                             </Button>
                                         ))}
-                                        {cohort.status === 'draft' && !cohort.contract_version_id && <span className="text-xs text-amber-300">Элсэлт нээхийн өмнө гэрээ сонгоно.</span>}
+                                        {cohort.status === 'draft' && !canOpen && <span className="text-xs text-amber-300">Дээрх бэлтгэлийн алхмыг дуусгасны дараа элсэлт нээнэ.</span>}
                                     </div>
                                 )}
                             </CardContent>
@@ -337,9 +490,9 @@ export function TrainingProgramEditor({ program, contracts }: { program: Trainin
                         <span className="mt-2 block text-sm text-zinc-500">Одоо байгаа элсэлтээс тусдаа шинэ элсэлтийн мөчлөг хэрэгтэй үед нээнэ.</span>
                     </summary>
                     <div className="border-t border-zinc-800 p-6">
-                        {!contracts.some((contract) => contract.is_assignable) && <p className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">Нийтлэгдсэн идэвхтэй гэрээ алга. Ноорог үүсгэж болох боловч элсэлт нээхээс өмнө <Link href="/admin/contracts" className="underline">гэрээний сангаас</Link> хувилбар нийтэлнэ үү.</p>}
+                        {!contracts.some((contract) => contract.is_assignable) && <p className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">Нийтлэгдсэн идэвхтэй гэрээ алга. Гэрээ шаардлагатай элсэлт нээх бол эхлээд <Link href="/admin/contracts" className="underline">гэрээний сангаас</Link> хувилбар нийтэлнэ үү.</p>}
                         <form onSubmit={addCohort} className="space-y-5">
-                            <CohortFields contracts={contracts} />
+                            <CohortFields key={program.cohorts.length} contracts={contracts} courses={courses} />
                             <div className="flex justify-end"><Button disabled={!!pending} className="bg-indigo-600 hover:bg-indigo-700"><Plus className="mr-2 h-4 w-4" />{pending === 'new-cohort' ? 'Үүсгэж байна…' : 'Ноорог үүсгэх'}</Button></div>
                         </form>
                     </div>

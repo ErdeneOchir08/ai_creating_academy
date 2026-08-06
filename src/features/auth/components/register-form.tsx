@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { withReturnPath } from '@/lib/auth/return-path'
 import Link from 'next/link'
 
 function SubmitButton() {
@@ -14,7 +15,7 @@ function SubmitButton() {
     return <Button className="h-11 w-full rounded-xl bg-white font-semibold text-black transition-all duration-300 hover:bg-zinc-200" type="submit" disabled={pending}>{pending ? 'Бүртгэж байна…' : 'Бүртгүүлэх'}</Button>
 }
 
-export function RegisterForm() {
+export function RegisterForm({ returnPath }: { returnPath: string | null }) {
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState<string | null>(null)
 
@@ -34,6 +35,7 @@ export function RegisterForm() {
             </CardHeader>
             <form action={clientAction}>
                 <CardContent className="space-y-5">
+                    {returnPath && <input type="hidden" name="next" value={returnPath} />}
                     <div className="space-y-2">
                         <Label htmlFor="full_name" className="text-zinc-300">Овог нэр</Label>
                         <Input id="full_name" name="full_name" placeholder="Жишээ: Бат Болд" required autoComplete="name" className="h-11 rounded-xl border-zinc-800 bg-zinc-900/50 text-white" />
@@ -51,7 +53,7 @@ export function RegisterForm() {
                 </CardContent>
                 <CardFooter className="flex w-full flex-col space-y-5 pt-2">
                     <SubmitButton />
-                    <div className="w-full text-center text-sm text-zinc-400">Бүртгэлтэй юу? <Link href="/login" className="font-medium text-indigo-400 transition-colors hover:text-indigo-300 hover:underline">Нэвтрэх</Link></div>
+                    <div className="w-full text-center text-sm text-zinc-400">Бүртгэлтэй юу? <Link href={withReturnPath('/login', returnPath)} className="font-medium text-indigo-400 transition-colors hover:text-indigo-300 hover:underline">Нэвтрэх</Link></div>
                 </CardFooter>
             </form>
         </Card>

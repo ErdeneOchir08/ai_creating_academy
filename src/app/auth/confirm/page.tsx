@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { getSafeReturnPath, withReturnPath } from '@/lib/auth/return-path'
 import { createClient } from '@/lib/supabase/client'
 
 export default function EmailConfirmationPage() {
@@ -10,11 +11,12 @@ export default function EmailConfirmationPage() {
 
     useEffect(() => {
         const confirmAndRedirect = async () => {
+            const returnPath = getSafeReturnPath(new URLSearchParams(window.location.search).get('next'))
             const supabase = createClient()
             const { data: { user }, error } = await supabase.auth.getUser()
 
             if (error || !user) {
-                router.replace('/login?confirmed=1')
+                router.replace(withReturnPath('/login?confirmed=1', returnPath))
                 return
             }
 
@@ -25,7 +27,7 @@ export default function EmailConfirmationPage() {
                 .maybeSingle()
 
             setMessage('Баталгаажлаа. Нэвтрүүлж байна...')
-            router.replace(roleRecord?.role === 'admin' ? '/admin' : '/dashboard')
+            router.replace(returnPath ?? (roleRecord?.role === 'admin' ? '/admin' : '/dashboard'))
         }
 
         void confirmAndRedirect()

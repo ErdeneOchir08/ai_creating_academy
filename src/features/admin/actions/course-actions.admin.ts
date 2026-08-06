@@ -14,7 +14,16 @@ type AdminCourseRow = {
     original_price_amount_mnt: number | null
     published: boolean
     created_at: string
-    lessons: Array<{ id: string; lesson_videos: { lesson_id: string } | null }> | null
+    lessons: Array<{ id: string; lesson_videos: { lesson_id: string; playback_status: string } | null }> | null
+}
+
+type DatabaseMutationError = { code?: string; message: string }
+
+function courseContentMutationError(error: DatabaseMutationError, fallback: string) {
+    if (error.code === '23514' && error.message.includes('customer-committed offering')) {
+        return new Error('Энэ хичээлд нээлттэй эсвэл баталгаажсан элсэлт холбогдсон байна. Дор хаяж нэг нийтлэгдсэн, бэлэн видео хичээлийг хэвээр үлдээнэ үү.')
+    }
+    return new Error(fallback)
 }
 
 async function requireAdmin() {
@@ -139,7 +148,7 @@ export async function getAllAdminCourses() {
             *,
             lessons (
                 id,
-                lesson_videos ( lesson_id )
+                lesson_videos ( lesson_id, playback_status )
             )
         `)
         .order('created_at', { ascending: false })
@@ -152,7 +161,7 @@ export async function getAllAdminCourses() {
     return ((data || []) as AdminCourseRow[]).map((course) => {
         const lessons = course.lessons ?? []
         const lessonCount = lessons.length
-        const videoLessonCount = lessons.filter((lesson) => lesson.lesson_videos !== null).length
+        const videoLessonCount = lessons.filter((lesson) => lesson.lesson_videos?.playback_status === 'ready').length
         const thumbnail_url = course.thumbnail_path
             ? supabase.storage.from('course-media').getPublicUrl(course.thumbnail_path).data.publicUrl
             : null
@@ -215,19 +224,41 @@ export async function createCourse(formData: FormData) {
 export async function deleteCourse(id: string) {
     const supabase = await requireAdmin()
 
-    const [{ data: course, error: courseError }, enrollments, payments] = await Promise.all([
+    const [
+        { data: course, error: courseError },
+        enrollments,
+        payments,
+        offeringLinks,
+        offeringCourseHistory,
+        offeringEntitlements,
+    ] = await Promise.all([
         supabase.from('courses').select('thumbnail_path').eq('id', id).maybeSingle(),
         supabase.from('enrollments').select('*', { count: 'exact', head: true }).eq('course_id', id),
         supabase.from('payment_requests').select('*', { count: 'exact', head: true }).eq('course_id', id),
+        supabase.from('training_cohorts').select('*', { count: 'exact', head: true }).eq('course_id', id),
+        supabase.from('course_offering_application_courses').select('*', { count: 'exact', head: true }).eq('course_id', id),
+        supabase.from('course_access_entitlements').select('*', { count: 'exact', head: true }).eq('course_id', id),
     ])
 
-    if (courseError || !course || enrollments.error || payments.error) {
-        console.error('Unable to check whether course can be deleted:', courseError?.message || enrollments.error?.message || payments.error?.message)
+    const relatedDataError = enrollments.error
+        || payments.error
+        || offeringLinks.error
+        || offeringCourseHistory.error
+        || offeringEntitlements.error
+    if (courseError || !course || relatedDataError) {
+        console.error('Unable to check whether course can be deleted:', courseError?.message || relatedDataError?.message)
         return { error: 'Хичээлийг устгах боломжийг шалгаж чадсангүй. Дахин оролдоно уу.' }
     }
 
-    if ((enrollments.count ?? 0) > 0 || (payments.count ?? 0) > 0) {
-        return { error: 'Энэ хичээлд суралцагчийн бүртгэл эсвэл төлбөрийн түүх байна. Устгахын оронд нийтлэлийг нь цуцална уу.' }
+    const hasOperationalHistory = [
+        enrollments,
+        payments,
+        offeringLinks,
+        offeringCourseHistory,
+        offeringEntitlements,
+    ].some((result) => (result.count ?? 0) > 0)
+    if (hasOperationalHistory) {
+        return { error: 'Энэ хичээлд элсэлт, суралцагчийн эрх эсвэл төлбөрийн түүх холбогдсон байна. Устгахын оронд нийтлэлийг нь цуцална уу.' }
     }
 
     const { error } = await supabase
@@ -297,7 +328,7 @@ export async function deleteLesson(id: string, courseId: string) {
 
     if (error) {
         console.error('Error deleting lesson:', error)
-        throw new Error(error.message)
+        throw courseContentMutationError(error, error.message)
     }
 
     revalidatePath(`/admin/courses/${courseId}`)
@@ -334,10 +365,10 @@ export async function updateLesson(id: string, courseId: string, formData: FormD
         const { error: videoError } = await supabase
             .from('lesson_videos')
             .upsert({ lesson_id: id, ...videoSource }, { onConflict: 'lesson_id' })
-        if (videoError) throw new Error(videoError.message)
+        if (videoError) throw courseContentMutationError(videoError, videoError.message)
     } else {
         const { error: videoError } = await supabase.from('lesson_videos').delete().eq('lesson_id', id)
-        if (videoError) throw new Error(videoError.message)
+        if (videoError) throw courseContentMutationError(videoError, videoError.message)
     }
 
     revalidatePath(`/admin/courses/${courseId}`)
@@ -416,7 +447,7 @@ export async function updateCourse(id: string, formData: FormData) {
     if (error) {
         console.error('Error updating course:', error)
         if (thumbnail_path) await supabase.storage.from('course-media').remove([thumbnail_path])
-        throw new Error(error.message)
+        throw courseContentMutationError(error, error.message)
     }
 
     revalidatePath('/admin/courses')

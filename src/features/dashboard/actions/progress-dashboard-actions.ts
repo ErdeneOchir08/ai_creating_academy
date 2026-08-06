@@ -1,7 +1,8 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { PROGRESS_ENROLLMENT_SELECT } from './progress-dashboard-query'
+import { getMyEffectiveCourseAccess } from '@/features/courses/actions/effective-course-access'
+import { PROGRESS_COURSE_SELECT } from './progress-dashboard-query'
 
 type ProgressLesson = {
     id: string
@@ -16,11 +17,6 @@ type ProgressCourse = {
     lessons: ProgressLesson[] | null
 }
 
-type ProgressEnrollment = {
-    course_id: string
-    course: ProgressCourse | ProgressCourse[] | null
-}
-
 type CompletedLesson = {
     lesson_id: string
     completed_at: string
@@ -31,12 +27,22 @@ export async function getUserProgressDashboard() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { status: 'unauthenticated' as const }
 
-    const [{ data: enrollments, error: enrollmentError }, { data: completed, error: progressError }] = await Promise.all([
-        supabase
-            .from('enrollments')
-            .select(PROGRESS_ENROLLMENT_SELECT)
-            .eq('user_id', user.id)
-            .eq('status', 'active'),
+    let effectiveAccess: Awaited<ReturnType<typeof getMyEffectiveCourseAccess>>
+    try {
+        effectiveAccess = await getMyEffectiveCourseAccess(supabase)
+    } catch (accessError) {
+        console.error('Unable to load effective course access for progress:', accessError)
+        return { status: 'error' as const }
+    }
+
+    const courseIds = effectiveAccess.map((access) => access.course_id)
+    const [coursesResult, { data: completed, error: progressError }] = await Promise.all([
+        courseIds.length === 0
+            ? Promise.resolve({ data: [] as ProgressCourse[], error: null })
+            : supabase
+                .from('courses')
+                .select(PROGRESS_COURSE_SELECT)
+                .in('id', courseIds),
         supabase
             .from('lesson_progress')
             .select('lesson_id, completed_at')
@@ -44,18 +50,20 @@ export async function getUserProgressDashboard() {
             .order('completed_at', { ascending: false }),
     ])
 
-    if (enrollmentError || progressError) {
-        console.error('Unable to load course progress:', enrollmentError?.message || progressError?.message)
+    if (coursesResult.error || progressError) {
+        console.error('Unable to load course progress:', coursesResult.error?.message || progressError?.message)
         return { status: 'error' as const }
     }
 
     const completedLessonIds = new Set(
         ((completed ?? []) as CompletedLesson[]).map((item) => item.lesson_id),
     )
-    const courseSummaries = ((enrollments ?? []) as ProgressEnrollment[]).map((enrollment) => {
-        const course = Array.isArray(enrollment.course) ? enrollment.course[0] : enrollment.course
+    const coursesById = new Map(
+        ((coursesResult.data ?? []) as ProgressCourse[]).map((course) => [course.id, course]),
+    )
+    const courseSummaries = courseIds.map((courseId) => {
+        const course = coursesById.get(courseId)
         if (!course) return null
-
         const lessons = [...(course.lessons ?? [])].sort((a, b) => a.position - b.position)
         const completedLessons = lessons.filter((lesson) => completedLessonIds.has(lesson.id)).length
         const nextLesson = lessons.find((lesson) => !completedLessonIds.has(lesson.id))

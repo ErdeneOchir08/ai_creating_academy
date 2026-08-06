@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getMyEffectiveCourseAccess } from '@/features/courses/actions/effective-course-access'
 
 type DashboardCourse = {
     id: string
@@ -12,9 +13,9 @@ type DashboardCourse = {
 type CourseRelation = DashboardCourse | DashboardCourse[] | null
 type EnrollmentRow = {
     id: string
-    granted_at: string
+    course_id: string
+    granted_at: string | null
     grant_source: string | null
-    courses: CourseRelation
 }
 type PendingPaymentRow = {
     id: string
@@ -43,29 +44,62 @@ export async function getEnrolledCourses() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return []
 
-    // Fetch enrollments and inner join with courses
-    const { data, error } = await supabase
-        .from('enrollments')
-        .select(`
-      id,
-      granted_at,
-      grant_source,
-      courses!enrollments_course_id_fkey (
-        id,
-        title,
-        description,
-        thumbnail_path
-      )
-    `)
-        .eq('user_id', user.id)
-        .eq('status', 'active')
-
-    if (error) {
-        console.error('Error fetching enrollments:', error.message)
+    let effectiveAccess: Awaited<ReturnType<typeof getMyEffectiveCourseAccess>>
+    try {
+        effectiveAccess = await getMyEffectiveCourseAccess(supabase)
+    } catch (error) {
+        console.error('Error fetching effective course access:', error)
         return []
     }
 
-    return ((data ?? []) as EnrollmentRow[]).map((record) => withCourseThumbnail(supabase, record))
+    if (effectiveAccess.length === 0) return []
+
+    const courseIds = effectiveAccess.map((access) => access.course_id)
+    const [coursesResult, legacyMetadataResult] = await Promise.all([
+        supabase
+            .from('courses')
+            .select('id, title, description, thumbnail_path')
+            .in('id', courseIds),
+        // Access is decided by the RPC. This legacy query preserves only the
+        // existing V1 card date and bonus badge while both systems coexist.
+        supabase
+            .from('enrollments')
+            .select('id, course_id, granted_at, grant_source')
+            .eq('user_id', user.id)
+            .eq('status', 'active')
+            .in('course_id', courseIds),
+    ])
+
+    if (coursesResult.error || legacyMetadataResult.error) {
+        console.error(
+            'Error fetching enrolled course details:',
+            coursesResult.error?.message || legacyMetadataResult.error?.message,
+        )
+        return []
+    }
+
+    const coursesById = new Map(
+        ((coursesResult.data ?? []) as DashboardCourse[]).map((course) => [course.id, course]),
+    )
+    const legacyMetadataByCourse = new Map(
+        ((legacyMetadataResult.data ?? []) as EnrollmentRow[]).map((row) => [row.course_id, row]),
+    )
+
+    return effectiveAccess.flatMap((access) => {
+        const course = coursesById.get(access.course_id)
+        if (!course) return []
+
+        const legacyMetadata = legacyMetadataByCourse.get(access.course_id)
+        return [withCourseThumbnail(supabase, {
+            id: access.access_id
+                ?? access.enrollment_id
+                ?? legacyMetadata?.id
+                ?? `effective:${access.course_id}`,
+            granted_at: access.granted_at ?? legacyMetadata?.granted_at ?? null,
+            grant_source: access.grant_source ?? legacyMetadata?.grant_source ?? null,
+            courses: course,
+        })]
+    })
 }
 
 export async function getPendingCourses() {

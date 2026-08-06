@@ -8,6 +8,8 @@ import { ArrowLeft, CheckCircle2, Gift, MessageCircleQuestion, MonitorPlay } fro
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/server'
 import { getPaymentConfiguration } from '@/features/admin/actions/settings-actions.admin'
+import { getPublicCourseOfferingCheckout } from '@/features/courses/actions/public-course-offering-actions'
+import { CourseOfferingOptions } from '@/features/courses/components/course-offering-options'
 
 export default async function CourseSalesPage(props: { params: Promise<{ id: string }> }) {
     const { id } = await props.params
@@ -24,9 +26,10 @@ export default async function CourseSalesPage(props: { params: Promise<{ id: str
         redirect(`/courses/${id}`)
     }
 
-    const [lessons, bonusCourses] = await Promise.all([
+    const [lessons, bonusCourses, offeringCheckout] = await Promise.all([
         getCourseLessons(id),
         getCourseBonusCourses(id),
+        getPublicCourseOfferingCheckout(id),
     ])
     const isPurchasable = lessons.length > 0
 
@@ -34,7 +37,9 @@ export default async function CourseSalesPage(props: { params: Promise<{ id: str
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    const paymentConfiguration = await getPaymentConfiguration()
+    const paymentConfiguration = offeringCheckout.usesOfferingCheckout
+        ? null
+        : await getPaymentConfiguration()
 
     return (
         <div className="min-h-screen bg-[#09090b] text-white">
@@ -138,18 +143,25 @@ export default async function CourseSalesPage(props: { params: Promise<{ id: str
 
                             {/* Checkout Actions */}
                             <div className="p-8">
-                                <div className="mb-8">
-                                    {course.original_price_display && (
-                                        <p className="text-xl text-zinc-500 line-through mb-1">
-                                            {course.original_price_display}
+                                {!offeringCheckout.usesOfferingCheckout && (
+                                    <div className="mb-8">
+                                        {course.original_price_display && (
+                                            <p className="text-xl text-zinc-500 line-through mb-1">
+                                                {course.original_price_display}
+                                            </p>
+                                        )}
+                                        <p className="text-5xl font-black text-white">
+                                            {course.price_display}
                                         </p>
-                                    )}
-                                    <p className="text-5xl font-black text-white">
-                                        {course.price_display}
-                                    </p>
-                                </div>
+                                    </div>
+                                )}
 
-                                {!isPurchasable ? (
+                                {offeringCheckout.usesOfferingCheckout ? (
+                                    <CourseOfferingOptions
+                                        offerings={offeringCheckout.offerings}
+                                        lookupFailed={offeringCheckout.lookupFailed}
+                                    />
+                                ) : !isPurchasable ? (
                                     <div className="w-full rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-center text-sm font-medium text-amber-200">
                                         Энэ хичээлийн хөтөлбөр бэлэн болоогүй байна. Удахгүй дахин шалгана уу.
                                     </div>
@@ -164,9 +176,9 @@ export default async function CourseSalesPage(props: { params: Promise<{ id: str
                                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
                                         </Button>
                                     </Link>
-                                ) : (
+                                ) : paymentConfiguration ? (
                                     <PaymentModal courseId={course.id} coursePrice={course.price_display} paymentInstructions={paymentConfiguration.instructions} isTestMode={paymentConfiguration.isTestMode} rejectionReason={rejectionReason} />
-                                )}
+                                ) : null}
 
                                 <div className="mt-6 space-y-3 shrink-0">
                                     {[

@@ -3,7 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
-      bodySizeLimit: '10mb',
+      // Receipt validation allows a 10 MiB image. Leave room for multipart
+      // boundaries and Server Action metadata around that file.
+      bodySizeLimit: '12mb',
     },
   },
   async headers() {

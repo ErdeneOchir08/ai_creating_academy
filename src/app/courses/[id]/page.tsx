@@ -12,6 +12,8 @@ import { ArrowLeft, Video, PlayCircle, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { getPaymentConfiguration } from '@/features/admin/actions/settings-actions.admin'
 import { getCloudflareStreamPlaybackUrl } from '@/lib/cloudflare-stream/playback'
+import { getPublicCourseOfferingCheckout } from '@/features/courses/actions/public-course-offering-actions'
+import { CourseOfferingOptions } from '@/features/courses/components/course-offering-options'
 
 function getYouTubeEmbedUrl(url: string) {
     if (!url) return ''
@@ -60,7 +62,10 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
         notFound()
     }
 
-    const paymentStatus = await checkPaymentStatus(id)
+    const [paymentStatus, offeringCheckout] = await Promise.all([
+        checkPaymentStatus(id),
+        getPublicCourseOfferingCheckout(id),
+    ])
     const rejectionReason = paymentStatus === 'rejected' ? await getRejectedPaymentReason(id) : null
     const isEnrolled = paymentStatus === 'enrolled'
     const isPending = paymentStatus === 'pending'
@@ -95,7 +100,9 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
         ? await getCloudflareStreamPlaybackUrl(currentLesson.provider_video_id)
         : ''
 
-    const paymentConfiguration = await getPaymentConfiguration()
+    const paymentConfiguration = offeringCheckout.usesOfferingCheckout
+        ? null
+        : await getPaymentConfiguration()
 
     return (
         <div className="flex h-[calc(100vh-64px)] w-full overflow-hidden bg-[#09090b] text-white relative">
@@ -174,13 +181,27 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
                             </div>
                         ) : (
                             <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-zinc-950/90 backdrop-blur-md z-20">
-                                <h2 className="text-3xl font-black mb-3 text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Үзэхийн тулд элсэх</h2>
-                                <p className="text-zinc-400 mb-8 max-w-md text-lg">Видео болон асуулт хариултын хэсэгт хандахын тулд энэ хичээлийг худалдан авах шаардлагатай.</p>
-                                {isPending ? (
+                                <h2 className="text-3xl font-black mb-3 text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">
+                                    {offeringCheckout.usesOfferingCheckout ? 'Нээлттэй элсэлтээс сонгох' : 'Үзэхийн тулд элсэх'}
+                                </h2>
+                                <p className="text-zinc-400 mb-8 max-w-md text-lg">
+                                    {offeringCheckout.usesOfferingCheckout
+                                        ? 'Танд тохирох сургалтын хэлбэр, хуваарьтай элсэлтийг сонгоно уу.'
+                                        : 'Видео болон асуулт хариултын хэсэгт хандахын тулд энэ хичээлийг худалдан авах шаардлагатай.'}
+                                </p>
+                                {offeringCheckout.usesOfferingCheckout ? (
+                                    <div className="max-h-[70%] w-full max-w-xl overflow-y-auto px-1">
+                                        <CourseOfferingOptions
+                                            offerings={offeringCheckout.offerings}
+                                            lookupFailed={offeringCheckout.lookupFailed}
+                                            compact
+                                        />
+                                    </div>
+                                ) : isPending ? (
                                     <span className="inline-flex items-center rounded-full bg-yellow-500/10 px-6 py-3 text-base font-bold text-yellow-500 ring-1 ring-inset ring-yellow-500/20 shadow-[0_0_20px_rgba(234,179,8,0.2)]">
                                         Төлбөр хүлээгдэх төлөвтэй байна
                                     </span>
-                                ) : user ? (
+                                ) : user && paymentConfiguration ? (
                                     <div className="w-72 mx-auto scale-110">
                                         <PaymentModal
                                             courseId={course.id}
@@ -208,9 +229,21 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
                         {!isEnrolled && (
                             <div className="w-full md:w-80 shrink-0 flex flex-col gap-4">
                                 <div className="p-6 rounded-2xl bg-gradient-to-br from-indigo-900/40 to-purple-900/20 border border-indigo-500/30 text-center shadow-xl shadow-indigo-500/10">
-                                    <h3 className="text-lg font-bold text-white mb-2">Бүтэн хичээлийг нээх</h3>
-                                    <p className="text-sm text-indigo-200/80 mb-5 leading-relaxed">Үнэгүй хичээл таалагдаж байна уу? Бүх хичээл болон нийгэмлэгт хандах эрхээ аваарай.</p>
-                                    {user ? (
+                                    <h3 className="text-lg font-bold text-white mb-2">
+                                        {offeringCheckout.usesOfferingCheckout ? 'Нээлттэй элсэлтээс сонгох' : 'Бүтэн хичээлийг нээх'}
+                                    </h3>
+                                    <p className="text-sm text-indigo-200/80 mb-5 leading-relaxed">
+                                        {offeringCheckout.usesOfferingCheckout
+                                            ? 'Танд тохирох сургалтын хэлбэр, хуваарьтай элсэлтийг сонгоно уу.'
+                                            : 'Үнэгүй хичээл таалагдаж байна уу? Бүх хичээл болон нийгэмлэгт хандах эрхээ аваарай.'}
+                                    </p>
+                                    {offeringCheckout.usesOfferingCheckout ? (
+                                        <CourseOfferingOptions
+                                            offerings={offeringCheckout.offerings}
+                                            lookupFailed={offeringCheckout.lookupFailed}
+                                            compact
+                                        />
+                                    ) : user && paymentConfiguration ? (
                                         <PaymentModal
                                             courseId={course.id}
                                             coursePrice={course.price_display}

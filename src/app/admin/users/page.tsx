@@ -35,7 +35,7 @@ export default async function AdminUsersPage() {
                   <TableRow key={user.id} className="border-zinc-800 hover:bg-zinc-800/50">
                     <TableCell className="font-medium">{user.display_name || user.id}</TableCell>
                     <TableCell><Badge variant="secondary" className={user.role === 'admin' ? 'bg-indigo-600/20 text-indigo-300' : user.role === 'teacher' ? 'bg-amber-500/10 text-amber-300' : 'bg-zinc-800 text-zinc-300'}>{roleLabel[user.role as keyof typeof roleLabel] || user.role}</Badge></TableCell>
-                    <TableCell className="text-center text-zinc-300">{user.enrollments?.[0]?.count || 0}</TableCell>
+                    <TableCell className="text-center text-zinc-300">{user.enrollment_count}</TableCell>
                     <TableCell className="text-right text-sm text-zinc-400">{new Date(user.created_at).toLocaleDateString('mn-MN')}</TableCell>
                     <TableCell className="text-right"><EditUserDialog user={user} /></TableCell>
                   </TableRow>

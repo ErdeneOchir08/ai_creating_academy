@@ -1,8 +1,15 @@
 import { LoginForm } from '@/features/auth/components/login-form'
 import { Sparkles } from 'lucide-react'
 import Link from 'next/link'
+import { getSafeReturnPath } from '@/lib/auth/return-path'
 
-export default function LoginPage() {
+export default async function LoginPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ next?: string | string[] }>
+}) {
+    const returnPath = getSafeReturnPath((await searchParams).next)
+
     return (
         <div className="flex min-h-screen bg-[#09090b]">
             {/* Left Side: Art / Branding (Hidden on mobile) */}
@@ -67,7 +74,7 @@ export default function LoginPage() {
                         </Link>
                     </div>
 
-                    <LoginForm />
+                    <LoginForm returnPath={returnPath} />
                 </div>
             </div>
         </div>

@@ -12,6 +12,7 @@ export type AdminUser = {
     created_at: string
     role: Role
     enrollments: Array<{ count: number }> | null
+    enrollment_count: number
 }
 
 async function requireAdmin() {
@@ -28,9 +29,8 @@ export async function getAllUsers(): Promise<AdminUser[]> {
     const supabase = await requireAdmin()
 
     // Fetch all profiles
-    const { data: users, error } = await supabase
-        .from('profiles')
-        .select(`
+    const [{ data: users, error }, { data: offeringEnrollments, error: offeringEnrollmentError }] = await Promise.all([
+        supabase.from('profiles').select(`
             id,
             display_name,
             avatar_url,
@@ -38,11 +38,24 @@ export async function getAllUsers(): Promise<AdminUser[]> {
             created_at,
             enrollments ( count )
         `)
-        .order('created_at', { ascending: false })
+            .order('created_at', { ascending: false }),
+        supabase
+            .from('course_offering_enrollments')
+            .select('content_access_user_id')
+            .eq('status', 'active'),
+    ])
 
-    if (error) {
-        console.error('Error fetching users:', error)
+    if (error || offeringEnrollmentError) {
+        console.error('Error fetching users:', error?.message || offeringEnrollmentError?.message)
         return []
+    }
+
+    const offeringEnrollmentCountByUser = new Map<string, number>()
+    for (const enrollment of offeringEnrollments ?? []) {
+        offeringEnrollmentCountByUser.set(
+            enrollment.content_access_user_id,
+            (offeringEnrollmentCountByUser.get(enrollment.content_access_user_id) ?? 0) + 1,
+        )
     }
 
     return (users || []).map((user) => {
@@ -54,6 +67,8 @@ export async function getAllUsers(): Promise<AdminUser[]> {
             created_at: user.created_at,
             role: (roleRelation?.role || 'student') as Role,
             enrollments: user.enrollments,
+            enrollment_count: (user.enrollments?.[0]?.count ?? 0)
+                + (offeringEnrollmentCountByUser.get(user.id) ?? 0),
         }
     })
 }

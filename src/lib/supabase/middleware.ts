@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { getSafeReturnPath } from '@/lib/auth/return-path'
 
 export async function updateSession(request: NextRequest) {
     const recoveryCode = request.nextUrl.pathname === '/auth/reset-password'
@@ -76,7 +77,10 @@ export async function updateSession(request: NextRequest) {
 
     if (isProtectedRoute && !user) {
         const url = request.nextUrl.clone()
+        const returnPath = getSafeReturnPath(`${request.nextUrl.pathname}${request.nextUrl.search}`)
         url.pathname = '/login'
+        url.search = ''
+        if (returnPath) url.searchParams.set('next', returnPath)
         return NextResponse.redirect(url)
     }
 
@@ -86,9 +90,9 @@ export async function updateSession(request: NextRequest) {
             .select('role')
             .eq('user_id', user.id)
             .maybeSingle()
-        const url = request.nextUrl.clone()
-        url.pathname = roleRecord?.role === 'admin' ? '/admin' : '/dashboard'
-        return NextResponse.redirect(url)
+        const returnPath = getSafeReturnPath(request.nextUrl.searchParams.get('next'))
+        const fallbackPath = roleRecord?.role === 'admin' ? '/admin' : '/dashboard'
+        return NextResponse.redirect(new URL(returnPath ?? fallbackPath, request.url))
     }
 
     return supabaseResponse

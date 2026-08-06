@@ -3,11 +3,18 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Play, Clock } from 'lucide-react'
 import Link from 'next/link'
+import { getMyOfferingCheckoutStatuses } from '@/features/checkout/actions/offering-checkout-actions'
+import { OfferingCheckoutStatusList } from '@/features/dashboard/components/offering-checkout-status-list'
+import { selectNonApprovedOfferingCheckoutStatuses } from '@/features/dashboard/domain/offering-checkout-status-presentation'
 
 export default async function DashboardCoursesPage() {
-    const profile = await getStudentProfile()
-    const enrollments = await getEnrolledCourses()
-    const pendingCourses = await getPendingCourses()
+    const [profile, enrollments, pendingCourses, offeringCheckoutStatuses] = await Promise.all([
+        getStudentProfile(),
+        getEnrolledCourses(),
+        getPendingCourses(),
+        getMyOfferingCheckoutStatuses(),
+    ])
+    const nonApprovedOfferingStatuses = selectNonApprovedOfferingCheckoutStatuses(offeringCheckoutStatuses)
 
     return (
         <div className="mx-auto max-w-6xl p-5 sm:p-8">
@@ -50,7 +57,9 @@ export default async function DashboardCoursesPage() {
                                         <h3 className="font-semibold text-lg line-clamp-1">{course.title}</h3>
                                         <div className="mt-1 mb-4 flex-1 space-y-2">
                                             {enrollment.grant_source === 'bonus' && <span className="inline-flex rounded-full border border-violet-500/30 bg-violet-500/10 px-2 py-1 text-xs font-semibold text-violet-300">Дагалдах үнэгүй хичээл</span>}
-                                            <p className="text-zinc-400 text-sm">Элссэн огноо: {new Date(enrollment.granted_at).toLocaleDateString()}</p>
+                                            {enrollment.granted_at && (
+                                                <p className="text-zinc-400 text-sm">Элссэн огноо: {new Date(enrollment.granted_at).toLocaleDateString()}</p>
+                                            )}
                                         </div>
                                         <div className="mt-auto pt-4 border-t border-zinc-800/50">
                                             <Link href={`/courses/${course.id}`} className="w-full">
@@ -65,6 +74,10 @@ export default async function DashboardCoursesPage() {
                         })}
                     </div>
                 </div>
+            )}
+
+            {nonApprovedOfferingStatuses.length > 0 && (
+                <OfferingCheckoutStatusList statuses={nonApprovedOfferingStatuses} />
             )}
 
             {/* Pending Courses */}
@@ -111,7 +124,9 @@ export default async function DashboardCoursesPage() {
                 </div>
             )}
 
-            {(!enrollments || enrollments.length === 0) && (!pendingCourses || pendingCourses.length === 0) && (
+            {(!enrollments || enrollments.length === 0)
+                && (!pendingCourses || pendingCourses.length === 0)
+                && nonApprovedOfferingStatuses.length === 0 && (
                 <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 text-center sm:p-12">
                     <h3 className="text-xl font-semibold mb-2">Одоогоор хичээл алга</h3>
                     <p className="text-zinc-400 mb-6">Та ямар нэг хичээлд элсээгүй байна.</p>

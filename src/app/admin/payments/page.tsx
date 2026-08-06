@@ -3,12 +3,14 @@ import { CheckCircle2, Clock, Image as ImageIcon, Search, XCircle } from 'lucide
 import { Card, CardContent } from '@/components/ui/card'
 import { getPayments } from '@/features/admin/actions/admin-actions'
 import { getCohortPayments } from '@/features/admin/actions/cohort-payment-actions.admin'
+import { getCourseOfferingPayments } from '@/features/admin/actions/offering-payment-actions.admin'
 import { PaymentReviewActions } from '@/features/admin/components/payment-review-actions'
 import { CohortPaymentReviewActions } from '@/features/admin/components/cohort-payment-review-actions'
+import { OfferingPaymentList } from '@/features/admin/components/offering-payment-list'
 
 type SearchParams = { type?: string; status?: string; search?: string }
 type PaymentStatus = 'pending' | 'approved' | 'rejected'
-type PaymentType = 'course' | 'cohort'
+type PaymentType = 'course' | 'cohort' | 'offering'
 
 const statusLabels: Record<PaymentStatus, string> = {
     pending: 'Хүлээгдэж буй',
@@ -32,12 +34,22 @@ function formatMnt(value: number) {
 
 export default async function AdminPaymentsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
     const params = await searchParams
-    const paymentType: PaymentType = params.type === 'cohort' ? 'cohort' : 'course'
+    const paymentType: PaymentType = params.type === 'cohort'
+        ? 'cohort'
+        : params.type === 'offering'
+            ? 'offering'
+            : 'course'
     const currentStatus: PaymentStatus = params.status === 'approved' || params.status === 'rejected' ? params.status : 'pending'
     const currentSearch = params.search?.trim() ?? ''
-    const payments = paymentType === 'cohort'
-        ? await getCohortPayments({ status: currentStatus, search: currentSearch })
-        : await getPayments({ status: currentStatus, search: currentSearch })
+    const offeringPayments = paymentType === 'offering'
+        ? await getCourseOfferingPayments({ status: currentStatus, search: currentSearch })
+        : null
+    const payments = paymentType === 'offering'
+        ? []
+        : paymentType === 'cohort'
+            ? await getCohortPayments({ status: currentStatus, search: currentSearch })
+            : await getPayments({ status: currentStatus, search: currentSearch })
+    const paymentCount = offeringPayments?.length ?? payments.length
 
     return (
         <div className="min-h-screen bg-[#09090b] p-5 text-white md:p-8">
@@ -47,10 +59,11 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
                     <p className="text-zinc-400">Онлайн хичээл болон хөтөлбөрийн элсэлтийн баримтыг тусад нь шалгаж шийдвэрлэнэ.</p>
                 </header>
 
-                <nav className="mb-6 grid max-w-xl grid-cols-2 rounded-xl border border-zinc-800 bg-zinc-900 p-1" aria-label="Төлбөрийн төрөл">
+                <nav className="mb-6 grid max-w-3xl grid-cols-1 rounded-xl border border-zinc-800 bg-zinc-900 p-1 sm:grid-cols-3" aria-label="Төлбөрийн төрөл">
                     {([
                         ['course', 'Онлайн хичээл'],
                         ['cohort', 'Хөтөлбөрийн элсэлт'],
+                        ['offering', 'Хичээлийн элсэлт (V2)'],
                     ] as const).map(([type, label]) => (
                         <Link key={type} href={paymentHref(type, currentStatus, currentSearch)} className={`rounded-lg px-4 py-3 text-center text-sm font-medium transition-colors ${paymentType === type ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'}`}>
                             {label}
@@ -72,17 +85,19 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
                             <input type="hidden" name="type" value={paymentType} />
                             <input type="hidden" name="status" value={currentStatus} />
                             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
-                            <input type="search" name="search" defaultValue={currentSearch} placeholder={paymentType === 'cohort' ? 'Нэр, и-мэйл, хөтөлбөрөөр хайх' : 'Оюутан эсвэл хичээлээр хайх'} className="w-full rounded-lg border border-zinc-800 bg-zinc-900 py-2 pl-9 pr-4 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50" />
+                            <input type="search" name="search" defaultValue={currentSearch} placeholder={paymentType === 'course' ? 'Оюутан эсвэл хичээлээр хайх' : 'Суралцагч, и-мэйл, хөтөлбөрөөр хайх'} className="w-full rounded-lg border border-zinc-800 bg-zinc-900 py-2 pl-9 pr-4 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50" />
                         </form>
                     </div>
 
                     <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
                         {statusLabels[currentStatus]}
-                        <span className="rounded-full bg-indigo-600 px-2 py-1 text-xs text-white">{payments.length}</span>
+                        <span className="rounded-full bg-indigo-600 px-2 py-1 text-xs text-white">{paymentCount}</span>
                     </h2>
 
                     <div className="grid gap-4">
-                        {paymentType === 'course'
+                        {paymentType === 'offering'
+                            ? <OfferingPaymentList payments={offeringPayments ?? []} />
+                            : paymentType === 'course'
                             ? payments.map((payment) => {
                                 if (!('course_id' in payment)) return null
                                 return (
@@ -126,7 +141,7 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
                                 )
                             })}
 
-                        {payments.length === 0 && (
+                        {paymentCount === 0 && (
                             <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-12 text-center text-zinc-400">
                                 {currentSearch ? `“${currentSearch}” хайлтад тохирох хүсэлт олдсонгүй.` : `${statusLabels[currentStatus]} төлбөрийн хүсэлт одоогоор алга.`}
                             </div>

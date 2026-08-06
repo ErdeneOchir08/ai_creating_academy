@@ -5,10 +5,13 @@ import { createClient } from '@/lib/supabase/server'
 import {
     assertCohortTransition,
     cohortStatuses,
+    getCohortOpeningReadiness,
     validateCohortPaymentDueDays,
     validateTrainingCohortInput,
     validateTrainingProgramInput,
     type CohortStatus,
+    type CohortOpeningIssue,
+    type ContractPolicy,
     type DeliveryMode,
 } from '@/features/programs/domain/training-program'
 
@@ -18,6 +21,9 @@ export type TrainingCohort = {
     name: string
     delivery_mode: DeliveryMode
     status: CohortStatus
+    checkout_version: 1 | 2
+    course_id: string | null
+    contract_policy: ContractPolicy
     contract_version_id: string | null
     capacity: number | null
     tuition_amount_mnt: number | null
@@ -57,6 +63,44 @@ export type PublishedContractOption = {
     is_assignable: boolean
 }
 
+export type OfferingCourseOption = {
+    id: string
+    title: string
+    published: boolean
+    is_ready_for_offering: boolean
+}
+
+type OfferingCourseReadinessRecord = {
+    published: boolean
+    lessons: Array<{
+        lesson_videos: Array<{ playback_status: string }> | { playback_status: string } | null
+    }> | null
+}
+
+function isCourseReadyForOffering(course: OfferingCourseReadinessRecord | null | undefined) {
+    return course?.published === true && (course.lessons ?? []).some((lesson) => {
+        const videos = Array.isArray(lesson.lesson_videos)
+            ? lesson.lesson_videos
+            : lesson.lesson_videos
+                ? [lesson.lesson_videos]
+                : []
+        return videos.some((video) => video.playback_status === 'ready')
+    })
+}
+
+function cohortOpeningIssueMessage(issue: CohortOpeningIssue) {
+    const messages: Record<CohortOpeningIssue, string> = {
+        program_archived: 'Архивласан хөтөлбөрийн элсэлтийг нээх боломжгүй.',
+        unsupported_delivery_mode: 'Шинэ элсэлтийн сургалтын хэлбэр онлайн эсвэл танхим байх ёстой.',
+        course_not_ready: 'Холбосон хичээл нийтлэгдсэн бөгөөд дор хаяж нэг бэлэн видео агуулгатай байх ёстой.',
+        contract_not_assignable: 'Гэрээ шаардлагатай элсэлтэд идэвхтэй нийтлэгдсэн гэрээ сонгоно уу.',
+        contract_not_allowed: 'Гэрээ шаардлагагүй элсэлтэд гэрээний хувилбар холбоотой байж болохгүй.',
+        tuition_not_configured: 'Элсэлт нээхийн өмнө сургалтын төлбөрийг тохируулна уу.',
+        payment_deadline_not_configured: 'Төлбөртэй элсэлтэд төлөх хугацааг тохируулна уу.',
+    }
+    return messages[issue]
+}
+
 async function requireAdmin() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -90,10 +134,12 @@ function programInput(formData: FormData) {
     })
 }
 
-function cohortInput(formData: FormData) {
+function cohortInput(formData: FormData, checkoutVersion: 1 | 2) {
     return validateTrainingCohortInput({
         name: String(formData.get('name') ?? ''),
         deliveryMode: String(formData.get('delivery_mode') ?? ''),
+        courseId: String(formData.get('course_id') ?? ''),
+        contractPolicy: String(formData.get('contract_policy') ?? ''),
         contractVersionId: String(formData.get('contract_version_id') ?? ''),
         capacity: String(formData.get('capacity') ?? ''),
         tuitionAmountMnt: String(formData.get('tuition_amount_mnt') ?? ''),
@@ -105,13 +151,15 @@ function cohortInput(formData: FormData) {
         registrationClosesAt: String(formData.get('registration_closes_at') ?? ''),
         startsOn: String(formData.get('starts_on') ?? ''),
         endsOn: String(formData.get('ends_on') ?? ''),
-    })
+    }, checkoutVersion)
 }
 
 function cohortRecord(input: ReturnType<typeof cohortInput>) {
     return {
         name: input.name,
         delivery_mode: input.deliveryMode,
+        course_id: input.courseId,
+        contract_policy: input.contractPolicy,
         contract_version_id: input.contractVersionId,
         capacity: input.capacity,
         tuition_amount_mnt: input.tuitionAmountMnt,
@@ -167,7 +215,7 @@ export async function getTrainingProgram(programId: string): Promise<TrainingPro
             .maybeSingle(),
         supabase
             .from('training_cohorts')
-            .select('id, program_id, name, delivery_mode, status, contract_version_id, capacity, tuition_amount_mnt, payment_due_days, payment_plan, schedule_summary, location, registration_opens_at, registration_closes_at, starts_on, ends_on, created_at, updated_at')
+            .select('id, program_id, name, delivery_mode, status, checkout_version, course_id, contract_policy, contract_version_id, capacity, tuition_amount_mnt, payment_due_days, payment_plan, schedule_summary, location, registration_opens_at, registration_closes_at, starts_on, ends_on, created_at, updated_at')
             .eq('program_id', programId)
             .order('created_at', { ascending: false }),
     ])
@@ -178,6 +226,34 @@ export async function getTrainingProgram(programId: string): Promise<TrainingPro
     }
     if (!programResult.data) return null
     return { ...programResult.data, cohorts: (cohortsResult.data ?? []) as TrainingCohort[] } as TrainingProgramDetail
+}
+
+export async function getOfferingCourseOptions(): Promise<OfferingCourseOption[]> {
+    const { supabase } = await requireAdmin()
+    const { data, error } = await supabase
+        .from('courses')
+        .select(`
+            id,
+            title,
+            published,
+            lessons (
+                id,
+                lesson_videos ( playback_status )
+            )
+        `)
+        .order('title')
+
+    if (error) {
+        console.error('Unable to load offering course options:', error.message)
+        throw new Error('Видео хичээлийн багцуудыг уншиж чадсангүй.')
+    }
+
+    return (data ?? []).map((course) => ({
+        id: course.id,
+        title: course.title,
+        published: course.published,
+        is_ready_for_offering: isCourseReadyForOffering(course),
+    }))
 }
 
 export async function getPublishedContractOptions(): Promise<PublishedContractOption[]> {
@@ -261,12 +337,13 @@ export async function deleteTrainingProgram(programId: string) {
 export async function createTrainingCohort(programId: string, formData: FormData) {
     assertUuid(programId, 'Хөтөлбөрийн дугаар')
     const { supabase, user } = await requireAdmin()
-    const input = cohortInput(formData)
+    const input = cohortInput(formData, 2)
     const { data, error } = await supabase
         .from('training_cohorts')
         .insert({
             ...cohortRecord(input),
             program_id: programId,
+            checkout_version: 2,
             status: 'draft',
             created_by: user.id,
             status_changed_by: user.id,
@@ -288,7 +365,16 @@ export async function updateTrainingCohortDraft(cohortId: string, programId: str
     assertUuid(cohortId, 'Элсэлтийн дугаар')
     assertUuid(programId, 'Хөтөлбөрийн дугаар')
     const { supabase } = await requireAdmin()
-    const input = cohortInput(formData)
+    const { data: current, error: currentError } = await supabase
+        .from('training_cohorts')
+        .select('checkout_version')
+        .eq('id', cohortId)
+        .eq('program_id', programId)
+        .eq('status', 'draft')
+        .maybeSingle()
+    if (currentError || !current) throw new Error('Зөвхөн ноорог элсэлтийн мэдээллийг засах боломжтой.')
+
+    const input = cohortInput(formData, current.checkout_version as 1 | 2)
     const { data, error } = await supabase
         .from('training_cohorts')
         .update(cohortRecord(input))
@@ -343,7 +429,7 @@ export async function changeTrainingCohortStatus(cohortId: string, programId: st
     const { supabase } = await requireAdmin()
     const { data: current, error: readError } = await supabase
         .from('training_cohorts')
-        .select('status')
+        .select('status, checkout_version, delivery_mode, course_id, contract_policy, contract_version_id, tuition_amount_mnt, payment_due_days')
         .eq('id', cohortId)
         .eq('program_id', programId)
         .maybeSingle()
@@ -351,10 +437,70 @@ export async function changeTrainingCohortStatus(cohortId: string, programId: st
     if (readError || !current) throw new Error('Элсэлт олдсонгүй.')
     assertCohortTransition(current.status as CohortStatus, nextStatus)
 
+    if (nextStatus === 'open') {
+        const { data: program, error: programError } = await supabase
+            .from('training_programs')
+            .select('is_archived')
+            .eq('id', programId)
+            .maybeSingle()
+        if (programError || !program) throw new Error('Хөтөлбөр олдсонгүй.')
+
+        let courseIsReady = current.checkout_version === 1
+        if (current.checkout_version === 2 && current.course_id) {
+            const { data: course, error: courseError } = await supabase
+                .from('courses')
+                .select(`
+                    published,
+                    lessons (
+                        lesson_videos ( playback_status )
+                    )
+                `)
+                .eq('id', current.course_id)
+                .maybeSingle()
+            if (courseError) throw new Error('Холбосон видео хичээлийг шалгаж чадсангүй.')
+            courseIsReady = isCourseReadyForOffering(course)
+        }
+
+        let contractVersionIsAssignable = false
+        if (current.contract_policy === 'required' && current.contract_version_id) {
+            const { data: version, error: versionError } = await supabase
+                .from('contract_template_versions')
+                .select('status, template_id')
+                .eq('id', current.contract_version_id)
+                .maybeSingle()
+            if (!versionError && version?.status === 'published') {
+                const { data: template, error: templateError } = await supabase
+                    .from('contract_templates')
+                    .select('is_archived')
+                    .eq('id', version.template_id)
+                    .maybeSingle()
+                contractVersionIsAssignable = !templateError && template?.is_archived === false
+            }
+        }
+
+        const readiness = getCohortOpeningReadiness({
+            checkoutVersion: current.checkout_version as 1 | 2,
+            deliveryMode: current.delivery_mode as DeliveryMode,
+            contractPolicy: current.contract_policy as ContractPolicy,
+            hasContractVersion: current.contract_version_id !== null,
+            contractVersionIsAssignable,
+            courseIsReady,
+            tuitionAmountMnt: current.tuition_amount_mnt,
+            paymentDueDays: current.payment_due_days,
+            programIsArchived: program.is_archived,
+        })
+        if (!readiness.isReady) {
+            throw new Error(cohortOpeningIssueMessage(readiness.issues[0]!))
+        }
+    }
+
     const { error } = await supabase.from('training_cohorts').update({ status: nextStatus }).eq('id', cohortId)
     if (error) {
-        if (error.message.includes('contract')) throw new Error('Элсэлт нээхийн өмнө идэвхтэй, нийтлэгдсэн гэрээ сонгоно уу.')
+        if (error.message.includes('linked course') || error.message.includes('reusable course')) throw new Error('Элсэлт нээхийн өмнө видео хичээлийн багцыг холбоно уу.')
+        if (error.message.includes('published') && error.message.includes('video')) throw new Error('Холбосон хичээл нийтлэгдсэн бөгөөд дор хаяж нэг бэлэн видео агуулгатай байх ёстой.')
+        if (error.message.includes('contract')) throw new Error('Элсэлт нээхийн өмнө гэрээний бодлого болон гэрээний хувилбарыг шалгана уу.')
         if (error.message.includes('archived program')) throw new Error('Архивласан хөтөлбөрийн элсэлтийг нээх боломжгүй.')
+        if (error.message.includes('atomic cancellation workflow')) throw new Error('Идэвхтэй хүсэлт, төлбөр эсвэл хичээл үзэх эрхтэй элсэлтийг тусгай цуцлалтын ажиллагаагүйгээр цуцлах боломжгүй.')
         console.error('Unable to change cohort status:', error.message)
         throw new Error('Элсэлтийн төлөвийг өөрчилж чадсангүй.')
     }

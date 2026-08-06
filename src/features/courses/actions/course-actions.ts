@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getMyEffectiveCourseAccess } from './effective-course-access'
 
 type CourseRow = {
     id: string
@@ -88,12 +89,20 @@ export async function getPublishedCourses() {
     }))
     if (!user) return courseViews
 
-    const [enrollmentsResult, paymentsResult] = await Promise.all([
-        supabase.from('enrollments').select('course_id').eq('user_id', user.id).eq('status', 'active'),
-        supabase.from('payment_requests').select('course_id').eq('user_id', user.id).eq('status', 'pending'),
-    ])
+    const paymentsResult = await supabase
+        .from('payment_requests')
+        .select('course_id')
+        .eq('user_id', user.id)
+        .eq('status', 'pending')
 
-    const enrolled = new Set(enrollmentsResult.data?.map(({ course_id }) => course_id) ?? [])
+    let effectiveAccess: Awaited<ReturnType<typeof getMyEffectiveCourseAccess>> = []
+    try {
+        effectiveAccess = await getMyEffectiveCourseAccess(supabase)
+    } catch (accessError) {
+        console.error('Unable to load effective course access:', accessError)
+    }
+
+    const enrolled = new Set(effectiveAccess.map(({ course_id }) => course_id))
     const pending = new Set(paymentsResult.data?.map(({ course_id }) => course_id) ?? [])
 
     return courseViews.map((course) => ({

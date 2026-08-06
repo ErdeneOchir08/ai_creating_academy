@@ -1,8 +1,15 @@
 import { RegisterForm } from '@/features/auth/components/register-form'
 import { Sparkles } from 'lucide-react'
 import Link from 'next/link'
+import { getSafeReturnPath } from '@/lib/auth/return-path'
 
-export default function RegisterPage() {
+export default async function RegisterPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ next?: string | string[] }>
+}) {
+    const returnPath = getSafeReturnPath((await searchParams).next)
+
     return (
         <div className="flex min-h-screen bg-[#09090b]">
             {/* Left Side: Art / Branding (Hidden on mobile) */}
@@ -67,7 +74,7 @@ export default function RegisterPage() {
                         </Link>
                     </div>
 
-                    <RegisterForm />
+                    <RegisterForm returnPath={returnPath} />
                 </div>
             </div>
         </div>

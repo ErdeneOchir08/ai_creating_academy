@@ -3,15 +3,20 @@
 import { revalidatePath } from 'next/cache'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { getSafeReturnPath, withReturnPath } from '@/lib/auth/return-path'
 import { createClient } from '@/lib/supabase/server'
 
-async function getAuthRedirectUrl(path: '/auth/confirm' | '/auth/reset-password') {
+async function getAuthRedirectUrl(
+    path: '/auth/confirm' | '/auth/reset-password',
+    returnPath?: string | null,
+) {
     const requestHeaders = await headers()
     const origin = requestHeaders.get('origin')
+    const redirectPath = withReturnPath(path, returnPath)
 
     if (origin) {
         try {
-            return new URL(path, origin).toString()
+            return new URL(redirectPath, origin).toString()
         } catch {
             return undefined
         }
@@ -21,7 +26,7 @@ async function getAuthRedirectUrl(path: '/auth/confirm' | '/auth/reset-password'
     if (!host) return undefined
 
     const protocol = requestHeaders.get('x-forwarded-proto') ?? (host.startsWith('localhost') ? 'http' : 'https')
-    return `${protocol}://${host}${path}`
+    return `${protocol}://${host}${redirectPath}`
 }
 
 function authErrorMessage(message: string) {
@@ -37,6 +42,7 @@ export async function login(formData: FormData) {
 
     const email = String(formData.get('email') ?? '').trim().toLowerCase()
     const password = String(formData.get('password') ?? '')
+    const returnPath = getSafeReturnPath(formData.get('next'))
     if (!email || !password) return { error: 'И-мэйл хаяг болон нууц үгээ оруулна уу.' }
 
     const data = {
@@ -65,7 +71,7 @@ export async function login(formData: FormData) {
     }
 
     revalidatePath('/', 'layout')
-    redirect(redirectUrl)
+    redirect(returnPath ?? redirectUrl)
 }
 
 export async function signup(formData: FormData) {
@@ -74,10 +80,11 @@ export async function signup(formData: FormData) {
     const email = String(formData.get('email') ?? '').trim().toLowerCase()
     const password = String(formData.get('password') ?? '')
     const fullName = String(formData.get('full_name') ?? '').trim()
+    const returnPath = getSafeReturnPath(formData.get('next'))
     if (!email || !password || !fullName) return { error: 'Нэр, и-мэйл хаяг, нууц үгээ бүрэн оруулна уу.' }
     if (password.length < 8) return { error: 'Нууц үг дор хаяж 8 тэмдэгттэй байх ёстой.' }
 
-    const emailRedirectTo = await getAuthRedirectUrl('/auth/confirm')
+    const emailRedirectTo = await getAuthRedirectUrl('/auth/confirm', returnPath)
     const data = {
         email,
         password,
@@ -100,7 +107,7 @@ export async function signup(formData: FormData) {
     }
 
     revalidatePath('/', 'layout')
-    redirect('/dashboard')
+    redirect(returnPath ?? '/dashboard')
 }
 
 export async function logout() {

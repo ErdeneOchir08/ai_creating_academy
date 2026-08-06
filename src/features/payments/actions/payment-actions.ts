@@ -5,11 +5,27 @@ import { createClient } from '@/lib/supabase/server'
 import { sendPaymentSubmittedAlert } from '@/lib/telegram/notifications'
 import { validateImageFile } from '@/lib/uploads/image-validation'
 import { removeFailedPaymentReceipt } from '@/lib/uploads/payment-receipt-cleanup'
+import { hasEffectiveCourseAccess } from '@/features/courses/actions/effective-course-access'
+import { parseCourseUsesOfferingCheckout } from '@/features/courses/domain/public-course-offering'
 
 export async function submitPaymentRequest(courseId: string, formData: FormData) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { success: false, error: 'Төлбөрийн баримт илгээхийн өмнө нэвтэрнэ үү.' }
+
+    const ownershipResult = await supabase.rpc('course_uses_offering_checkout', { p_course_id: courseId })
+    if (ownershipResult.error) {
+        console.error('Unable to verify direct-payment ownership:', ownershipResult.error.message)
+        return { success: false, error: 'Төлбөрийн зөв сувгийг шалгаж чадсангүй. Хичээлийн мэдээлэл рүү буцаж дахин оролдоно уу.' }
+    }
+    try {
+        if (parseCourseUsesOfferingCheckout(ownershipResult.data)) {
+            return { success: false, error: 'Энэ хичээлийн төлбөрийг нээлттэй элсэлтийн сонголтоор илгээнэ үү.' }
+        }
+    } catch (error) {
+        console.error('Invalid direct-payment ownership response:', error)
+        return { success: false, error: 'Төлбөрийн зөв сувгийг шалгаж чадсангүй. Хичээлийн мэдээлэл рүү буцаж дахин оролдоно уу.' }
+    }
 
     const receipt = formData.get('receipt')
     if (!(receipt instanceof File) || receipt.size === 0) {
@@ -123,14 +139,11 @@ export async function checkPaymentStatus(courseId: string) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
 
-    const { data: enrollment } = await supabase
-        .from('enrollments')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('course_id', courseId)
-        .eq('status', 'active')
-        .maybeSingle()
-    if (enrollment) return 'enrolled'
+    try {
+        if (await hasEffectiveCourseAccess(supabase, courseId)) return 'enrolled'
+    } catch (error) {
+        console.error('Effective enrollment check failed:', error)
+    }
 
     const { data: payment } = await supabase
         .from('payment_requests')
