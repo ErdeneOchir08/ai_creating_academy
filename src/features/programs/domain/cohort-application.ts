@@ -28,6 +28,7 @@ const savedApplicationSchema = z.object({
     signer_email_verified_at: z.string().nullable(),
     signature_statement: z.string().nullable(),
     signature_statement_version: z.string().nullable(),
+    payment_due_at: z.string().nullable(),
     updated_at: z.string(),
 })
 

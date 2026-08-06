@@ -16,6 +16,7 @@ import {
     deleteTrainingProgram,
     setTrainingProgramArchived,
     updateTrainingCohortDraft,
+    updateTrainingCohortPaymentDeadline,
     updateTrainingProgram,
     type PublishedContractOption,
     type TrainingCohort,
@@ -95,6 +96,11 @@ function CohortFields({ cohort, contracts }: { cohort?: TrainingCohort; contract
             <label className="space-y-2 text-sm text-zinc-300">
                 <span>Сургалтын төлбөр (₮)</span>
                 <Input name="tuition_amount_mnt" type="number" min={0} step={1} defaultValue={cohort?.tuition_amount_mnt ?? ''} placeholder="Жишээ: 450000" className="border-zinc-700 bg-zinc-900" />
+            </label>
+            <label className="space-y-2 text-sm text-zinc-300 md:col-span-2">
+                <span>Өргөдөл зөвшөөрснөөс хойш төлөх хугацаа (хоног)</span>
+                <Input name="payment_due_days" type="number" min={1} step={1} defaultValue={cohort?.payment_due_days ?? ''} placeholder="Жишээ: 3" className="border-zinc-700 bg-zinc-900" />
+                <span className="block text-xs leading-relaxed text-zinc-500">Төлбөртэй элсэлтэд заавал тохируулна. Систем өргөдөл бүрийн яг төлөх эцсийн хугацааг зөвшөөрсөн мөчөөс тооцож хадгална.</span>
             </label>
             <label className="space-y-2 text-sm text-zinc-300">
                 <span>Бүртгэл нээх хугацаа</span>
@@ -245,8 +251,25 @@ export function TrainingProgramEditor({ program, contracts }: { program: Trainin
                                 <div className="grid gap-3 text-sm text-zinc-400 sm:grid-cols-2 lg:grid-cols-4">
                                     <p><span className="block text-xs text-zinc-600">Суудал</span>{cohort.capacity ?? 'Тодорхойгүй'}</p>
                                     <p><span className="block text-xs text-zinc-600">Төлбөр</span>{cohort.tuition_amount_mnt == null ? 'Тодорхойгүй' : `₮ ${cohort.tuition_amount_mnt.toLocaleString()}`}</p>
+                                    <p><span className="block text-xs text-zinc-600">Төлөх хугацаа</span>{cohort.payment_due_days == null ? 'Тохируулаагүй' : `${cohort.payment_due_days} хоног`}</p>
                                     <p className="sm:col-span-2"><span className="block text-xs text-zinc-600">Гэрээ</span>{contract ? `${contract.template_name} · v${contract.version_number}` : cohort.contract_version_id ? 'Ашиглалтаас гарсан хувилбар' : 'Сонгоогүй'}</p>
                                 </div>
+
+                                {cohort.status !== 'draft' && ['open', 'closed'].includes(cohort.status) && (
+                                    <form
+                                        onSubmit={(event) => {
+                                            event.preventDefault()
+                                            void run(`${cohort.id}-payment-deadline`, () => updateTrainingCohortPaymentDeadline(cohort.id, program.id, new FormData(event.currentTarget)))
+                                        }}
+                                        className="flex flex-col gap-3 rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 sm:flex-row sm:items-end"
+                                    >
+                                        <label className="flex-1 space-y-2 text-sm text-zinc-300">
+                                            <span>Өргөдөл зөвшөөрснөөс хойш төлөх хугацаа (хоног)</span>
+                                            <Input name="payment_due_days" type="number" min={1} step={1} defaultValue={cohort.payment_due_days ?? ''} required={Boolean(cohort.tuition_amount_mnt)} className="border-zinc-700 bg-zinc-950" />
+                                        </label>
+                                        <Button type="submit" variant="outline" disabled={!!pending}>Хугацаа хадгалах</Button>
+                                    </form>
+                                )}
 
                                 {cohort.status === 'draft' && (
                                     <div className={`rounded-xl border p-4 ${contract ? 'border-emerald-500/25 bg-emerald-500/5' : 'border-amber-500/25 bg-amber-500/5'}`}>

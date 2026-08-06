@@ -74,16 +74,17 @@ async function notifyStudentOfPaymentDecision(
 
 export async function getAdminOverview() {
   const { supabase } = await requireAdmin()
-  const [students, teachers, courses, pendingPayments, activeEnrollments, unansweredQuestions] = await Promise.all([
+  const [students, teachers, courses, pendingCoursePayments, pendingCohortPayments, activeEnrollments, unansweredQuestions] = await Promise.all([
     supabase.from('user_roles').select('*', { count: 'exact', head: true }).eq('role', 'student'),
     supabase.from('user_roles').select('*', { count: 'exact', head: true }).eq('role', 'teacher'),
     supabase.from('courses').select('*', { count: 'exact', head: true }),
     supabase.from('payment_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+    supabase.from('cohort_payment_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
     supabase.from('enrollments').select('*', { count: 'exact', head: true }).eq('status', 'active'),
     supabase.from('questions').select('*', { count: 'exact', head: true }).eq('is_answered', false),
   ])
 
-  const failure = [students, teachers, courses, pendingPayments, activeEnrollments, unansweredQuestions].find((result) => result.error)
+  const failure = [students, teachers, courses, pendingCoursePayments, pendingCohortPayments, activeEnrollments, unansweredQuestions].find((result) => result.error)
   if (failure?.error) {
     console.error('Unable to load admin overview:', failure.error.message)
     throw new Error('Unable to load the admin overview.')
@@ -93,7 +94,7 @@ export async function getAdminOverview() {
     students: students.count ?? 0,
     teachers: teachers.count ?? 0,
     courses: courses.count ?? 0,
-    pendingPayments: pendingPayments.count ?? 0,
+    pendingPayments: (pendingCoursePayments.count ?? 0) + (pendingCohortPayments.count ?? 0),
     activeEnrollments: activeEnrollments.count ?? 0,
     unansweredQuestions: unansweredQuestions.count ?? 0,
   }

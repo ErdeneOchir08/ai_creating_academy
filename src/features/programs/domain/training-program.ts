@@ -42,6 +42,7 @@ const cohortSchema = z.object({
     contractVersionId: optionalUuid,
     capacity: optionalPositiveInteger,
     tuitionAmountMnt: optionalNonNegativeInteger,
+    paymentDueDays: optionalPositiveInteger,
     paymentPlan: z.string().trim().max(1_000, 'Төлбөрийн нөхцөл 1,000 тэмдэгтээс урт байж болохгүй.'),
     scheduleSummary: z.string().trim().max(2_000, 'Хуваарийн тайлбар 2,000 тэмдэгтээс урт байж болохгүй.'),
     location: z.string().trim().max(1_000, 'Байршлын мэдээлэл 1,000 тэмдэгтээс урт байж болохгүй.'),
@@ -80,6 +81,10 @@ export function validateTrainingProgramInput(input: unknown) {
 
 export function validateTrainingCohortInput(input: unknown) {
     return parseWithUserMessage(cohortSchema, input)
+}
+
+export function validateCohortPaymentDueDays(input: unknown) {
+    return parseWithUserMessage(optionalPositiveInteger, input)
 }
 
 export const allowedCohortTransitions: Readonly<Record<CohortStatus, readonly CohortStatus[]>> = {

@@ -60,6 +60,9 @@ export function CohortApplicationInbox({
             try {
                 const result = await reviewCohortApplication(application.id, decision, reasons[application.id])
                 setMessage(result.success)
+                if (result.notificationError) {
+                    setError(`Шийдвэр хадгалагдсан боловч имэйл илгээгдсэнгүй: ${result.notificationError}`)
+                }
             } catch (cause) {
                 setError(cause instanceof Error ? cause.message : 'Үйлдлийг гүйцэтгэж чадсангүй.')
             }
@@ -190,6 +193,17 @@ export function CohortApplicationInbox({
                                             Дутуу мэдээлэл: {application.contract_snapshot.unresolved_variable_keys.map((key) => variableLabels[key] ?? key).join(', ')}
                                         </p>
                                     )}
+                                </div>
+                            )}
+
+                            {application.status === 'approved' && (
+                                <div className={`mt-4 rounded-xl border p-3 text-sm ${application.payment_status === 'approved' ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-200' : application.payment_status === 'rejected' ? 'border-red-500/20 bg-red-500/10 text-red-200' : 'border-amber-500/20 bg-amber-500/10 text-amber-200'}`}>
+                                    {application.payment_status === 'approved' && 'Элсэлт баталгаажсан — суудал хадгалагдсан.'}
+                                    {application.payment_status === 'pending' && 'Төлбөр хүлээгдэж байна — баримтыг админ шалгаж байна.'}
+                                    {application.payment_status === 'awaiting_receipt' && (
+                                        <>Төлбөр хүлээгдэж байна — суралцагч баримтаа илгээгээгүй байна.{application.payment_due_at ? ` Эцсийн хугацаа: ${new Date(application.payment_due_at).toLocaleString('mn-MN')}` : ''}</>
+                                    )}
+                                    {application.payment_status === 'rejected' && 'Төлбөрийн баримтыг буцаасан — суралцагч дахин илгээх боломжтой.'}
                                 </div>
                             )}
 

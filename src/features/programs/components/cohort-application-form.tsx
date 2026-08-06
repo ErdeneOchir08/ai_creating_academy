@@ -23,7 +23,7 @@ import {
 const statusLabels = {
     draft: 'Ноорог',
     submitted: 'Хянагдаж байна',
-    approved: 'Зөвшөөрсөн',
+    approved: 'Өргөдөл зөвшөөрсөн',
     rejected: 'Буцаасан',
     withdrawn: 'Буцаан татсан',
 } as const

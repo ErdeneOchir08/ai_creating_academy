@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { sendPaymentSubmittedAlert } from '@/lib/telegram/notifications'
 import { validateImageFile } from '@/lib/uploads/image-validation'
+import { removeFailedPaymentReceipt } from '@/lib/uploads/payment-receipt-cleanup'
 
 export async function submitPaymentRequest(courseId: string, formData: FormData) {
     const supabase = await createClient()
@@ -88,8 +89,7 @@ export async function submitPaymentRequest(courseId: string, formData: FormData)
 
     if (paymentError) {
         console.error('Payment request failed:', paymentError.message)
-        const { error: cleanupError } = await supabase.storage.from('payment-receipts').remove([receiptPath])
-        if (cleanupError) console.error('Receipt cleanup failed:', cleanupError.message)
+        await removeFailedPaymentReceipt(receiptPath)
         return { success: false, error: paymentError.code === '23505'
             ? 'Энэ хичээлийн төлбөрийн хүсэлт аль хэдийн хянагдаж байна.'
             : 'Төлбөрийн хүсэлтийг илгээж чадсангүй. Дахин оролдоно уу.' }

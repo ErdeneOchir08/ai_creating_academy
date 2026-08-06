@@ -45,3 +45,21 @@ export async function sendPaymentSubmittedAlert(input: { studentName: string; co
     if (input.adminUrl) lines.push(input.adminUrl)
     return sendTelegramMessage(lines.join('\n'))
 }
+
+export async function sendCohortPaymentSubmittedAlert(input: {
+    studentName: string
+    programName: string
+    cohortName: string
+    adminUrl?: string
+}) {
+    const lines = [
+        '🔔 Шинэ элсэлтийн төлбөр',
+        `Суралцагч: ${input.studentName}`,
+        `Хөтөлбөр: ${input.programName}`,
+        `Ээлж: ${input.cohortName}`,
+        'Төлбөрийн баримтыг админ хэсгээс шалгана уу.',
+    ]
+
+    if (input.adminUrl) lines.push(input.adminUrl)
+    return sendTelegramMessage(lines.join('\n'))
+}

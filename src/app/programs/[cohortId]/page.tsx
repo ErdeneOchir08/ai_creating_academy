@@ -8,6 +8,8 @@ import { ApprovedContractSnapshot } from '@/features/programs/components/approve
 import { CohortApplicationEditor } from '@/features/programs/components/cohort-application-form'
 import { getMyApprovedContractSnapshot } from '@/features/programs/queries/approved-contract-snapshot-query'
 import { getUlaanbaatarDate } from '@/features/programs/domain/contract-signing'
+import { getMyCohortPaymentState } from '@/features/payments/actions/cohort-payment-actions'
+import { CohortPaymentPanel } from '@/features/payments/components/cohort-payment-panel'
 
 const deliveryLabels = { online: 'Цахим', offline: 'Танхим', hybrid: 'Хосолсон' } as const
 
@@ -20,12 +22,15 @@ export default async function ProgramApplicationPage({ params }: { params: Promi
     if (!cohort) notFound()
 
     const { data: { user } } = await supabase.auth.getUser()
-    const [profileResult, contractSnapshot] = user
+    const [profileResult, contractSnapshot, paymentState] = user
         ? await Promise.all([
             supabase.from('profiles').select('display_name').eq('id', user.id).maybeSingle(),
             getMyApprovedContractSnapshot(cohortId),
+            cohort.my_application?.status === 'approved'
+                ? getMyCohortPaymentState(cohort.my_application.id)
+                : Promise.resolve(null),
         ])
-        : [{ data: null }, null] as const
+        : [{ data: null }, null, null] as const
     const profile = profileResult.data
 
     return (
@@ -67,6 +72,11 @@ export default async function ProgramApplicationPage({ params }: { params: Promi
                             {contractSnapshot && (
                                 <div className="mt-6">
                                     <ApprovedContractSnapshot snapshot={contractSnapshot} />
+                                </div>
+                            )}
+                            {paymentState && (
+                                <div className="mt-6">
+                                    <CohortPaymentPanel state={paymentState} />
                                 </div>
                             )}
                         </div>

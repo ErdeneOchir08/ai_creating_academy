@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
     assertCohortTransition,
+    validateCohortPaymentDueDays,
     validateTrainingCohortInput,
     validateTrainingProgramInput,
 } from './training-program'
@@ -11,6 +12,7 @@ const validCohort = {
     contractVersionId: '',
     capacity: '20',
     tuitionAmountMnt: '450000',
+    paymentDueDays: '3',
     paymentPlan: '2 хувааж төлнө',
     scheduleSummary: 'Бямба, Ням',
     location: 'Улаанбаатар',
@@ -27,8 +29,15 @@ describe('training program validation', () => {
     })
 
     it('normalizes optional cohort values', () => {
-        expect(validateTrainingCohortInput({ ...validCohort, capacity: '', tuitionAmountMnt: '' }))
-            .toMatchObject({ capacity: null, tuitionAmountMnt: null, contractVersionId: null })
+        expect(validateTrainingCohortInput({ ...validCohort, capacity: '', tuitionAmountMnt: '', paymentDueDays: '' }))
+            .toMatchObject({ capacity: null, tuitionAmountMnt: null, paymentDueDays: null, contractVersionId: null })
+    })
+
+    it('requires a positive whole-number payment deadline when configured', () => {
+        expect(validateCohortPaymentDueDays('5')).toBe(5)
+        expect(validateCohortPaymentDueDays('')).toBeNull()
+        expect(() => validateCohortPaymentDueDays('0')).toThrow('0-ээс их')
+        expect(() => validateCohortPaymentDueDays('1.5')).toThrow()
     })
 
     it('rejects an invalid registration window', () => {

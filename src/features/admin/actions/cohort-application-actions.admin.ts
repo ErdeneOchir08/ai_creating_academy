@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { sendCohortApplicationDecisionEmail } from '@/lib/email/cohort-status'
 import {
     parseAdminApprovedApplicationContractSnapshot,
     type CohortApplicationStatus,
@@ -29,6 +30,7 @@ type RawApplication = {
     signature_statement: string | null
     signature_statement_version: string | null
     reviewed_at: string | null
+    payment_due_at: string | null
     rejection_reason: string | null
     created_at: string
     updated_at: string
@@ -60,6 +62,7 @@ export type AdminCohortApplication = Omit<RawApplication, 'applicant' | 'cohort'
         created_at: string
         unresolved_variable_keys: string[]
     } | null
+    payment_status: 'not_required' | 'awaiting_receipt' | 'pending' | 'rejected' | 'approved'
 }
 
 function first<T>(value: Relation<T>) {
@@ -93,7 +96,7 @@ export async function getAdminCohortApplications() {
                 signer_registration_number, signer_relationship,
                 submitted_at, contract_acknowledged_at, signed_at, signature_method,
                 signer_email_verified_at, signature_statement, signature_statement_version, reviewed_at,
-                rejection_reason, created_at, updated_at,
+                rejection_reason, payment_due_at, created_at, updated_at,
                 applicant:profiles!cohort_applications_applicant_user_id_fkey ( display_name ),
                 cohort:training_cohorts!cohort_applications_cohort_id_fkey (
                     id, name, tuition_amount_mnt,
@@ -115,14 +118,53 @@ export async function getAdminCohortApplications() {
         throw new Error('Элсэлтийн өргөдлүүдийг уншиж чадсангүй.')
     }
 
-    const applications = ((applicationsResult.data ?? []) as unknown as RawApplication[]).map((application) => {
+    const rawApplications = (applicationsResult.data ?? []) as unknown as RawApplication[]
+    const approvedApplicationIds = rawApplications.filter((application) => application.status === 'approved').map((application) => application.id)
+    const [paymentsResult, enrollmentsResult] = approvedApplicationIds.length > 0
+        ? await Promise.all([
+            supabase
+                .from('cohort_payment_requests')
+                .select('application_id, status, created_at')
+                .in('application_id', approvedApplicationIds)
+                .order('created_at', { ascending: false }),
+            supabase
+                .from('cohort_enrollments')
+                .select('application_id')
+                .eq('status', 'active')
+                .in('application_id', approvedApplicationIds),
+        ])
+        : [{ data: [], error: null }, { data: [], error: null }]
+
+    if (paymentsResult.error || enrollmentsResult.error) {
+        console.error('Unable to load cohort application payment state:', paymentsResult.error?.message ?? enrollmentsResult.error?.message)
+        throw new Error('Элсэлтийн төлбөрийн төлөвийг уншиж чадсангүй.')
+    }
+
+    const latestPaymentByApplication = new Map<string, 'pending' | 'approved' | 'rejected'>()
+    for (const payment of paymentsResult.data ?? []) {
+        if (!latestPaymentByApplication.has(payment.application_id)) {
+            latestPaymentByApplication.set(payment.application_id, payment.status as 'pending' | 'approved' | 'rejected')
+        }
+    }
+    const enrolledApplicationIds = new Set((enrollmentsResult.data ?? []).map((enrollment) => enrollment.application_id))
+
+    const applications = rawApplications.map((application) => {
         const cohort = first(application.cohort)
+        const tuition = cohort?.tuition_amount_mnt ?? null
+        const paymentStatus: AdminCohortApplication['payment_status'] = application.status !== 'approved'
+            ? 'not_required'
+            : enrolledApplicationIds.has(application.id)
+                ? 'approved'
+                : tuition === 0
+                    ? 'approved'
+                    : latestPaymentByApplication.get(application.id) ?? 'awaiting_receipt'
         return {
             ...application,
             applicant: first(application.applicant),
             cohort: cohort ? { ...cohort, program: first(cohort.program) } : null,
             contract: first(application.contract),
             contract_snapshot: first(application.contract_snapshot),
+            payment_status: paymentStatus,
         }
     }) as AdminCohortApplication[]
 
@@ -200,7 +242,44 @@ export async function reviewCohortApplication(applicationId: string, decision: '
         throw new Error('Өргөдлийн шийдвэрийг хадгалж чадсангүй.')
     }
 
+    const { data: application, error: recipientError } = await supabase
+        .from('cohort_applications')
+        .select(`
+            contact_email, payment_due_at, answers,
+            cohort:training_cohorts!cohort_applications_cohort_id_fkey (
+                id, name, tuition_amount_mnt,
+                program:training_programs!training_cohorts_program_id_fkey ( name )
+            )
+        `)
+        .eq('id', applicationId)
+        .maybeSingle()
+
+    let notificationError: string | undefined
+    const cohort = application ? first(application.cohort) : null
+    const program = cohort ? first(cohort.program) : null
+    if (recipientError || !application || !cohort || !program) {
+        console.error('Application decision saved but recipient data could not be loaded:', recipientError?.message)
+        notificationError = 'Шийдвэр хадгалагдсан боловч имэйл мэдээллийг уншиж чадсангүй.'
+    } else {
+        const notification = await sendCohortApplicationDecisionEmail({
+            to: application.contact_email,
+            recipientName: application.answers?.student_name || 'Суралцагч',
+            programName: program.name,
+            cohortName: cohort.name,
+            cohortId: cohort.id,
+            decision,
+            amountMnt: cohort.tuition_amount_mnt,
+            paymentDueAt: application.payment_due_at,
+            rejectionReason,
+        })
+        if (!notification.sent) notificationError = notification.error
+    }
+
     revalidatePath('/admin/applications')
     revalidatePath('/programs')
-    return { success: decision === 'approved' ? 'Өргөдлийг зөвшөөрлөө.' : 'Өргөдлийг шалтгаантайгаар буцаалаа.' }
+    if (cohort) revalidatePath(`/programs/${cohort.id}`)
+    return {
+        success: decision === 'approved' ? 'Өргөдлийг зөвшөөрлөө.' : 'Өргөдлийг шалтгаантайгаар буцаалаа.',
+        notificationError,
+    }
 }
