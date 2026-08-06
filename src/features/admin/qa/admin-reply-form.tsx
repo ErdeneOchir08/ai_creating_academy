@@ -62,7 +62,7 @@ export function AdminReplyForm({
                 type="submit"
                 size="icon"
                 disabled={!reply.trim() || isSubmitting}
-                className="shrink-0 bg-indigo-600 hover:bg-indigo-700 h-12 w-12 rounded-xl"
+                className="shrink-0 bg-indigo-600 text-white hover:bg-indigo-700 h-12 w-12 rounded-xl"
             >
                 <Send className="h-5 w-5" />
             </Button>

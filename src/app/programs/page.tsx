@@ -51,7 +51,7 @@ export default async function ProgramsPage() {
                                         <p className="text-xs text-zinc-500">Сургалтын төлбөр</p>
                                         <p className="mt-1 text-xl font-semibold text-emerald-400">{cohort.tuition_amount_mnt == null ? 'Тодорхойгүй' : `₮ ${cohort.tuition_amount_mnt.toLocaleString()}`}</p>
                                     </div>
-                                    <Button asChild className="bg-indigo-600 hover:bg-indigo-700">
+                                    <Button asChild className="bg-indigo-600 text-white hover:bg-indigo-700">
                                         <Link href={`/programs/${cohort.cohort_id}`}>Дэлгэрэнгүй</Link>
                                     </Button>
                                 </div>

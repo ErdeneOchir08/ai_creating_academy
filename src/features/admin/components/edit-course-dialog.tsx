@@ -56,7 +56,7 @@ export function EditCourseDialog({ course }: { course: CourseProps }) {
                     Дэлгэрэнгүйг засах
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px] bg-zinc-950 border-zinc-800 text-white">
+            <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-[500px] bg-zinc-950 border-zinc-800 text-white">
                 <DialogHeader>
                     <DialogTitle>Хичээл засах</DialogTitle>
                     <DialogDescription className="text-zinc-400">

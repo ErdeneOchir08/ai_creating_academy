@@ -135,7 +135,7 @@ export default async function ProgressDashboardPage() {
                         <Flame className="h-12 w-12 text-zinc-600 mx-auto mb-4 opacity-50" />
                         <h3 className="text-lg font-medium text-white mb-2">Таны аялал эндээс эхэлнэ</h3>
                         <p className="text-zinc-400 mb-6">Мастеркласст элсэн орж эхний XP-ээ цуглуулаарай!</p>
-                        <Button asChild className="bg-indigo-600 hover:bg-indigo-700">
+                        <Button asChild className="bg-indigo-600 text-white hover:bg-indigo-700">
                             <Link href="/#courses">Каталог үзэх</Link>
                         </Button>
                     </div>

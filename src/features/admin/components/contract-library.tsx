@@ -77,7 +77,7 @@ export function ContractLibrary({ templates }: { templates: ContractTemplateSumm
                         <input type="hidden" name="change_summary" value="" />
                         <div className="flex flex-col gap-3 md:col-span-2 md:flex-row md:items-center md:justify-between">
                             {error ? <p className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</p> : <span />}
-                            <Button disabled={isCreating} className="bg-indigo-600 hover:bg-indigo-700">
+                            <Button disabled={isCreating} className="bg-indigo-600 text-white hover:bg-indigo-700">
                                 <FilePlus2 className="mr-2 h-4 w-4" />{isCreating ? 'Үүсгэж байна…' : 'Ноорог үүсгэх'}
                             </Button>
                         </div>

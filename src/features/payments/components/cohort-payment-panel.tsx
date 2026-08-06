@@ -101,7 +101,7 @@ export function CohortPaymentPanel({ state }: { state: MyCohortPaymentState }) {
                         <input name="receipt" type="file" accept="image/jpeg,image/png,image/webp" required className="block w-full rounded-lg border border-zinc-700 bg-zinc-900 p-3 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-indigo-600 file:px-3 file:py-2 file:text-white" />
                         <span className="block text-xs text-zinc-600">JPEG, PNG эсвэл WebP зураг · 10 MB хүртэл</span>
                     </label>
-                    <Button type="submit" disabled={pending} className="bg-indigo-600 hover:bg-indigo-700">
+                    <Button type="submit" disabled={pending} className="bg-indigo-600 text-white hover:bg-indigo-700">
                         {pending ? 'Илгээж байна…' : 'Баримт илгээх'}
                     </Button>
                     {error && <p role="alert" className="text-sm text-red-400">{error}</p>}

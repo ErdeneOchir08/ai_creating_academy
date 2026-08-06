@@ -182,7 +182,7 @@ export function ContractTemplateEditor({ template, variables }: { template: Cont
             ) : (
                 <Card className="border-zinc-800 bg-zinc-950 text-white">
                     <CardHeader><CardTitle>Засварлах ноорог байхгүй</CardTitle><CardDescription className="text-zinc-500">Нийтлэгдсэн эсвэл ашиглалтаас гарсан хамгийн сүүлийн хувилбараас шинэ ноорог үүсгэнэ.</CardDescription></CardHeader>
-                    <CardContent><Button disabled={pendingAction !== null || template.is_archived} onClick={() => void run('new-draft', () => createNextContractDraft(template.id), 'Шинэ ноорог хувилбар үүсгэлээ.')} className="bg-indigo-600 hover:bg-indigo-700"><FilePlus2 className="mr-2 h-4 w-4" />Шинэ хувилбарын ноорог үүсгэх</Button></CardContent>
+                    <CardContent><Button disabled={pendingAction !== null || template.is_archived} onClick={() => void run('new-draft', () => createNextContractDraft(template.id), 'Шинэ ноорог хувилбар үүсгэлээ.')} className="bg-indigo-600 text-white hover:bg-indigo-700"><FilePlus2 className="mr-2 h-4 w-4" />Шинэ хувилбарын ноорог үүсгэх</Button></CardContent>
                 </Card>
             )}
 

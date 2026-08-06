@@ -62,7 +62,7 @@ export function CategoryManager({ initialCategories }: { initialCategories: Cate
         </header>
         <form onSubmit={addCategory} className="flex gap-3 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
             <Input value={name} onChange={(event) => setName(event.target.value)} maxLength={60} placeholder="Жишээ: AI, Программчлал, Хүүхэд" className="border-zinc-700 bg-zinc-900" />
-            <Button disabled={pendingId === 'new'} className="shrink-0 bg-indigo-600 hover:bg-indigo-700"><Plus className="mr-2 h-4 w-4" />Нэмэх</Button>
+            <Button disabled={pendingId === 'new'} className="shrink-0 bg-indigo-600 text-white hover:bg-indigo-700"><Plus className="mr-2 h-4 w-4" />Нэмэх</Button>
         </form>
         {error && <p className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
         <div className="space-y-3">

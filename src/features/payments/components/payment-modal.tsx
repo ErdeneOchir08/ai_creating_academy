@@ -76,7 +76,7 @@ export function PaymentModal({ courseId, coursePrice, paymentInstructions, isTes
                 <p className="text-xs text-zinc-500">JPG, PNG эсвэл WebP; хамгийн ихдээ 10 MB.</p>
               </div>
               {errorMessage && <p className="text-sm font-medium text-red-400">{errorMessage}</p>}
-              <Button type="submit" className="h-10 w-full bg-indigo-600 hover:bg-indigo-700" disabled={loading || !isConfigured}>{loading ? 'Илгээж байна…' : 'Баримт илгээх'}</Button>
+              <Button type="submit" className="h-10 w-full bg-indigo-600 text-white hover:bg-indigo-700" disabled={loading || !isConfigured}>{loading ? 'Илгээж байна…' : 'Баримт илгээх'}</Button>
             </form>
           </>
         )}

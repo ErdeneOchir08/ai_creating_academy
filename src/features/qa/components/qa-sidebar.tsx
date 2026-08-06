@@ -35,6 +35,6 @@ export function QASidebar({ courseId, lessonId, initialData }: { courseId: strin
             </article>)}
         </div>
         <form onSubmit={submit} className="mt-4 border-t border-zinc-800 pt-4"><textarea value={content} onChange={event => setContent(event.target.value)} maxLength={2000} placeholder="Асуултаа бичнэ үү..." className="min-h-24 w-full rounded-xl border border-zinc-700 bg-zinc-900 p-3 text-sm outline-none focus:border-indigo-500" disabled={pending} />
-            {message && <p className="mt-2 text-xs text-zinc-400">{message}</p>}<button type="submit" disabled={pending || !content.trim()} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold hover:bg-indigo-500 disabled:opacity-50"><Send className="h-4 w-4" />{pending ? 'Илгээж байна...' : 'Асуулт илгээх'}</button></form>
+            {message && <p className="mt-2 text-xs text-zinc-400">{message}</p>}<button type="submit" disabled={pending || !content.trim()} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-50"><Send className="h-4 w-4" />{pending ? 'Илгээж байна...' : 'Асуулт илгээх'}</button></form>
     </div>
 }

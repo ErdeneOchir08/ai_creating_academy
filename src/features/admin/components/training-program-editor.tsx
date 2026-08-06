@@ -331,7 +331,7 @@ export function TrainingProgramEditor({
                         <label className="space-y-2 text-sm text-zinc-300"><span>Тайлбар</span><Textarea name="description" maxLength={2_000} defaultValue={program.description} className="min-h-24 border-zinc-700 bg-zinc-900" /></label>
                         <div className="flex flex-wrap justify-between gap-3">
                             {program.cohorts.length === 0 ? <Button type="button" variant="ghost" disabled={!!pending} onClick={() => void removeProgram()} className="text-zinc-400 hover:text-red-400"><Trash2 className="mr-2 h-4 w-4" />Устгах</Button> : <span />}
-                            <Button disabled={!!pending} className="bg-indigo-600 hover:bg-indigo-700"><PencilLine className="mr-2 h-4 w-4" />Хадгалах</Button>
+                            <Button disabled={!!pending} className="bg-indigo-600 text-white hover:bg-indigo-700"><PencilLine className="mr-2 h-4 w-4" />Хадгалах</Button>
                         </div>
                     </form>
                 </CardContent>
@@ -493,7 +493,7 @@ export function TrainingProgramEditor({
                         {!contracts.some((contract) => contract.is_assignable) && <p className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">Нийтлэгдсэн идэвхтэй гэрээ алга. Гэрээ шаардлагатай элсэлт нээх бол эхлээд <Link href="/admin/contracts" className="underline">гэрээний сангаас</Link> хувилбар нийтэлнэ үү.</p>}
                         <form onSubmit={addCohort} className="space-y-5">
                             <CohortFields key={program.cohorts.length} contracts={contracts} courses={courses} />
-                            <div className="flex justify-end"><Button disabled={!!pending} className="bg-indigo-600 hover:bg-indigo-700"><Plus className="mr-2 h-4 w-4" />{pending === 'new-cohort' ? 'Үүсгэж байна…' : 'Ноорог үүсгэх'}</Button></div>
+                            <div className="flex justify-end"><Button disabled={!!pending} className="bg-indigo-600 text-white hover:bg-indigo-700"><Plus className="mr-2 h-4 w-4" />{pending === 'new-cohort' ? 'Үүсгэж байна…' : 'Ноорог үүсгэх'}</Button></div>
                         </form>
                     </div>
                 </details>

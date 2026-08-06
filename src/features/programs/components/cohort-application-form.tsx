@@ -544,7 +544,7 @@ export function CohortApplicationEditor({
                         <Button
                             type="button"
                             disabled={pending || !signerRole || !hasRequiredStudentIdentity}
-                            className="bg-indigo-600 hover:bg-indigo-700"
+                            className="bg-indigo-600 text-white hover:bg-indigo-700"
                             onClick={() => {
                                 if (formRef.current?.reportValidity()) submitContract()
                             }}
