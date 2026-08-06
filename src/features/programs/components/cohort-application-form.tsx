@@ -162,6 +162,10 @@ export function CohortApplicationEditor({
         startTransition(async () => {
             try {
                 const result = await submitCohortApplication(cohort.cohort_id, formData())
+                if (result.status === 'error') {
+                    setError(result.error)
+                    return
+                }
                 setMessage(result.success)
                 if (result.status === 'verification_required') {
                     setVerification({

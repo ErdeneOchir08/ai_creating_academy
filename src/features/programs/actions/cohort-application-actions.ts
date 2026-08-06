@@ -21,7 +21,6 @@ import {
 import {
     CONTRACT_OTP_COOKIE,
     CONTRACT_OTP_EXPIRY_MINUTES,
-    CONTRACT_OTP_RESEND_SECONDS,
     createContractSigningChallenge,
     verifyContractSigningChallenge,
 } from '@/features/programs/server/contract-signing-challenge'
@@ -45,6 +44,19 @@ type ContractSubmissionResult =
         maskedEmail: string
         expiresInMinutes: number
     }
+    | { status: 'error'; error: string }
+
+const otpReservationSchema = z.object({
+    reserved: z.boolean(),
+    reserved_at: z.string().datetime({ offset: true }),
+    retry_after_seconds: z.number().int().nonnegative(),
+})
+
+class ContractSubmissionError extends Error {}
+
+function failContractSubmission(message: string): never {
+    throw new ContractSubmissionError(message)
+}
 
 function assertUuid(value: string, fieldName: string) {
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) {
@@ -160,12 +172,12 @@ export async function saveCohortApplicationDraft(cohortId: string, formData: For
     return { success: 'Өргөдлийн ноорог хадгалагдлаа.' }
 }
 
-export async function submitCohortApplication(
+async function submitCohortApplicationInternal(
     cohortId: string,
     formData: FormData,
 ): Promise<ContractSubmissionResult> {
     if (formData.get('contract_accepted') !== 'on') {
-        throw new Error('Гэрээний нөхцөлийг зөвшөөрснөө баталгаажуулна уу.')
+        failContractSubmission('Гэрээний нөхцөлийг зөвшөөрснөө баталгаажуулна уу.')
     }
 
     const signingInput = signerDraftSchema.safeParse({
@@ -177,7 +189,7 @@ export async function submitCohortApplication(
         signerRelationship: optionalFormString(formData, 'signer_relationship', 120),
     })
     if (!signingInput.success) {
-        throw new Error('Суралцагч болон гэрээ зөвшөөрөх хүний мэдээллийг бүрэн, зөв оруулна уу.')
+        failContractSubmission('Суралцагч болон гэрээ зөвшөөрөх хүний мэдээллийг бүрэн, зөв оруулна уу.')
     }
     getSignerRole(signingInput.data.studentBirthDate, getUlaanbaatarDate())
 
@@ -187,7 +199,7 @@ export async function submitCohortApplication(
         supabase.auth.getUser(),
         supabase.auth.getClaims(),
     ])
-    if (!user) throw new Error('Гэрээ зөвшөөрөхийн тулд дахин нэвтэрнэ үү.')
+    if (!user) failContractSubmission('Гэрээ зөвшөөрөхийн тулд дахин нэвтэрнэ үү.')
 
     const sessionId = typeof claimsResult.data?.claims?.session_id === 'string'
         ? claimsResult.data.claims.session_id
@@ -204,7 +216,7 @@ export async function submitCohortApplication(
     )
     if (policyError) {
         console.error('Unable to determine contract verification policy:', policyError.message)
-        throw new Error('Гарын үсгийн баталгаажуулалтыг шалгаж чадсангүй.')
+        failContractSubmission('Гарын үсгийн баталгаажуулалтыг шалгаж чадсангүй.')
     }
     const policy = verificationPolicySchema.parse(rawPolicy)
     const cookieStore = await cookies()
@@ -219,12 +231,12 @@ export async function submitCohortApplication(
 
         if (verificationCode) {
             if (!/^\d{6}$/.test(verificationCode)) {
-                throw new Error('Баталгаажуулах код 6 оронтой байна.')
+                failContractSubmission('Баталгаажуулах код 6 оронтой байна.')
             }
 
             const challengeToken = cookieStore.get(CONTRACT_OTP_COOKIE)?.value
             if (!challengeToken) {
-                throw new Error('Баталгаажуулах кодын хугацаа дууссан. Шинэ код авна уу.')
+                failContractSubmission('Баталгаажуулах кодын хугацаа дууссан. Шинэ код авна уу.')
             }
 
             const verification = verifyContractSigningChallenge(
@@ -247,12 +259,12 @@ export async function submitCohortApplication(
                 }
 
                 if (verification.reason === 'expired') {
-                    throw new Error('Баталгаажуулах кодын хугацаа дууссан. Шинэ код авна уу.')
+                    failContractSubmission('Баталгаажуулах кодын хугацаа дууссан. Шинэ код авна уу.')
                 }
                 if (verification.reason === 'attempts_exceeded') {
-                    throw new Error('Кодыг олон удаа буруу оруулсан. Шинэ код авна уу.')
+                    failContractSubmission('Кодыг олон удаа буруу оруулсан. Шинэ код авна уу.')
                 }
-                throw new Error('Баталгаажуулах код буруу байна.')
+                failContractSubmission('Баталгаажуулах код буруу байна.')
             }
 
             await finalizeContractSignature(admin, applicationId, user.id, 'email_otp')
@@ -263,7 +275,6 @@ export async function submitCohortApplication(
                 .select(`
                     signer_name,
                     signer_email,
-                    signature_verification_sent_at,
                     cohort:training_cohorts!cohort_applications_cohort_id_fkey (
                         program:training_programs!training_cohorts_program_id_fkey ( name )
                     )
@@ -274,34 +285,26 @@ export async function submitCohortApplication(
                 .maybeSingle()
 
             if (applicationError || !application) {
-                throw new Error('Баталгаажуулах мэдээллийг бэлтгэж чадсангүй.')
-            }
-
-            const previousSentAt = application.signature_verification_sent_at
-                ? new Date(application.signature_verification_sent_at).getTime()
-                : 0
-            const remainingSeconds = Math.ceil(
-                (previousSentAt + CONTRACT_OTP_RESEND_SECONDS * 1_000 - Date.now()) / 1_000,
-            )
-            if (remainingSeconds > 0) {
-                throw new Error(`Шинэ код авахын өмнө ${remainingSeconds} секунд хүлээнэ үү.`)
+                failContractSubmission('Баталгаажуулах мэдээллийг бэлтгэж чадсангүй.')
             }
 
             const challenge = createContractSigningChallenge(identity, serviceSecret)
-            const sentAt = new Date().toISOString()
-            const retryBefore = new Date(Date.now() - CONTRACT_OTP_RESEND_SECONDS * 1_000).toISOString()
-            const { data: markedApplication, error: markError } = await admin
-                .from('cohort_applications')
-                .update({ signature_verification_sent_at: sentAt })
-                .eq('id', applicationId)
-                .eq('applicant_user_id', user.id)
-                .eq('status', 'draft')
-                .or(`signature_verification_sent_at.is.null,signature_verification_sent_at.lte.${retryBefore}`)
-                .select('id')
-                .maybeSingle()
-            if (markError) throw new Error('Баталгаажуулах кодын хүсэлтийг хадгалж чадсангүй.')
-            if (!markedApplication) {
-                throw new Error(`Шинэ код авахын өмнө ${CONTRACT_OTP_RESEND_SECONDS} секунд хүлээнэ үү.`)
+            const { data: rawReservation, error: reservationError } = await supabase.rpc(
+                'reserve_cohort_signature_verification',
+                { p_application_id: applicationId },
+            )
+            if (reservationError) {
+                console.error('Unable to reserve contract verification send:', reservationError.message)
+                failContractSubmission('Баталгаажуулах кодын хүсэлтийг хадгалж чадсангүй.')
+            }
+
+            const reservation = otpReservationSchema.parse(
+                Array.isArray(rawReservation) ? rawReservation[0] : rawReservation,
+            )
+            if (!reservation.reserved) {
+                failContractSubmission(
+                    `Шинэ код авахын өмнө ${reservation.retry_after_seconds} секунд хүлээнэ үү.`,
+                )
             }
 
             const emailResult = await sendContractSigningCodeEmail({
@@ -312,12 +315,17 @@ export async function submitCohortApplication(
                 expiresInMinutes: CONTRACT_OTP_EXPIRY_MINUTES,
             })
             if (!emailResult.sent) {
-                await admin
-                    .from('cohort_applications')
-                    .update({ signature_verification_sent_at: null })
-                    .eq('id', applicationId)
-                    .eq('signature_verification_sent_at', sentAt)
-                throw new Error(emailResult.error)
+                const { error: releaseError } = await supabase.rpc(
+                    'release_cohort_signature_verification',
+                    {
+                        p_application_id: applicationId,
+                        p_reserved_at: reservation.reserved_at,
+                    },
+                )
+                if (releaseError) {
+                    console.error('Unable to release contract verification reservation:', releaseError.message)
+                }
+                failContractSubmission(emailResult.error)
             }
 
             cookieStore.set(CONTRACT_OTP_COOKIE, challenge.token, {
@@ -345,6 +353,21 @@ export async function submitCohortApplication(
     return { status: 'submitted', success: 'Гэрээг зөвшөөрч, өргөдлийг амжилттай илгээлээ.' }
 }
 
+export async function submitCohortApplication(
+    cohortId: string,
+    formData: FormData,
+): Promise<ContractSubmissionResult> {
+    try {
+        return await submitCohortApplicationInternal(cohortId, formData)
+    } catch (cause) {
+        const message = cause instanceof ContractSubmissionError
+            ? cause.message
+            : 'Гэрээг зөвшөөрч чадсангүй. Дахин оролдоно уу.'
+        console.error('Unable to submit cohort application:', cause)
+        return { status: 'error', error: message }
+    }
+}
+
 async function finalizeContractSignature(
     admin: ReturnType<typeof createAdminClient>,
     applicationId: string,
@@ -363,15 +386,15 @@ async function finalizeContractSignature(
     console.error('Unable to finalize cohort contract signature:', error.message)
 
     if (error.message.includes('student age')) {
-        throw new Error('Суралцагчийн нас болон гарын үсэг зурах талын мэдээлэл тохирохгүй байна.')
+        failContractSubmission('Суралцагчийн нас болон гарын үсэг зурах талын мэдээлэл тохирохгүй байна.')
     }
     if (error.message.includes('adult signer name')) {
-        throw new Error('18 нас хүрсэн суралцагчийн гарын үсгийн нэр суралцагчийн нэртэй таарах ёстой.')
+        failContractSubmission('18 нас хүрсэн суралцагчийн гарын үсгийн нэр суралцагчийн нэртэй таарах ёстой.')
     }
     if (error.message.includes('incomplete') || error.message.includes('missing')) {
-        throw new Error('Гэрээ байгуулахад шаардлагатай мэдээллийг бүрэн оруулна уу.')
+        failContractSubmission('Гэрээ байгуулахад шаардлагатай мэдээллийг бүрэн оруулна уу.')
     }
-    throw new Error('Гэрээг зөвшөөрч, өргөдлийг илгээж чадсангүй.')
+    failContractSubmission('Гэрээг зөвшөөрч, өргөдлийг илгээж чадсангүй.')
 }
 
 export async function withdrawCohortApplication(applicationId: string, cohortId: string) {
