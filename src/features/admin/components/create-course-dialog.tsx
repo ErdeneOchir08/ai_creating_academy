@@ -46,7 +46,7 @@ export function CreateCourseDialog() {
                     Шинэ хичээл үүсгэх
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-[500px] border-zinc-800 bg-zinc-950 text-white">
+            <DialogContent className="sm:max-w-[640px] border-zinc-800 bg-zinc-950 text-white">
                 <DialogHeader>
                     <DialogTitle>Шинэ хичээл үүсгэх</DialogTitle>
                     <DialogDescription className="text-zinc-400">

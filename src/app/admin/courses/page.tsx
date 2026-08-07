@@ -19,8 +19,8 @@ export default async function AdminCoursesPage() {
     const courses = await getAllAdminCourses()
 
     return (
-        <div className="p-8">
-            <header className="flex items-start justify-between mb-8">
+        <div className="p-5 md:p-8">
+            <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                     <h1 className="text-3xl font-bold text-white mb-2">Хичээлүүд</h1>
                     <p className="text-zinc-400">Хичээлийн каталог болон хичээлийн бүтцийг удирдах.</p>

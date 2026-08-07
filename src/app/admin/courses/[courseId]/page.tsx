@@ -38,16 +38,16 @@ export default async function AdminCourseDetailsPage({
     const isReadyForPublication = lessons.length > 0 && videoLessonCount > 0
 
     return (
-        <div className="p-8 max-w-5xl mx-auto space-y-8">
-            <header className="flex items-center gap-4">
-                <Button variant="outline" size="icon" className="h-10 w-10 border-zinc-800 bg-zinc-900 text-white hover:bg-zinc-800" asChild>
+        <div className="mx-auto max-w-5xl space-y-8 p-5 sm:p-8">
+            <header className="flex items-start gap-3 sm:items-center sm:gap-4">
+                <Button variant="outline" size="icon" className="h-10 w-10 shrink-0 border-zinc-800 bg-zinc-900 text-white hover:bg-zinc-800" asChild>
                     <Link href="/admin/courses">
                         <ArrowLeft className="h-4 w-4" />
                     </Link>
                 </Button>
-                <div>
-                    <div className="flex items-center gap-3">
-                        <h1 className="text-3xl font-bold text-white mb-1">{course.title}</h1>
+                <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                        <h1 className="mb-1 break-words text-2xl font-bold text-white sm:text-3xl">{course.title}</h1>
                         {course.published ? (
                             <Badge className="bg-emerald-500/10 text-emerald-400">Нийтлэгдсэн</Badge>
                         ) : (
