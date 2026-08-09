@@ -99,8 +99,6 @@ async function OfferingCheckoutPage({
 }) {
     if (!checkout) notFound()
     const returnPath = `/programs/${encodeURIComponent(checkout.offering_id)}`
-    const availableSeats = checkout.available_seats
-
     return (
         <div className="min-h-[calc(100vh-64px)] bg-zinc-950 px-4 py-10 text-white">
             <div className="mx-auto max-w-6xl">
@@ -117,7 +115,8 @@ async function OfferingCheckoutPage({
                             startsOn={checkout.starts_on}
                             endsOn={checkout.ends_on}
                             location={checkout.location}
-                            availableSeats={availableSeats}
+                            classSize={checkout.capacity}
+                            classSizeIsLimit={false}
                             schedule={checkout.schedule_summary}
                         />
 
@@ -188,14 +187,16 @@ function OfferingFacts({
     startsOn,
     endsOn,
     location,
-    availableSeats,
+    classSize,
+    classSizeIsLimit,
     schedule,
 }: {
     deliveryMode: 'online' | 'offline' | 'hybrid'
     startsOn: string | null
     endsOn: string | null
     location: string
-    availableSeats: number | null
+    classSize: number | null
+    classSizeIsLimit: boolean
     schedule: string
 }) {
     return (
@@ -203,7 +204,7 @@ function OfferingFacts({
             <p className="flex items-start gap-3"><Monitor className="mt-0.5 h-4 w-4 text-indigo-400" /><span><span className="block text-xs text-zinc-500">Хэлбэр</span>{deliveryLabels[deliveryMode]}</span></p>
             <p className="flex items-start gap-3"><CalendarDays className="mt-0.5 h-4 w-4 text-indigo-400" /><span><span className="block text-xs text-zinc-500">Хугацаа</span>{startsOn ?? 'Тодорхойгүй'} – {endsOn ?? 'Тодорхойгүй'}</span></p>
             {location && <p className="flex items-start gap-3"><MapPin className="mt-0.5 h-4 w-4 text-indigo-400" /><span><span className="block text-xs text-zinc-500">Байршил</span>{location}</span></p>}
-            {availableSeats !== null && <p className="flex items-start gap-3"><Users className="mt-0.5 h-4 w-4 text-indigo-400" /><span><span className="block text-xs text-zinc-500">Үлдсэн суудал</span>{availableSeats}</span></p>}
+            {classSize !== null && <p className="flex items-start gap-3"><Users className="mt-0.5 h-4 w-4 text-indigo-400" /><span><span className="block text-xs text-zinc-500">{classSizeIsLimit ? 'Үлдсэн суудал' : 'Ангийн хэмжээ'}</span>{classSizeIsLimit ? classSize : `${classSize} суралцагч`}</span></p>}
             {schedule && <p className="sm:col-span-2"><span className="block text-xs text-zinc-500">Хуваарь</span>{schedule}</p>}
         </div>
     )
@@ -235,7 +236,8 @@ function LegacyCohortApplicationPage({
                             startsOn={cohort.starts_on}
                             endsOn={cohort.ends_on}
                             location={cohort.location}
-                            availableSeats={cohort.capacity === null ? null : Math.max(0, cohort.capacity - cohort.approved_count)}
+                            classSize={cohort.capacity === null ? null : Math.max(0, cohort.capacity - cohort.approved_count)}
+                            classSizeIsLimit
                             schedule={cohort.schedule_summary}
                         />
                         <div className="mt-8">

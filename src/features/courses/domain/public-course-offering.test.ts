@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import {
     parseCourseUsesOfferingCheckout,
+    parseOfferingDisplayMetadata,
+    parseOfferingDisplayMetadataItem,
     parsePublicCourseOfferings,
 } from './public-course-offering'
 
@@ -58,5 +60,19 @@ describe('public course offering domain', () => {
         expect(parseCourseUsesOfferingCheckout(true)).toBe(true)
         expect(parseCourseUsesOfferingCheckout(false)).toBe(false)
         expect(() => parseCourseUsesOfferingCheckout('true')).toThrow()
+    })
+
+    it('parses informational class-size metadata independently from seat availability', () => {
+        const metadata = {
+            offering_id: offering.offering_id,
+            display_capacity: '20',
+            configuration_revision: '3',
+        }
+        expect(parseOfferingDisplayMetadata([metadata])[0]).toMatchObject({
+            display_capacity: 20,
+            configuration_revision: 3,
+        })
+        expect(parseOfferingDisplayMetadataItem(metadata)?.display_capacity).toBe(20)
+        expect(parseOfferingDisplayMetadataItem({})).toBeNull()
     })
 })

@@ -9,6 +9,7 @@ import { sendContractSigningCodeEmail } from '@/lib/email/contract-signing-code'
 import { sendOfferingPaymentSubmittedAlert } from '@/lib/telegram/notifications'
 import { validateImageFile } from '@/lib/uploads/image-validation'
 import { removeFailedPaymentReceipt } from '@/lib/uploads/payment-receipt-cleanup'
+import { parseOfferingDisplayMetadataItem } from '@/features/courses/domain/public-course-offering'
 import {
     parseMyOfferingCheckoutStatuses,
     parseOfferingCheckoutForm,
@@ -133,15 +134,29 @@ function refreshOffering(offeringId: string) {
 export async function getOfferingCheckoutForm(offeringId: string) {
     assertUuid(offeringId, 'Элсэлтийн дугаар')
     const supabase = await createClient()
-    const { data, error } = await supabase.rpc('get_course_offering_checkout_form', {
-        p_offering_id: offeringId,
-    })
+    const [checkoutResult, metadataResult] = await Promise.all([
+        supabase.rpc('get_course_offering_checkout_form', { p_offering_id: offeringId }),
+        supabase.rpc('get_course_offering_display_metadata', { p_offering_id: offeringId }),
+    ])
 
-    if (error) {
-        console.error('Unable to load course offering checkout:', error.message)
+    if (checkoutResult.error) {
+        console.error('Unable to load course offering checkout:', checkoutResult.error.message)
         throw new Error('Элсэлтийн мэдээллийг ачаалж чадсангүй.')
     }
-    return data ? parseOfferingCheckoutForm(data) : null
+    if (!checkoutResult.data) return null
+
+    let displayCapacity: number | null = null
+    if (metadataResult.error) {
+        console.error('Unable to load course offering display metadata:', metadataResult.error.message)
+    } else {
+        displayCapacity = parseOfferingDisplayMetadataItem(metadataResult.data)?.display_capacity ?? null
+    }
+
+    return parseOfferingCheckoutForm({
+        ...(checkoutResult.data as Record<string, unknown>),
+        capacity: displayCapacity,
+        available_seats: null,
+    })
 }
 
 export async function getOfferingPaymentConfiguration() {

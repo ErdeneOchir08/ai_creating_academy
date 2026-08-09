@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import {
     parseCourseUsesOfferingCheckout,
+    parseOfferingDisplayMetadata,
     parsePublicCourseOfferings,
     type PublicCourseOffering,
 } from '../domain/public-course-offering'
@@ -23,9 +24,10 @@ export async function getPublicCourseOfferingCheckout(
     courseId: string,
 ): Promise<PublicCourseOfferingCheckout> {
     const supabase = await createClient()
-    const [ownershipResult, offeringsResult] = await Promise.all([
+    const [ownershipResult, offeringsResult, metadataResult] = await Promise.all([
         supabase.rpc('course_uses_offering_checkout', { p_course_id: courseId }),
         supabase.rpc('list_public_course_offerings', { p_course_id: courseId }),
+        supabase.rpc('list_public_course_offering_display_metadata', { p_course_id: courseId }),
     ])
 
     if (ownershipResult.error) {
@@ -51,9 +53,21 @@ export async function getPublicCourseOfferingCheckout(
     }
 
     try {
+        const offerings = parsePublicCourseOfferings(offeringsResult.data, courseId)
+        const metadata = metadataResult.error
+            ? []
+            : parseOfferingDisplayMetadata(metadataResult.data)
+        if (metadataResult.error) {
+            console.error('Unable to load course offering display metadata:', metadataResult.error.message)
+        }
+        const metadataByOffering = new Map(metadata.map((item) => [item.offering_id, item]))
         return {
             usesOfferingCheckout: true,
-            offerings: parsePublicCourseOfferings(offeringsResult.data, courseId),
+            offerings: offerings.map((offering) => ({
+                ...offering,
+                capacity: metadataByOffering.get(offering.offering_id)?.display_capacity ?? null,
+                available_seats: null,
+            })),
             lookupFailed: false,
         }
     } catch (error) {

@@ -21,6 +21,14 @@ export const publicCourseOfferingSchema = z.object({
 
 export type PublicCourseOffering = z.infer<typeof publicCourseOfferingSchema>
 
+const offeringDisplayMetadataSchema = z.object({
+    offering_id: z.string().uuid(),
+    display_capacity: z.coerce.number().int().positive().nullable(),
+    configuration_revision: z.coerce.number().int().positive(),
+})
+
+export type OfferingDisplayMetadata = z.infer<typeof offeringDisplayMetadataSchema>
+
 export function parseCourseUsesOfferingCheckout(value: unknown) {
     return z.boolean().parse(value)
 }
@@ -34,4 +42,13 @@ export function parsePublicCourseOfferings(value: unknown, expectedCourseId: str
     }
 
     return offerings
+}
+
+export function parseOfferingDisplayMetadata(value: unknown) {
+    return z.array(offeringDisplayMetadataSchema).parse(value)
+}
+
+export function parseOfferingDisplayMetadataItem(value: unknown) {
+    if (typeof value !== 'object' || value === null || !('offering_id' in value)) return null
+    return offeringDisplayMetadataSchema.parse(value)
 }

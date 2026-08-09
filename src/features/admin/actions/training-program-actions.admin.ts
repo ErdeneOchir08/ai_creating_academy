@@ -6,7 +6,6 @@ import {
     assertCohortTransition,
     cohortStatuses,
     getCohortOpeningReadiness,
-    validateCohortPaymentDueDays,
     validateTrainingCohortInput,
     validateTrainingProgramInput,
     type CohortStatus,
@@ -26,6 +25,8 @@ export type TrainingCohort = {
     contract_policy: ContractPolicy
     contract_version_id: string | null
     capacity: number | null
+    display_capacity: number | null
+    configuration_revision: number
     tuition_amount_mnt: number | null
     payment_due_days: number | null
     payment_plan: string
@@ -154,14 +155,15 @@ function cohortInput(formData: FormData, checkoutVersion: 1 | 2) {
     }, checkoutVersion)
 }
 
-function cohortRecord(input: ReturnType<typeof cohortInput>) {
+function cohortRecord(input: ReturnType<typeof cohortInput>, checkoutVersion: 1 | 2) {
     return {
         name: input.name,
         delivery_mode: input.deliveryMode,
         course_id: input.courseId,
         contract_policy: input.contractPolicy,
         contract_version_id: input.contractVersionId,
-        capacity: input.capacity,
+        capacity: checkoutVersion === 1 ? input.capacity : null,
+        display_capacity: checkoutVersion === 2 ? input.capacity : null,
         tuition_amount_mnt: input.tuitionAmountMnt,
         payment_due_days: input.paymentDueDays,
         payment_plan: input.paymentPlan,
@@ -215,7 +217,7 @@ export async function getTrainingProgram(programId: string): Promise<TrainingPro
             .maybeSingle(),
         supabase
             .from('training_cohorts')
-            .select('id, program_id, name, delivery_mode, status, checkout_version, course_id, contract_policy, contract_version_id, capacity, tuition_amount_mnt, payment_due_days, payment_plan, schedule_summary, location, registration_opens_at, registration_closes_at, starts_on, ends_on, created_at, updated_at')
+            .select('id, program_id, name, delivery_mode, status, checkout_version, course_id, contract_policy, contract_version_id, capacity, display_capacity, configuration_revision, tuition_amount_mnt, payment_due_days, payment_plan, schedule_summary, location, registration_opens_at, registration_closes_at, starts_on, ends_on, created_at, updated_at')
             .eq('program_id', programId)
             .order('created_at', { ascending: false }),
     ])
@@ -341,7 +343,7 @@ export async function createTrainingCohort(programId: string, formData: FormData
     const { data, error } = await supabase
         .from('training_cohorts')
         .insert({
-            ...cohortRecord(input),
+            ...cohortRecord(input, 2),
             program_id: programId,
             checkout_version: 2,
             status: 'draft',
@@ -377,7 +379,7 @@ export async function updateTrainingCohortDraft(cohortId: string, programId: str
     const input = cohortInput(formData, current.checkout_version as 1 | 2)
     const { data, error } = await supabase
         .from('training_cohorts')
-        .update(cohortRecord(input))
+        .update(cohortRecord(input, current.checkout_version as 1 | 2))
         .eq('id', cohortId)
         .eq('program_id', programId)
         .eq('status', 'draft')
@@ -391,33 +393,72 @@ export async function updateTrainingCohortDraft(cohortId: string, programId: str
     refreshPrograms(programId)
 }
 
-export async function updateTrainingCohortPaymentDeadline(cohortId: string, programId: string, formData: FormData) {
-    assertUuid(cohortId, 'Ээлжийн дугаар')
+export async function updateTrainingCohortConfiguration(cohortId: string, programId: string, formData: FormData) {
+    assertUuid(cohortId, 'Элсэлтийн дугаар')
     assertUuid(programId, 'Хөтөлбөрийн дугаар')
     const { supabase } = await requireAdmin()
-    const paymentDueDays = validateCohortPaymentDueDays(String(formData.get('payment_due_days') ?? ''))
-    const { data: cohort, error: cohortError } = await supabase
+    const { data: current, error: currentError } = await supabase
         .from('training_cohorts')
-        .select('tuition_amount_mnt')
+        .select('id, program_id, name, delivery_mode, status, checkout_version, course_id, contract_policy, contract_version_id, display_capacity, configuration_revision, tuition_amount_mnt, payment_due_days, payment_plan, schedule_summary, location, registration_opens_at, registration_closes_at, starts_on, ends_on')
         .eq('id', cohortId)
         .eq('program_id', programId)
-        .maybeSingle()
-    if (cohortError || !cohort) throw new Error('Ээлж олдсонгүй.')
-    if ((cohort.tuition_amount_mnt ?? 0) > 0 && paymentDueDays === null) {
-        throw new Error('Төлбөртэй элсэлтийн төлөх хугацааг хоосон орхиж болохгүй.')
-    }
-    const { data, error } = await supabase
-        .from('training_cohorts')
-        .update({ payment_due_days: paymentDueDays })
-        .eq('id', cohortId)
-        .eq('program_id', programId)
-        .in('status', ['draft', 'open', 'closed'])
-        .select('id')
         .maybeSingle()
 
-    if (error || !data) {
-        console.error('Unable to update cohort payment deadline:', error?.message)
-        throw new Error('Төлбөр төлөх хугацааг хадгалж чадсангүй.')
+    if (currentError || !current || current.checkout_version !== 2 || !['open', 'closed'].includes(current.status)) {
+        throw new Error('Зөвхөн нээлттэй эсвэл хаалттай шинэ урсгалын элсэлтийн нөхцөлийг засах боломжтой.')
+    }
+
+    const merged = new FormData()
+    merged.set('name', String(formData.get('name') ?? current.name))
+    merged.set('delivery_mode', current.delivery_mode)
+    merged.set('course_id', current.course_id ?? '')
+    merged.set('contract_policy', current.contract_policy)
+    merged.set('contract_version_id', current.contract_version_id ?? '')
+    for (const key of [
+        'capacity',
+        'tuition_amount_mnt',
+        'payment_due_days',
+        'payment_plan',
+        'schedule_summary',
+        'location',
+        'registration_opens_at',
+        'registration_closes_at',
+        'starts_on',
+        'ends_on',
+    ]) {
+        merged.set(key, String(formData.get(key) ?? ''))
+    }
+    const input = cohortInput(merged, 2)
+    const expectedRevision = Number(formData.get('configuration_revision'))
+    if (!Number.isInteger(expectedRevision) || expectedRevision < 1) {
+        throw new Error('Өөрчлөлтийн хувилбар буруу байна. Хуудсыг дахин ачаална уу.')
+    }
+
+    const { error } = await supabase.rpc('update_v2_course_offering_configuration', {
+        p_offering_id: cohortId,
+        p_expected_revision: expectedRevision,
+        p_name: input.name,
+        p_display_capacity: input.capacity,
+        p_tuition_amount_mnt: input.tuitionAmountMnt,
+        p_payment_due_days: input.paymentDueDays,
+        p_payment_plan: input.paymentPlan,
+        p_schedule_summary: input.scheduleSummary,
+        p_location: input.location,
+        p_registration_opens_at: input.registrationOpensAt,
+        p_registration_closes_at: input.registrationClosesAt,
+        p_starts_on: input.startsOn,
+        p_ends_on: input.endsOn,
+        p_reason: String(formData.get('change_reason') ?? ''),
+    })
+
+    if (error) {
+        console.error('Unable to update V2 offering configuration:', error.message)
+        if (error.message.includes('changed by another administrator')) {
+            throw new Error('Өөр админ энэ элсэлтийг өөрчилсөн байна. Хуудсыг дахин ачаалаад шалгана уу.')
+        }
+        if (error.message.includes('change reason')) throw new Error('Өөрчлөлтийн шалтгааныг дор хаяж 5 тэмдэгтээр бичнэ үү.')
+        if (error.code === '23505') throw new Error('Энэ сургалтад ижил нэртэй элсэлт аль хэдийн байна.')
+        throw new Error('Элсэлтийн шинэ нөхцөлийг хадгалж чадсангүй.')
     }
     refreshPrograms(programId)
 }

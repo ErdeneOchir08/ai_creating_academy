@@ -15,8 +15,8 @@ import {
     deleteTrainingCohortDraft,
     deleteTrainingProgram,
     setTrainingProgramArchived,
+    updateTrainingCohortConfiguration,
     updateTrainingCohortDraft,
-    updateTrainingCohortPaymentDeadline,
     updateTrainingProgram,
     type OfferingCourseOption,
     type PublishedContractOption,
@@ -224,8 +224,9 @@ function CohortFields({
             {contractPolicy === 'none' && <input type="hidden" name="contract_version_id" value="" />}
             <FormSectionHeading step={3} title="Үнэ ба бүртгэл" description="Үнэ, суралцагчийн тоо, төлбөрийн хугацаа болон бүртгэл нээлттэй байх хугацааг тохируулна." />
             <label className="space-y-2 text-sm text-zinc-300">
-                <span>Суралцагчийн тоо</span>
-                <Input name="capacity" type="number" min={1} step={1} defaultValue={cohort?.capacity ?? ''} placeholder="Жишээ: 20" className="border-zinc-700 bg-zinc-900" />
+                <span>Ангийн суралцагчийн тоо (мэдээллийн)</span>
+                <Input name="capacity" type="number" min={1} step={1} defaultValue={(cohort?.checkout_version === 2 ? cohort.display_capacity : cohort?.capacity) ?? ''} placeholder="Жишээ: 20" className="border-zinc-700 bg-zinc-900" />
+                <span className="block text-xs leading-relaxed text-zinc-500">Суралцагчдад ангийн хэмжээг мэдээлнэ. Шинэ нэгдсэн урсгалд энэ тоо бүртгэлийг автоматаар хаахгүй.</span>
             </label>
             <label className="space-y-2 text-sm text-zinc-300">
                 <span>Сургалтын төлбөр (₮)</span>
@@ -269,6 +270,66 @@ function CohortFields({
             <label className="space-y-2 text-sm text-zinc-300 md:col-span-2">
                 <span>Төлбөрийн нөхцөл</span>
                 <Textarea name="payment_plan" maxLength={1_000} defaultValue={cohort?.payment_plan} placeholder="Жишээ: Төлбөрийг бүтнээр шилжүүлнэ" className="min-h-20 border-zinc-700 bg-zinc-900" />
+            </label>
+        </div>
+    )
+}
+
+function ConfigurableOfferingFields({ cohort }: { cohort: TrainingCohort }) {
+    return (
+        <div className="grid gap-4 md:grid-cols-2">
+            <input type="hidden" name="configuration_revision" value={cohort.configuration_revision} />
+            <label className="space-y-2 text-sm text-zinc-300 md:col-span-2">
+                <span>Анги / элсэлтийн нэр</span>
+                <Input name="name" required maxLength={160} defaultValue={cohort.name} className="border-zinc-700 bg-zinc-950" />
+            </label>
+            <label className="space-y-2 text-sm text-zinc-300">
+                <span>Ангийн суралцагчийн тоо (мэдээллийн)</span>
+                <Input name="capacity" type="number" min={1} step={1} defaultValue={cohort.display_capacity ?? ''} placeholder="Жишээ: 20" className="border-zinc-700 bg-zinc-950" />
+                <span className="block text-xs leading-relaxed text-zinc-500">Энэ нь зөвхөн нийтэд харагдах мэдээлэл бөгөөд бүртгэлийг автоматаар хаахгүй.</span>
+            </label>
+            <label className="space-y-2 text-sm text-zinc-300">
+                <span>Сургалтын төлбөр (₮)</span>
+                <Input name="tuition_amount_mnt" type="number" min={1} step={1} required defaultValue={cohort.tuition_amount_mnt ?? ''} className="border-zinc-700 bg-zinc-950" />
+            </label>
+            <label className="space-y-2 text-sm text-zinc-300 md:col-span-2">
+                <span>Өргөдөл зөвшөөрснөөс хойш төлөх хугацаа (хоног)</span>
+                <Input name="payment_due_days" type="number" min={1} step={1} required defaultValue={cohort.payment_due_days ?? ''} className="border-zinc-700 bg-zinc-950" />
+            </label>
+            <label className="space-y-2 text-sm text-zinc-300">
+                <span>Бүртгэл нээх хугацаа</span>
+                <Input name="registration_opens_at" type="datetime-local" defaultValue={localDateTime(cohort.registration_opens_at)} className="border-zinc-700 bg-zinc-950" />
+            </label>
+            <label className="space-y-2 text-sm text-zinc-300">
+                <span>Бүртгэл хаах хугацаа</span>
+                <Input name="registration_closes_at" type="datetime-local" defaultValue={localDateTime(cohort.registration_closes_at)} className="border-zinc-700 bg-zinc-950" />
+            </label>
+            <label className="space-y-2 text-sm text-zinc-300">
+                <span>Сургалт эхлэх өдөр</span>
+                <Input name="starts_on" type="date" defaultValue={cohort.starts_on ?? ''} className="border-zinc-700 bg-zinc-950" />
+            </label>
+            <label className="space-y-2 text-sm text-zinc-300">
+                <span>Сургалт дуусах өдөр</span>
+                <Input name="ends_on" type="date" defaultValue={cohort.ends_on ?? ''} className="border-zinc-700 bg-zinc-950" />
+            </label>
+            <label className="space-y-2 text-sm text-zinc-300 md:col-span-2">
+                <span>Хуваарийн тайлбар</span>
+                <Textarea name="schedule_summary" maxLength={2_000} defaultValue={cohort.schedule_summary} className="min-h-20 border-zinc-700 bg-zinc-950" />
+            </label>
+            {cohort.delivery_mode === 'offline' ? (
+                <label className="space-y-2 text-sm text-zinc-300 md:col-span-2">
+                    <span>Танхимын байршил</span>
+                    <Textarea name="location" required maxLength={1_000} defaultValue={cohort.location} className="min-h-20 border-zinc-700 bg-zinc-950" />
+                </label>
+            ) : <input type="hidden" name="location" value="" />}
+            <label className="space-y-2 text-sm text-zinc-300 md:col-span-2">
+                <span>Төлбөрийн нөхцөл</span>
+                <Textarea name="payment_plan" maxLength={1_000} defaultValue={cohort.payment_plan} className="min-h-20 border-zinc-700 bg-zinc-950" />
+            </label>
+            <label className="space-y-2 text-sm text-zinc-300 md:col-span-2">
+                <span>Өөрчлөлтийн шалтгаан</span>
+                <Textarea name="change_reason" required minLength={5} maxLength={500} placeholder="Жишээ: 2026 намрын хуваарь болон үнийг шинэчлэв" className="min-h-20 border-zinc-700 bg-zinc-950" />
+                <span className="block text-xs leading-relaxed text-zinc-500">Аудитын түүхэнд хадгалагдана. Өмнө хүсэлт илгээсэн суралцагчдын нөхцөл өөрчлөгдөхгүй.</span>
             </label>
         </div>
     )
@@ -416,7 +477,7 @@ export function TrainingProgramEditor({
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="grid gap-3 text-sm text-zinc-400 sm:grid-cols-2 lg:grid-cols-4">
-                                    <p><span className="block text-xs text-zinc-600">Суралцагчийн тоо</span>{cohort.capacity ?? 'Тодорхойгүй'}</p>
+                                    <p><span className="block text-xs text-zinc-600">Ангийн хэмжээ</span>{(isLegacyCheckout ? cohort.capacity : cohort.display_capacity) ?? 'Тодорхойгүй'}{!isLegacyCheckout ? ' · мэдээллийн' : ''}</p>
                                     <p><span className="block text-xs text-zinc-600">Төлбөр</span>{cohort.tuition_amount_mnt == null ? 'Тодорхойгүй' : `₮ ${cohort.tuition_amount_mnt.toLocaleString()}`}</p>
                                     <p><span className="block text-xs text-zinc-600">Төлөх хугацаа</span>{cohort.payment_due_days == null ? 'Тохируулаагүй' : `${cohort.payment_due_days} хоног`}</p>
                                     <p className="sm:col-span-2"><span className="block text-xs text-zinc-600">Ашиглах урсгал</span>{isLegacyCheckout ? 'Одоогийн баталгаажсан урсгал' : 'Шинэ нэгдсэн урсгал'}</p>
@@ -424,20 +485,25 @@ export function TrainingProgramEditor({
                                     <p className="sm:col-span-2"><span className="block text-xs text-zinc-600">Гэрээ</span>{contractPolicyLabels[cohort.contract_policy]}{cohort.contract_policy === 'required' ? ` · ${contract?.is_assignable ? `${contract.template_name} · v${contract.version_number}` : contract ? `${contract.template_name} · v${contract.version_number} · ашиглалтаас гарсан` : cohort.contract_version_id ? 'ашиглалтаас гарсан хувилбар' : 'хувилбар сонгоогүй'}` : ''}</p>
                                 </div>
 
-                                {cohort.status !== 'draft' && ['open', 'closed'].includes(cohort.status) && (
-                                    <form
-                                        onSubmit={(event) => {
-                                            event.preventDefault()
-                                            void run(`${cohort.id}-payment-deadline`, () => updateTrainingCohortPaymentDeadline(cohort.id, program.id, new FormData(event.currentTarget)))
-                                        }}
-                                        className="flex flex-col gap-3 rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 sm:flex-row sm:items-end"
-                                    >
-                                        <label className="flex-1 space-y-2 text-sm text-zinc-300">
-                                            <span>Өргөдөл зөвшөөрснөөс хойш төлөх хугацаа (хоног)</span>
-                                            <Input name="payment_due_days" type="number" min={1} step={1} defaultValue={cohort.payment_due_days ?? ''} required={Boolean(cohort.tuition_amount_mnt)} className="border-zinc-700 bg-zinc-950" />
-                                        </label>
-                                        <Button type="submit" variant="outline" disabled={!!pending}>Хугацаа хадгалах</Button>
-                                    </form>
+                                {!isLegacyCheckout && cohort.status !== 'draft' && ['open', 'closed'].includes(cohort.status) && (
+                                    <details className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-4">
+                                        <summary className="cursor-pointer text-sm font-medium text-indigo-200">Ирээдүйн элсэгчдэд харагдах нөхцөлийг засах</summary>
+                                        <div className="mt-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-xs leading-relaxed text-amber-100">
+                                            Энд хадгалсан үнэ, хугацаа, хуваарь болон байршил зөвхөн дараа нь хүсэлт илгээх суралцагчдад үйлчилнэ. Одоо байгаа хүсэлт, гэрээ, төлбөрийн нөхцөл өөрчлөгдөхгүй. Хичээлийн контент, сургалтын хэлбэр, гэрээний бодлогыг нээсний дараа солихгүй.
+                                        </div>
+                                        <form
+                                            onSubmit={(event) => {
+                                                event.preventDefault()
+                                                void run(`${cohort.id}-configuration`, () => updateTrainingCohortConfiguration(cohort.id, program.id, normalizedFormData(event.currentTarget)))
+                                            }}
+                                            className="mt-5 space-y-5"
+                                        >
+                                            <ConfigurableOfferingFields key={`${cohort.id}:${cohort.configuration_revision}`} cohort={cohort} />
+                                            <div className="flex justify-end">
+                                                <Button type="submit" variant="outline" disabled={!!pending}>Шинэ нөхцөлийг хадгалах</Button>
+                                            </div>
+                                        </form>
+                                    </details>
                                 )}
 
                                 {cohort.status === 'draft' && (

@@ -49,10 +49,7 @@ export function CourseOfferingOptions({
                     <p className="mt-1 text-sm text-zinc-400">Танд тохирох хэлбэр, хуваарьтай элсэлтийг сонгоно уу.</p>
                 </div>
             )}
-            {offerings.map((offering) => {
-                const isFull = offering.available_seats === 0
-
-                return (
+            {offerings.map((offering) => (
                     <article key={offering.offering_id} className="rounded-xl border border-zinc-700 bg-zinc-950/70 p-4 text-left">
                         <div className="flex flex-wrap items-start justify-between gap-2">
                             <div>
@@ -71,10 +68,10 @@ export function CourseOfferingOptions({
                                 icon={FileText}
                                 value={offering.contract_policy === 'required' ? 'Гэрээ байгуулна' : 'Гэрээ шаардахгүй'}
                             />
-                            {offering.available_seats !== null && (
+                            {offering.capacity !== null && (
                                 <OfferingDetail
                                     icon={Users}
-                                    value={isFull ? 'Суудал дүүрсэн' : `${offering.available_seats} суудал үлдсэн`}
+                                    value={`${offering.capacity} суралцагчийн анги`}
                                 />
                             )}
                             {!offering.schedule_summary && <OfferingDetail icon={Monitor} value={deliveryLabels[offering.delivery_mode]} />}
@@ -85,17 +82,12 @@ export function CourseOfferingOptions({
                                 <p className="font-bold text-emerald-400">{formatMnt(offering.tuition_amount_mnt)}</p>
                                 {offering.payment_plan && <p className="mt-0.5 text-xs text-zinc-500">{offering.payment_plan}</p>}
                             </div>
-                            {isFull ? (
-                                <Button type="button" disabled className="shrink-0">Суудал дүүрсэн</Button>
-                            ) : (
-                                <Button asChild className="shrink-0 bg-indigo-600 font-bold text-white hover:bg-indigo-700">
-                                    <Link href={`/programs/${offering.offering_id}`}>Элсэлт рүү очих</Link>
-                                </Button>
-                            )}
+                            <Button asChild className="shrink-0 bg-indigo-600 font-bold text-white hover:bg-indigo-700">
+                                <Link href={`/programs/${offering.offering_id}`}>Элсэлт рүү очих</Link>
+                            </Button>
                         </div>
                     </article>
-                )
-            })}
+            ))}
         </div>
     )
 }
