@@ -1,0 +1,2 @@
+create index course_offering_configuration_changes_changed_by_idx
+on public.course_offering_configuration_changes (changed_by);
