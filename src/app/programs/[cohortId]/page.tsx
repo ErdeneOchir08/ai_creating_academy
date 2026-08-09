@@ -203,7 +203,7 @@ function OfferingFacts({
         <div className="mt-7 grid gap-4 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5 text-sm sm:grid-cols-2">
             <p className="flex items-start gap-3"><Monitor className="mt-0.5 h-4 w-4 text-indigo-400" /><span><span className="block text-xs text-zinc-500">Хэлбэр</span>{deliveryLabels[deliveryMode]}</span></p>
             <p className="flex items-start gap-3"><CalendarDays className="mt-0.5 h-4 w-4 text-indigo-400" /><span><span className="block text-xs text-zinc-500">Хугацаа</span>{startsOn ?? 'Тодорхойгүй'} – {endsOn ?? 'Тодорхойгүй'}</span></p>
-            {location && <p className="flex items-start gap-3"><MapPin className="mt-0.5 h-4 w-4 text-indigo-400" /><span><span className="block text-xs text-zinc-500">Байршил</span>{location}</span></p>}
+            {deliveryMode === 'offline' && location && <p className="flex items-start gap-3"><MapPin className="mt-0.5 h-4 w-4 text-indigo-400" /><span><span className="block text-xs text-zinc-500">Байршил</span>{location}</span></p>}
             {classSize !== null && <p className="flex items-start gap-3"><Users className="mt-0.5 h-4 w-4 text-indigo-400" /><span><span className="block text-xs text-zinc-500">{classSizeIsLimit ? 'Үлдсэн суудал' : 'Ангийн хэмжээ'}</span>{classSizeIsLimit ? classSize : `${classSize} суралцагч`}</span></p>}
             {schedule && <p className="sm:col-span-2"><span className="block text-xs text-zinc-500">Хуваарь</span>{schedule}</p>}
         </div>

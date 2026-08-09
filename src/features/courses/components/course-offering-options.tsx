@@ -63,7 +63,7 @@ export function CourseOfferingOptions({
 
                         <dl className={compact ? 'mt-3 space-y-2 text-xs text-zinc-400' : 'mt-4 grid gap-2 text-sm text-zinc-400'}>
                             {offering.schedule_summary && <OfferingDetail icon={CalendarDays} value={offering.schedule_summary} />}
-                            {offering.location && <OfferingDetail icon={MapPin} value={offering.location} />}
+                            {offering.delivery_mode === 'offline' && offering.location && <OfferingDetail icon={MapPin} value={offering.location} />}
                             <OfferingDetail
                                 icon={FileText}
                                 value={offering.contract_policy === 'required' ? 'Гэрээ байгуулна' : 'Гэрээ шаардахгүй'}
