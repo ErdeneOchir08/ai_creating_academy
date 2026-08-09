@@ -12,7 +12,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Edit } from 'lucide-react'
+import { ArrowRight, Edit } from 'lucide-react'
 import Link from 'next/link'
 
 export default async function AdminCoursesPage() {
@@ -22,17 +22,29 @@ export default async function AdminCoursesPage() {
         <div className="p-5 md:p-8">
             <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold text-white mb-2">Хичээлүүд</h1>
-                    <p className="text-zinc-400">Хичээлийн каталог болон хичээлийн бүтцийг удирдах.</p>
+                    <h1 className="text-3xl font-bold text-white mb-2">Хичээлийн контент</h1>
+                    <p className="max-w-2xl text-zinc-400">Сургалтуудад дахин ашиглах видео хичээл, бүлэг, preview болон ангиллыг энд бэлтгэнэ. Үнэ, хуваарь, гэрээг анги / элсэлт дээр тохируулна.</p>
                 </div>
                 <CreateCourseDialog />
             </header>
 
+            <Card className="mb-6 border-indigo-500/20 bg-indigo-500/5 text-white">
+                <CardContent className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                        <p className="font-semibold">Ажиллах дараалал</p>
+                        <p className="mt-1 text-sm text-zinc-400">1. Контент бэлтгэх → 2. Сургалтад холбох → 3. Анги / элсэлт нээх</p>
+                    </div>
+                    <Button asChild variant="outline" className="shrink-0 border-indigo-400/30 bg-zinc-950">
+                        <Link href="/admin/programs">Сургалтууд руу очих<ArrowRight className="ml-2 h-4 w-4" /></Link>
+                    </Button>
+                </CardContent>
+            </Card>
+
             <Card className="bg-zinc-950 border-zinc-800 text-white">
                 <CardHeader>
-                    <CardTitle>Бүх хичээлүүд</CardTitle>
+                    <CardTitle>Видео хичээлийн багцууд</CardTitle>
                     <CardDescription className="text-zinc-500">
-                        Платформ дээр нийт {courses.length} хичээл байна.
+                        Нийт {courses.length} контентын багц байна.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -42,7 +54,7 @@ export default async function AdminCoursesPage() {
                                 <TableRow className="border-zinc-800 hover:bg-zinc-900/50">
                                     <TableHead className="text-zinc-400">Гарчиг</TableHead>
                                     <TableHead className="text-zinc-400">Төлөв</TableHead>
-                                    <TableHead className="text-zinc-400 text-center">Хичээлүүд</TableHead>
+                                    <TableHead className="text-zinc-400 text-center">Бүлэг</TableHead>
                                     <TableHead className="text-zinc-400">Бэлэн байдал</TableHead>
                                     <TableHead className="text-zinc-400">Үнэ</TableHead>
                                     <TableHead className="text-zinc-400 text-right">Үйлдэл</TableHead>
@@ -52,7 +64,7 @@ export default async function AdminCoursesPage() {
                                 {courses.length === 0 ? (
                                     <TableRow className="border-0 hover:bg-transparent">
                                         <TableCell colSpan={6} className="h-24 text-center text-zinc-500">
-                                            Хичээл олдсонгүй. Шинээр үүсгэнэ үү!
+                                            Контентын багц алга байна. Эхний багцаа үүсгэнэ үү.
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -79,7 +91,7 @@ export default async function AdminCoursesPage() {
                                                 ) : course.published ? (
                                                     <Badge className="bg-amber-500/10 text-amber-300 hover:bg-amber-500/20">Засвар шаардлагатай</Badge>
                                                 ) : course.lesson_count === 0 ? (
-                                                    <Badge variant="outline" className="border-zinc-700 text-zinc-400">Хичээл нэмнэ үү</Badge>
+                                                    <Badge variant="outline" className="border-zinc-700 text-zinc-400">Бүлэг нэмнэ үү</Badge>
                                                 ) : (
                                                     <Badge variant="outline" className="border-zinc-700 text-zinc-400">Видео нэмнэ үү</Badge>
                                                 )}

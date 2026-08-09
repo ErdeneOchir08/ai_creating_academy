@@ -63,8 +63,8 @@ function statusClass(status: CohortStatus) {
 
 const openingIssueContent: Record<CohortOpeningIssue, { title: string; description: string }> = {
     program_archived: {
-        title: 'Дараагийн алхам: хөтөлбөрийг архиваас гаргах',
-        description: 'Архивласан хөтөлбөрийн элсэлтийг суралцагчдад нээх боломжгүй.',
+        title: 'Дараагийн алхам: сургалтыг архиваас гаргах',
+        description: 'Архивласан сургалтын анги / элсэлтийг суралцагчдад нээх боломжгүй.',
     },
     unsupported_delivery_mode: {
         title: 'Дараагийн алхам: сургалтын хэлбэр сонгох',
@@ -108,6 +108,20 @@ function normalizedFormData(form: HTMLFormElement) {
     return data
 }
 
+function FormSectionHeading({ step, title, description }: { step: number; title: string; description: string }) {
+    return (
+        <div className="mt-2 border-t border-zinc-800 pt-5 md:col-span-2 first:mt-0 first:border-t-0 first:pt-0">
+            <div className="flex items-start gap-3">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-500/15 text-sm font-semibold text-indigo-300">{step}</span>
+                <div>
+                    <h3 className="font-semibold text-white">{title}</h3>
+                    <p className="mt-1 text-xs leading-relaxed text-zinc-500">{description}</p>
+                </div>
+            </div>
+        </div>
+    )
+}
+
 function CohortFields({
     cohort,
     contracts,
@@ -124,18 +138,20 @@ function CohortFields({
     const [contractVersionId, setContractVersionId] = useState(cohort?.contract_version_id ?? '')
     const needsDeliveryChoice = !cohort || (!isLegacyCheckout && cohort.delivery_mode === 'hybrid')
     const deliveryDefaultValue = needsDeliveryChoice ? '' : cohort?.delivery_mode ?? ''
+    const [deliveryMode, setDeliveryMode] = useState(deliveryDefaultValue)
     const selectableContracts = contracts.filter((contract) => contract.is_assignable || contract.id === cohort?.contract_version_id)
     return (
         <div className="grid gap-4 md:grid-cols-2">
+            <FormSectionHeading step={1} title="Анги / элсэлтийн үндсэн мэдээлэл" description="Суралцагчид харах нэр, үзэх контент болон сургалтын хэлбэрийг сонгоно." />
             <label className="space-y-2 text-sm text-zinc-300 md:col-span-2">
-                <span>Элсэлтийн нэр</span>
+                <span>Анги / элсэлтийн нэр</span>
                 <Input name="name" required maxLength={160} defaultValue={cohort?.name} placeholder="Жишээ: TeenCoder 2026 намрын элсэлт" className="border-zinc-700 bg-zinc-900" />
             </label>
             {isLegacyCheckout ? (
                 <input type="hidden" name="course_id" value="" />
             ) : (
                 <label className="space-y-2 text-sm text-zinc-300 md:col-span-2">
-                    <span>Видео хичээлийн багц</span>
+                    <span>Хичээлийн контент</span>
                     <select name="course_id" defaultValue={cohort?.course_id ?? ''} className="h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 text-sm">
                         <option value="">Одоогоор сонгохгүй</option>
                         {courses.map((course) => (
@@ -144,7 +160,7 @@ function CohortFields({
                             </option>
                         ))}
                     </select>
-                    <span className="block text-xs leading-relaxed text-zinc-500">Энэ элсэлт батлагдсаны дараа суралцагчид нээгдэх видео хичээлийг сонгоно. Нэг хичээл олон элсэлттэй байж болно.</span>
+                    <span className="block text-xs leading-relaxed text-zinc-500">Төлбөр батлагдсаны дараа суралцагчид нээгдэх контентыг сонгоно. Нэг контентыг олон анги / элсэлтэд ашиглаж болно.</span>
                     <span className="block rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs leading-relaxed text-amber-200">
                         Ноорог дээр хичээл сонгох нь буцааж өөрчлөх боломжтой. Хэрэв сонгосон хичээл шинэ элсэлтийн урсгалд хараахан шилжээгүй бол анхны нээлтээр хуучин шууд төлбөрийн урсгал бүрмөсөн хаагдаж, цаашид зөвхөн элсэлтийн сонголтоор бүртгэнэ.
                     </span>
@@ -152,13 +168,14 @@ function CohortFields({
             )}
             <label className="space-y-2 text-sm text-zinc-300">
                 <span>Сургалтын хэлбэр</span>
-                <select name="delivery_mode" required defaultValue={deliveryDefaultValue} className="h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 text-sm">
+                <select name="delivery_mode" required value={deliveryMode} onChange={(event) => setDeliveryMode(event.target.value)} className="h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 text-sm">
                     {needsDeliveryChoice && <option value="" disabled>{cohort ? 'Онлайн эсвэл танхим сонгох' : 'Сургалтын хэлбэр сонгох'}</option>}
                     <option value="offline">Танхим</option>
                     <option value="online">Онлайн</option>
                     {isLegacyCheckout && <option value="hybrid">Хосолсон · хуучин урсгал</option>}
                 </select>
             </label>
+            <FormSectionHeading step={2} title="Гэрээ" description="Гэрээ шаардах эсэхийг сонгоно. Шаардлагатай бол зөвхөн нийтлэгдсэн хувилбар ашиглана." />
             <label className="space-y-2 text-sm text-zinc-300">
                 <span>Гэрээ шаардах эсэх</span>
                 {isLegacyCheckout ? (
@@ -205,8 +222,9 @@ function CohortFields({
                 </label>
             )}
             {contractPolicy === 'none' && <input type="hidden" name="contract_version_id" value="" />}
+            <FormSectionHeading step={3} title="Үнэ ба бүртгэл" description="Үнэ, суралцагчийн тоо, төлбөрийн хугацаа болон бүртгэл нээлттэй байх хугацааг тохируулна." />
             <label className="space-y-2 text-sm text-zinc-300">
-                <span>Суудлын тоо</span>
+                <span>Суралцагчийн тоо</span>
                 <Input name="capacity" type="number" min={1} step={1} defaultValue={cohort?.capacity ?? ''} placeholder="Жишээ: 20" className="border-zinc-700 bg-zinc-900" />
             </label>
             <label className="space-y-2 text-sm text-zinc-300">
@@ -226,6 +244,7 @@ function CohortFields({
                 <span>Бүртгэл хаах хугацаа</span>
                 <Input name="registration_closes_at" type="datetime-local" defaultValue={localDateTime(cohort?.registration_closes_at ?? null)} className="border-zinc-700 bg-zinc-900" />
             </label>
+            <FormSectionHeading step={4} title="Хуваарь ба байршил" description="Сургалтын эхлэх, дуусах өдөр болон суралцагчид харах хуваарийг оруулна." />
             <label className="space-y-2 text-sm text-zinc-300">
                 <span>Сургалт эхлэх өдөр</span>
                 <Input name="starts_on" type="date" defaultValue={cohort?.starts_on ?? ''} className="border-zinc-700 bg-zinc-900" />
@@ -238,13 +257,18 @@ function CohortFields({
                 <span>Хуваарийн тайлбар</span>
                 <Textarea name="schedule_summary" maxLength={2_000} defaultValue={cohort?.schedule_summary} placeholder="Жишээ: Бямба, Ням гарагт 10:00–12:00" className="min-h-20 border-zinc-700 bg-zinc-900" />
             </label>
-            <label className="space-y-2 text-sm text-zinc-300 md:col-span-2">
-                <span>Байршил / онлайн мэдээлэл</span>
-                <Textarea name="location" maxLength={1_000} defaultValue={cohort?.location} placeholder="Танхимын хаяг эсвэл онлайн сургалтын тайлбар" className="min-h-20 border-zinc-700 bg-zinc-900" />
-            </label>
+            {isLegacyCheckout || deliveryMode === 'offline' ? (
+                <label className="space-y-2 text-sm text-zinc-300 md:col-span-2">
+                    <span>Танхимын байршил</span>
+                    <Textarea name="location" required={!isLegacyCheckout} maxLength={1_000} defaultValue={cohort?.location} placeholder="Жишээ: Twin Tower 1, 5 давхар, 505 тоот" className="min-h-20 border-zinc-700 bg-zinc-900" />
+                </label>
+            ) : (
+                <input type="hidden" name="location" value="" />
+            )}
+            <FormSectionHeading step={5} title="Нэмэлт нөхцөл" description="Зөвхөн нийтэд харуулах шаардлагатай нэмэлт төлбөрийн тайлбар байвал оруулна." />
             <label className="space-y-2 text-sm text-zinc-300 md:col-span-2">
                 <span>Төлбөрийн нөхцөл</span>
-                <Textarea name="payment_plan" maxLength={1_000} defaultValue={cohort?.payment_plan} placeholder="Нэг удаа эсвэл хуваан төлөх нөхцөл" className="min-h-20 border-zinc-700 bg-zinc-900" />
+                <Textarea name="payment_plan" maxLength={1_000} defaultValue={cohort?.payment_plan} placeholder="Жишээ: Төлбөрийг бүтнээр шилжүүлнэ" className="min-h-20 border-zinc-700 bg-zinc-900" />
             </label>
         </div>
     )
@@ -296,7 +320,7 @@ export function TrainingProgramEditor({
     }
 
     async function removeProgram() {
-        if (!confirm(`“${program.name}” хөтөлбөрийг устгах уу?`)) return
+        if (!confirm(`“${program.name}” сургалтыг устгах уу?`)) return
         await run('delete-program', async () => {
             await deleteTrainingProgram(program.id)
             router.push('/admin/programs')
@@ -306,25 +330,29 @@ export function TrainingProgramEditor({
     return (
         <div className="mx-auto max-w-6xl space-y-8 p-5 sm:p-8">
             <header className="space-y-4">
-                <Link href="/admin/programs" className="inline-flex items-center text-sm text-zinc-400 hover:text-white"><ArrowLeft className="mr-2 h-4 w-4" />Хөтөлбөрүүд</Link>
+                <Link href="/admin/programs" className="inline-flex items-center text-sm text-zinc-400 hover:text-white"><ArrowLeft className="mr-2 h-4 w-4" />Сургалтууд</Link>
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <div className="flex flex-wrap items-center gap-3">
                             <h1 className="text-2xl font-bold text-white sm:text-3xl">{program.name}</h1>
                             {program.is_archived && <Badge variant="outline" className="border-zinc-700 text-zinc-400"><Archive className="mr-1 h-3 w-3" />Архив</Badge>}
                         </div>
-                        <p className="mt-2 text-zinc-400">Хөтөлбөрийн мэдээлэл, элсэлтийн мөчлөг болон гэрээний хувилбарыг удирдана.</p>
+                        <p className="mt-2 text-zinc-400">Сургалтын ерөнхий мэдээлэл болон анги / элсэлт бүрийн нөхцөлийг удирдана.</p>
                     </div>
-                    <Button variant="outline" disabled={!!pending} onClick={() => void run('archive', () => setTrainingProgramArchived(program.id, !program.is_archived))}>
-                        <Archive className="mr-2 h-4 w-4" />{program.is_archived ? 'Архиваас гаргах' : 'Архивлах'}
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                        <Button asChild variant="outline"><Link href="/admin/courses">Хичээлийн контент</Link></Button>
+                        <Button asChild variant="outline"><Link href="/admin/contracts"><FileSignature className="mr-2 h-4 w-4" />Гэрээний сан</Link></Button>
+                        <Button variant="outline" disabled={!!pending} onClick={() => void run('archive', () => setTrainingProgramArchived(program.id, !program.is_archived))}>
+                            <Archive className="mr-2 h-4 w-4" />{program.is_archived ? 'Архиваас гаргах' : 'Архивлах'}
+                        </Button>
+                    </div>
                 </div>
             </header>
 
             {error && <p role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
 
             <Card className="border-zinc-800 bg-zinc-950 text-white">
-                <CardHeader><CardTitle>Хөтөлбөрийн үндсэн мэдээлэл</CardTitle></CardHeader>
+                <CardHeader><CardTitle>Сургалтын ерөнхий мэдээлэл</CardTitle></CardHeader>
                 <CardContent>
                     <form onSubmit={saveProgram} className="grid gap-4">
                         <label className="space-y-2 text-sm text-zinc-300"><span>Нэр</span><Input name="name" required maxLength={160} defaultValue={program.name} className="border-zinc-700 bg-zinc-900" /></label>
@@ -339,25 +367,25 @@ export function TrainingProgramEditor({
 
             <Card className="border-indigo-500/20 bg-indigo-500/5 text-white">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><ListChecks className="h-5 w-5 text-indigo-400" />Элсэлт бэлтгэх дараалал</CardTitle>
-                    <CardDescription className="text-zinc-400">Нэг элсэлтийг дараах дарааллаар бэлтгэнэ. Аль нэг алхам дутуу бол суралцагчдад харагдахгүй.</CardDescription>
+                    <CardTitle className="flex items-center gap-2"><ListChecks className="h-5 w-5 text-indigo-400" />Шинэ анги / элсэлт нээх дараалал</CardTitle>
+                    <CardDescription className="text-zinc-400">Доорх дөрвөн алхмыг дуусгасны дараа л суралцагчдад нээнэ.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <ol className="grid gap-3 text-sm text-zinc-300 md:grid-cols-2">
-                        <li className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4"><strong className="block text-white">1. Хичээл ба элсэлт</strong><span className="mt-1 block text-zinc-500">Видео хичээл, онлайн/танхим хэлбэр, үнэ, хугацаа, хуваарь, байршлыг ноорогт хадгална.</span></li>
-                        <li className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4"><strong className="block text-white">2. Гэрээний бодлого</strong><span className="mt-1 block text-zinc-500">Гэрээ шаардлагатай эсэхийг сонгоно. Шаардлагатай бол нийтлэгдсэн идэвхтэй хувилбар холбоно.</span></li>
-                        <li className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4"><strong className="block text-white">3. Урсгалыг шалгах</strong><span className="mt-1 block text-zinc-500">Гэрээтэй бол гэрээний маягт, гэрээгүй бол шууд төлбөрийн урсгалыг шалгана.</span></li>
-                        <li className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4"><strong className="block text-white">4. Элсэлт нээх</strong><span className="mt-1 block text-zinc-500">Хичээл, төлбөр болон шаардлагатай гэрээ бүрэн бэлэн үед суралцагчдад нээнэ.</span></li>
+                        <li className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4"><strong className="block text-white">1. Контент бэлтгэх</strong><span className="mt-1 block text-zinc-500">Видео хичээл, preview болон ангиллыг “Хичээлийн контент” хэсэгт бэлтгэнэ.</span></li>
+                        <li className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4"><strong className="block text-white">2. Анги / элсэлт үүсгэх</strong><span className="mt-1 block text-zinc-500">Онлайн эсвэл танхим, үнэ, хугацаа, хуваарь болон контентыг сонгоно.</span></li>
+                        <li className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4"><strong className="block text-white">3. Гэрээ ба төлбөрийг шалгах</strong><span className="mt-1 block text-zinc-500">Гэрээ шаардлагатай бол нийтлэгдсэн хувилбар холбоод урсгалыг preview-ээр шалгана.</span></li>
+                        <li className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4"><strong className="block text-white">4. Суралцагчдад нээх</strong><span className="mt-1 block text-zinc-500">Бэлэн байдлын шалгалт амжилттай үед анги / элсэлтийг нээнэ.</span></li>
                     </ol>
                 </CardContent>
             </Card>
 
             <section className="space-y-4">
                 <div>
-                    <h2 className="text-xl font-semibold text-white">Элсэлтүүд</h2>
-                    <p className="mt-1 text-sm text-zinc-500">Нийт {program.cohorts.length} элсэлтийн мөчлөг байна.</p>
+                    <h2 className="text-xl font-semibold text-white">Анги / элсэлтүүд</h2>
+                    <p className="mt-1 text-sm text-zinc-500">Нийт {program.cohorts.length} анги / элсэлт байна.</p>
                 </div>
-                {program.cohorts.length === 0 ? <div className="rounded-xl border border-dashed border-zinc-800 p-10 text-center text-zinc-500">Одоогоор элсэлт үүсгээгүй байна.</div> : program.cohorts.map((cohort) => {
+                {program.cohorts.length === 0 ? <div className="rounded-xl border border-dashed border-zinc-800 p-10 text-center text-zinc-500">Одоогоор анги / элсэлт үүсгээгүй байна.</div> : program.cohorts.map((cohort) => {
                     const contract = contracts.find((item) => item.id === cohort.contract_version_id)
                     const linkedCourse = courses.find((item) => item.id === cohort.course_id)
                     const courseIsReady = linkedCourse?.is_ready_for_offering === true
@@ -388,11 +416,11 @@ export function TrainingProgramEditor({
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="grid gap-3 text-sm text-zinc-400 sm:grid-cols-2 lg:grid-cols-4">
-                                    <p><span className="block text-xs text-zinc-600">Суудал</span>{cohort.capacity ?? 'Тодорхойгүй'}</p>
+                                    <p><span className="block text-xs text-zinc-600">Суралцагчийн тоо</span>{cohort.capacity ?? 'Тодорхойгүй'}</p>
                                     <p><span className="block text-xs text-zinc-600">Төлбөр</span>{cohort.tuition_amount_mnt == null ? 'Тодорхойгүй' : `₮ ${cohort.tuition_amount_mnt.toLocaleString()}`}</p>
                                     <p><span className="block text-xs text-zinc-600">Төлөх хугацаа</span>{cohort.payment_due_days == null ? 'Тохируулаагүй' : `${cohort.payment_due_days} хоног`}</p>
                                     <p className="sm:col-span-2"><span className="block text-xs text-zinc-600">Ашиглах урсгал</span>{isLegacyCheckout ? 'Одоогийн баталгаажсан урсгал' : 'Шинэ нэгдсэн урсгал'}</p>
-                                    {!isLegacyCheckout && <p className="sm:col-span-2"><span className="block text-xs text-zinc-600">Видео хичээл</span>{linkedCourse?.title ?? 'Сонгоогүй'}</p>}
+                                    {!isLegacyCheckout && <p className="sm:col-span-2"><span className="block text-xs text-zinc-600">Хичээлийн контент</span>{linkedCourse?.title ?? 'Сонгоогүй'}</p>}
                                     <p className="sm:col-span-2"><span className="block text-xs text-zinc-600">Гэрээ</span>{contractPolicyLabels[cohort.contract_policy]}{cohort.contract_policy === 'required' ? ` · ${contract?.is_assignable ? `${contract.template_name} · v${contract.version_number}` : contract ? `${contract.template_name} · v${contract.version_number} · ашиглалтаас гарсан` : cohort.contract_version_id ? 'ашиглалтаас гарсан хувилбар' : 'хувилбар сонгоогүй'}` : ''}</p>
                                 </div>
 
@@ -486,11 +514,11 @@ export function TrainingProgramEditor({
             {!program.is_archived && (
                 <details className="rounded-xl border border-zinc-800 bg-zinc-950 text-white">
                     <summary className="cursor-pointer list-none p-6">
-                        <span className="flex items-center gap-2 text-lg font-semibold"><Plus className="h-5 w-5 text-indigo-400" />Шинэ элсэлт үүсгэх</span>
-                        <span className="mt-2 block text-sm text-zinc-500">Одоо байгаа элсэлтээс тусдаа шинэ элсэлтийн мөчлөг хэрэгтэй үед нээнэ.</span>
+                        <span className="flex items-center gap-2 text-lg font-semibold"><Plus className="h-5 w-5 text-indigo-400" />Шинэ анги / элсэлт үүсгэх</span>
+                        <span className="mt-2 block text-sm text-zinc-500">Энэ сургалтын шинэ хугацаа, үнэ эсвэл хэлбэртэй анги нээх үед ашиглана.</span>
                     </summary>
                     <div className="border-t border-zinc-800 p-6">
-                        {!contracts.some((contract) => contract.is_assignable) && <p className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">Нийтлэгдсэн идэвхтэй гэрээ алга. Гэрээ шаардлагатай элсэлт нээх бол эхлээд <Link href="/admin/contracts" className="underline">гэрээний сангаас</Link> хувилбар нийтэлнэ үү.</p>}
+                        {!contracts.some((contract) => contract.is_assignable) && <p className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">Нийтлэгдсэн идэвхтэй гэрээ алга. Гэрээ шаардлагатай анги / элсэлт нээх бол эхлээд <Link href="/admin/contracts" className="underline">гэрээний сангаас</Link> хувилбар нийтэлнэ үү.</p>}
                         <form onSubmit={addCohort} className="space-y-5">
                             <CohortFields key={program.cohorts.length} contracts={contracts} courses={courses} />
                             <div className="flex justify-end"><Button disabled={!!pending} className="bg-indigo-600 text-white hover:bg-indigo-700"><Plus className="mr-2 h-4 w-4" />{pending === 'new-cohort' ? 'Үүсгэж байна…' : 'Ноорог үүсгэх'}</Button></div>

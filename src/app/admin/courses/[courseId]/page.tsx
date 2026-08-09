@@ -9,7 +9,7 @@ import { getAdminCategories, getCourseBonusIds, getCourseCategoryIds } from '@/f
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Trash2, PlayCircle, ChevronUp, ChevronDown } from 'lucide-react'
+import { ArrowLeft, Trash2, PlayCircle, ChevronUp, ChevronDown, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
@@ -39,7 +39,8 @@ export default async function AdminCourseDetailsPage({
 
     return (
         <div className="mx-auto max-w-5xl space-y-8 p-5 sm:p-8">
-            <header className="flex items-start gap-3 sm:items-center sm:gap-4">
+            <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-3 sm:items-center sm:gap-4">
                 <Button variant="outline" size="icon" className="h-10 w-10 shrink-0 border-zinc-800 bg-zinc-900 text-white hover:bg-zinc-800" asChild>
                     <Link href="/admin/courses">
                         <ArrowLeft className="h-4 w-4" />
@@ -56,6 +57,10 @@ export default async function AdminCourseDetailsPage({
                     </div>
                     <p className="text-zinc-400">{course.id}</p>
                 </div>
+                </div>
+                <Button asChild variant="outline" className="self-start border-indigo-400/30 bg-zinc-950">
+                    <Link href="/admin/programs">Сургалтад холбох<ArrowRight className="ml-2 h-4 w-4" /></Link>
+                </Button>
             </header>
 
             <div className="grid md:grid-cols-3 gap-8">
@@ -65,13 +70,13 @@ export default async function AdminCourseDetailsPage({
                         <CardContent className="flex flex-col gap-1 p-4 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <p className="font-semibold">{isReadyForPublication ? 'Нийтлэхэд бэлэн' : 'Нийтлэхэд бэлэн биш'}</p>
-                                <p className="text-sm text-zinc-400">{lessons.length} хичээлээс {videoLessonCount} нь видео агуулгатай.</p>
+                                <p className="text-sm text-zinc-400">{lessons.length} бүлгээс {videoLessonCount} нь видео агуулгатай.</p>
                             </div>
                             {!isReadyForPublication && <p className="text-sm text-amber-200">Нийтлэхийн тулд дор хаяж нэг видео хичээл нэмнэ үү.</p>}
                         </CardContent>
                     </Card>
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-xl font-bold text-white">Хичээлийн хөтөлбөр</h2>
+                        <h2 className="text-xl font-bold text-white">Контентын бүтэц</h2>
                         <CreateLessonDialog courseId={course.id} nextOrderIndex={nextOrderIndex} />
                     </div>
 
@@ -147,7 +152,7 @@ export default async function AdminCourseDetailsPage({
 
                 {/* Right Col: Details Summary */}
                 <div className="space-y-4">
-                    <h2 className="text-xl font-bold text-white mb-4">Хичээлийн мэдээлэл</h2>
+                    <h2 className="text-xl font-bold text-white mb-4">Контентын мэдээлэл</h2>
                     <Card className="bg-zinc-950 border-zinc-800 text-white">
                         <CardHeader className="bg-zinc-900/50 border-b border-zinc-800 pb-4">
                             <CardTitle className="text-lg">Мэдээлэл</CardTitle>

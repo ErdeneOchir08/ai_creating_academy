@@ -6,6 +6,10 @@ const activationMigration = readFileSync(
     resolve(process.cwd(), 'supabase/migrations/20260806160000_enable_v2_offering_checkout.sql'),
     'utf8',
 )
+const readinessPermissionMigration = readFileSync(
+    resolve(process.cwd(), 'supabase/migrations/20260809065241_allow_training_cohort_readiness_check.sql'),
+    'utf8',
+)
 
 describe('V2 offering lifecycle migration', () => {
     it('keeps the selected contract version immutable after draft', () => {
@@ -18,5 +22,15 @@ describe('V2 offering lifecycle migration', () => {
         expect(activationMigration).toMatch(
             /if new\.checkout_version = 2 and new\.status = 'open' then[\s\S]*?select not program\.is_archived[\s\S]*?Registration cannot remain open for an archived program/,
         )
+    })
+
+    it('lets the authenticated lifecycle trigger call the private readiness helper without exposing it anonymously', () => {
+        expect(readinessPermissionMigration).toMatch(
+            /grant execute on function private\.course_is_ready\(uuid\) to authenticated/,
+        )
+        expect(readinessPermissionMigration).toMatch(
+            /revoke execute on function private\.course_is_ready\(uuid\) from anon, public/,
+        )
+        expect(readinessPermissionMigration).not.toContain('security definer')
     })
 })

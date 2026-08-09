@@ -86,7 +86,7 @@ export function CohortApplicationInbox({
                 </div>
                 <label className="relative block lg:w-80">
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-600" />
-                    <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Нэр, и-мэйл, хөтөлбөрөөр хайх" className="border-zinc-800 bg-zinc-950 pl-9" />
+                    <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Нэр, и-мэйл, сургалтаар хайх" className="border-zinc-800 bg-zinc-950 pl-9" />
                 </label>
             </div>
 

@@ -8,13 +8,13 @@ import { Button } from '@/components/ui/button'
 
 const adminLinks = [
     { name: 'Тойм', href: '/admin', icon: LayoutDashboard },
-    { name: 'Хэрэглэгчид', href: '/admin/users', icon: Users },
-    { name: 'Хичээлүүд', href: '/admin/courses', icon: BookOpen },
+    { name: 'Сургалтууд', href: '/admin/programs', icon: CalendarRange },
+    { name: 'Хичээлийн контент', href: '/admin/courses', icon: BookOpen },
     { name: 'Ангиллууд', href: '/admin/categories', icon: Tags },
-    { name: 'Хөтөлбөрүүд', href: '/admin/programs', icon: CalendarRange },
-    { name: 'Элсэлтийн өргөдлүүд', href: '/admin/applications', icon: ClipboardList },
-    { name: 'Гэрээнүүд', href: '/admin/contracts', icon: FileSignature },
+    { name: 'Элсэлтийн хүсэлтүүд', href: '/admin/applications', icon: ClipboardList },
     { name: 'Төлбөрүүд', href: '/admin/payments', icon: CreditCard },
+    { name: 'Гэрээнүүд', href: '/admin/contracts', icon: FileSignature },
+    { name: 'Хэрэглэгчид', href: '/admin/users', icon: Users },
     { name: 'Асуулт, хариулт', href: '/admin/qa', icon: MessageSquareText },
     { name: 'Тохиргоо', href: '/admin/settings', icon: Settings },
 ]

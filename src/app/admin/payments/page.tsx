@@ -34,11 +34,9 @@ function formatMnt(value: number) {
 
 export default async function AdminPaymentsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
     const params = await searchParams
-    const paymentType: PaymentType = params.type === 'cohort'
-        ? 'cohort'
-        : params.type === 'offering'
-            ? 'offering'
-            : 'course'
+    const paymentType: PaymentType = params.type === 'course' || params.type === 'cohort'
+        ? params.type
+        : 'offering'
     const currentStatus: PaymentStatus = params.status === 'approved' || params.status === 'rejected' ? params.status : 'pending'
     const currentSearch = params.search?.trim() ?? ''
     const offeringPayments = paymentType === 'offering'
@@ -56,14 +54,14 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
             <div className="mx-auto max-w-6xl">
                 <header className="mb-8">
                     <h1 className="mb-2 text-3xl font-bold">Төлбөрийн хүсэлтүүд</h1>
-                    <p className="text-zinc-400">Онлайн хичээл болон хөтөлбөрийн элсэлтийн баримтыг тусад нь шалгаж шийдвэрлэнэ.</p>
+                    <p className="text-zinc-400">Шинэ нэгдсэн анги / элсэлтийн төлбөрийг үндсэн хэсгээс шалгана. Хуучин урсгалууд түүхэн хүсэлтүүдэд зориулан тусдаа хадгалагдана.</p>
                 </header>
 
                 <nav className="mb-6 grid max-w-3xl grid-cols-1 rounded-xl border border-zinc-800 bg-zinc-900 p-1 sm:grid-cols-3" aria-label="Төлбөрийн төрөл">
                     {([
-                        ['course', 'Онлайн хичээл'],
-                        ['cohort', 'Хөтөлбөрийн элсэлт'],
-                        ['offering', 'Хичээлийн элсэлт (V2)'],
+                        ['offering', 'Анги / элсэлт'],
+                        ['course', 'Шууд төлбөр · хуучин'],
+                        ['cohort', 'Гэрээт урсгал · хуучин'],
                     ] as const).map(([type, label]) => (
                         <Link key={type} href={paymentHref(type, currentStatus, currentSearch)} className={`rounded-lg px-4 py-3 text-center text-sm font-medium transition-colors ${paymentType === type ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'}`}>
                             {label}
@@ -85,7 +83,7 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
                             <input type="hidden" name="type" value={paymentType} />
                             <input type="hidden" name="status" value={currentStatus} />
                             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
-                            <input type="search" name="search" defaultValue={currentSearch} placeholder={paymentType === 'course' ? 'Оюутан эсвэл хичээлээр хайх' : 'Суралцагч, и-мэйл, хөтөлбөрөөр хайх'} className="w-full rounded-lg border border-zinc-800 bg-zinc-900 py-2 pl-9 pr-4 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50" />
+                            <input type="search" name="search" defaultValue={currentSearch} placeholder={paymentType === 'course' ? 'Оюутан эсвэл хичээлээр хайх' : 'Суралцагч, и-мэйл, сургалтаар хайх'} className="w-full rounded-lg border border-zinc-800 bg-zinc-900 py-2 pl-9 pr-4 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50" />
                         </form>
                     </div>
 

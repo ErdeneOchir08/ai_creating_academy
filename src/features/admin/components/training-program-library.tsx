@@ -27,7 +27,7 @@ export function TrainingProgramLibrary({ programs }: { programs: TrainingProgram
             const result = await createTrainingProgram(new FormData(event.currentTarget))
             router.push(`/admin/programs/${result.programId}`)
         } catch (cause) {
-            setError(cause instanceof Error ? cause.message : 'Хөтөлбөр үүсгэж чадсангүй.')
+            setError(cause instanceof Error ? cause.message : 'Сургалт үүсгэж чадсангүй.')
         } finally {
             setIsCreating(false)
         }
@@ -38,22 +38,22 @@ export function TrainingProgramLibrary({ programs }: { programs: TrainingProgram
             <header>
                 <div className="flex items-center gap-3">
                     <CalendarRange className="h-7 w-7 text-indigo-400" />
-                    <h1 className="text-2xl font-bold text-white sm:text-3xl">Сургалтын хөтөлбөрүүд</h1>
+                    <h1 className="text-2xl font-bold text-white sm:text-3xl">Сургалтууд</h1>
                 </div>
                 <p className="mt-2 max-w-3xl text-zinc-400">
-                    TeenCoder зэрэг давтан нээгддэг сургалтын үндсэн хөтөлбөр болон элсэлт бүрийг тусад нь удирдана.
+                    TeenCoder зэрэг сургалтын ерөнхий мэдээлэл, контент болон анги / элсэлтүүдийг нэг дор удирдана.
                 </p>
             </header>
 
             <Card className="border-zinc-800 bg-zinc-950 text-white">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Plus className="h-5 w-5 text-indigo-400" />Шинэ хөтөлбөр</CardTitle>
-                    <CardDescription className="text-zinc-500">Энд тогтвортой хөтөлбөрийн нэр, зорилгыг бүртгэнэ. Огноо, үнэ, гэрээг элсэлт дээр тохируулна.</CardDescription>
+                    <CardTitle className="flex items-center gap-2"><Plus className="h-5 w-5 text-indigo-400" />Шинэ сургалт</CardTitle>
+                    <CardDescription className="text-zinc-500">Сургалтын тогтвортой нэр, зорилгыг эхлээд үүсгэнэ. Дараа нь контент сонгож, анги / элсэлт нээнэ.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={createProgram} className="grid gap-4 md:grid-cols-2">
                         <label className="space-y-2 text-sm text-zinc-300">
-                            <span>Хөтөлбөрийн нэр</span>
+                            <span>Сургалтын нэр</span>
                             <Input name="name" required maxLength={160} placeholder="Жишээ: TeenCoder" className="border-zinc-700 bg-zinc-900" />
                         </label>
                         <label className="space-y-2 text-sm text-zinc-300 md:col-span-2">
@@ -63,7 +63,7 @@ export function TrainingProgramLibrary({ programs }: { programs: TrainingProgram
                         <div className="flex flex-col gap-3 md:col-span-2 md:flex-row md:items-center md:justify-between">
                             {error ? <p className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</p> : <span />}
                             <Button disabled={isCreating} className="bg-indigo-600 text-white hover:bg-indigo-700">
-                                <Plus className="mr-2 h-4 w-4" />{isCreating ? 'Үүсгэж байна…' : 'Хөтөлбөр үүсгэх'}
+                                <Plus className="mr-2 h-4 w-4" />{isCreating ? 'Үүсгэж байна…' : 'Сургалт үүсгэх'}
                             </Button>
                         </div>
                     </form>
@@ -72,11 +72,11 @@ export function TrainingProgramLibrary({ programs }: { programs: TrainingProgram
 
             <section className="space-y-4">
                 <div>
-                    <h2 className="text-xl font-semibold text-white">Бүртгэлтэй хөтөлбөрүүд</h2>
-                    <p className="mt-1 text-sm text-zinc-500">Нийт {programs.length} хөтөлбөр байна.</p>
+                    <h2 className="text-xl font-semibold text-white">Бүртгэлтэй сургалтууд</h2>
+                    <p className="mt-1 text-sm text-zinc-500">Нийт {programs.length} сургалт байна.</p>
                 </div>
                 {programs.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-zinc-800 p-10 text-center text-zinc-500">Одоогоор хөтөлбөр үүсгээгүй байна.</div>
+                    <div className="rounded-xl border border-dashed border-zinc-800 p-10 text-center text-zinc-500">Одоогоор сургалт үүсгээгүй байна.</div>
                 ) : (
                     <div className="grid gap-4 lg:grid-cols-2">
                         {programs.map((program) => (
@@ -92,11 +92,11 @@ export function TrainingProgramLibrary({ programs }: { programs: TrainingProgram
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="flex flex-wrap gap-2">
-                                        <Badge variant="outline" className="border-zinc-700 text-zinc-300">{program.cohortCount} элсэлт</Badge>
+                                        <Badge variant="outline" className="border-zinc-700 text-zinc-300">{program.cohortCount} анги / элсэлт</Badge>
                                         <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-300">{program.openCohortCount} нээлттэй</Badge>
                                     </div>
                                     <Button asChild variant="outline" className="w-full border-zinc-700 bg-zinc-900 hover:bg-zinc-800">
-                                        <Link href={`/admin/programs/${program.id}`}><Settings2 className="mr-2 h-4 w-4" />Удирдах</Link>
+                                        <Link href={`/admin/programs/${program.id}`}><Settings2 className="mr-2 h-4 w-4" />Сургалтыг удирдах</Link>
                                     </Button>
                                 </CardContent>
                             </Card>
