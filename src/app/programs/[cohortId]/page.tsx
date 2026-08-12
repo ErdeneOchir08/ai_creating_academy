@@ -225,7 +225,7 @@ function LegacyCohortApplicationPage({
     return (
         <div className="min-h-[calc(100vh-64px)] bg-zinc-950 px-4 py-10 text-white">
             <div className="mx-auto max-w-6xl">
-                <Link href="/programs" className="text-sm text-zinc-400 hover:text-white">← Нээлттэй элсэлтүүд</Link>
+                <Link href="/programs" className="text-sm text-zinc-400 hover:text-white">← Бүх сургалтууд</Link>
                 <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
                     <div>
                         <p className="text-sm font-medium text-indigo-400">{cohort.program_name}</p>

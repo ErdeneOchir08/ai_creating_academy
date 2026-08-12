@@ -83,7 +83,7 @@ export function CourseOfferingOptions({
                                 {offering.payment_plan && <p className="mt-0.5 text-xs text-zinc-500">{offering.payment_plan}</p>}
                             </div>
                             <Button asChild className="shrink-0 bg-indigo-600 font-bold text-white hover:bg-indigo-700">
-                                <Link href={`/programs/${offering.offering_id}`}>Элсэлт рүү очих</Link>
+                                <Link href={`/programs/${offering.offering_id}`}>Бүртгүүлэх</Link>
                             </Button>
                         </div>
                     </article>

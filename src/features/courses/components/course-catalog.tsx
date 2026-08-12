@@ -6,7 +6,7 @@ import { CourseCard } from '@/features/courses/components/course-card'
 type Category = { id: string; name: string }
 type Course = { id: string; title: string; description: string; thumbnail_url: string; price_display: string; original_price_display?: string | null; payment_status?: 'none' | 'pending' | 'enrolled'; categories: Category[] }
 
-export function CourseCatalog({ courses }: { courses: Course[] }) {
+export function CourseCatalog({ courses, showFilters = true }: { courses: Course[]; showFilters?: boolean }) {
     const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
     const categories = useMemo(() => {
         const map = new Map<string, Category>()
@@ -15,7 +15,7 @@ export function CourseCatalog({ courses }: { courses: Course[] }) {
     }, [courses])
     const visibleCourses = selectedCategoryId ? courses.filter((course) => course.categories.some((category) => category.id === selectedCategoryId)) : courses
     return <>
-        {categories.length > 0 && <div className="mb-8 flex flex-wrap gap-2" aria-label="Хичээлийн ангиллаар шүүх">
+        {showFilters && categories.length > 0 && <div className="mb-8 flex flex-wrap gap-2" aria-label="Сургалтын ангиллаар шүүх">
             <button type="button" onClick={() => setSelectedCategoryId(null)} className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${selectedCategoryId === null ? 'bg-indigo-600 text-white' : 'border border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-indigo-500/50'}`}>Бүгд</button>
             {categories.map((category) => <button key={category.id} type="button" onClick={() => setSelectedCategoryId(category.id)} className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${selectedCategoryId === category.id ? 'bg-indigo-600 text-white' : 'border border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-indigo-500/50'}`}>{category.name}</button>)}
         </div>}

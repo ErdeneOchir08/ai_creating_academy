@@ -44,7 +44,7 @@ export function CourseCard({ course }: { course: Course }) {
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/card:opacity-100 transition-opacity flex items-center justify-center duration-300 backdrop-blur-[2px]">
                         <Link href={course.payment_status === 'enrolled' ? `/courses/${course.id}` : `/course/${course.id}`}>
                             <Button className="rounded-full bg-white text-black hover:bg-zinc-200 shadow-xl transition-transform duration-300 transform scale-95 group-hover/card:scale-100 font-bold">
-                                <Play className="mr-2 h-4 w-4 fill-current" /> {course.payment_status === 'enrolled' ? 'Үргэлжлүүлэх' : 'Хичээл үзэх'}
+                                <Play className="mr-2 h-4 w-4 fill-current" /> {course.payment_status === 'enrolled' ? 'Үргэлжлүүлэх' : 'Дэлгэрэнгүй'}
                             </Button>
                         </Link>
                     </div>
@@ -85,7 +85,7 @@ export function CourseCard({ course }: { course: Course }) {
                         </div>
                         <Link href={course.payment_status === 'enrolled' ? `/courses/${course.id}` : `/course/${course.id}`} className="w-full">
                             <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/20 rounded-xl font-bold h-12 text-md">
-                                {course.payment_status === 'enrolled' ? 'Хичээл үзэх' : course.payment_status === 'pending' ? 'Төлөв харах' : 'Хичээл үзэх'}
+                                {course.payment_status === 'enrolled' ? 'Хичээл үзэх' : course.payment_status === 'pending' ? 'Төлөв харах' : 'Дэлгэрэнгүй'}
                             </Button>
                         </Link>
                     </div>

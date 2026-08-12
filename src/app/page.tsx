@@ -1,6 +1,9 @@
+import Link from 'next/link'
 import { getPublishedCourses } from '@/features/courses/actions/course-actions'
 import { CourseCatalog } from '@/features/courses/components/course-catalog'
+import { latestCourses } from '@/features/courses/domain/latest-courses'
 import { Sparkles } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { AnimatedHero } from '@/components/animated-hero'
 import { AboutSection } from '@/components/about-section'
 import { ProjectShowcaseSlider } from '@/components/project-showcase-slider'
@@ -15,6 +18,7 @@ export const metadata = {
 
 export default async function LandingPage() {
   const courses = await getPublishedCourses()
+  const featuredCourses = latestCourses(courses)
   const settings = await getAppSettings() || {}
 
   return (
@@ -41,8 +45,15 @@ export default async function LandingPage() {
           <p className="text-zinc-400">{settings.landing_course_subtitle || 'Анхан шатнаас AI мэргэжилтэн хүртэлх цогц хөтөлбөр.'}</p>
         </div>
 
-        {courses.length > 0 ? (
-          <CourseCatalog courses={courses} />
+        {featuredCourses.length > 0 ? (
+          <>
+            <CourseCatalog courses={featuredCourses} showFilters={false} />
+            <div className="mt-10 flex justify-center">
+              <Button asChild variant="outline" className="border-indigo-500/40 bg-zinc-950 text-white hover:bg-indigo-600 hover:text-white">
+                <Link href="/programs">Бүх сургалтыг харах</Link>
+              </Button>
+            </div>
+          </>
         ) : (
           <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/50 p-12 text-center flex flex-col items-center">
             <Sparkles className="h-12 w-12 text-zinc-600 mb-4" />
