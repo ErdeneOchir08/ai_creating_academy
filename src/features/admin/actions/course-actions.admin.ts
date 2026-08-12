@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { validateImageFile } from '@/lib/uploads/image-validation'
 import { getCloudflareStreamVideoReadiness } from '@/lib/cloudflare-stream/playback'
+import { normalizeLessonDisplayCode } from '@/features/courses/domain/lesson-display-code'
 
 type AdminCourseRow = {
     id: string
@@ -321,6 +322,7 @@ export async function createLesson(formData: FormData) {
 
     const course_id = String(formData.get('course_id') ?? '')
     const title = String(formData.get('title') ?? '').trim()
+    const display_code = normalizeLessonDisplayCode(formData.get('display_code'))
     const videoSource = await lessonVideoSourceFromForm(formData)
     const position = lessonPositionFromForm(formData.get('order_index'))
     const is_preview = formData.get('is_preview') === 'true'
@@ -330,12 +332,15 @@ export async function createLesson(formData: FormData) {
 
     const { data: lesson, error } = await supabase
         .from('lessons')
-        .insert([{ course_id, title, position, is_preview }])
+        .insert([{ course_id, title, display_code, position, is_preview }])
         .select('id')
         .single()
 
     if (error) {
         console.error('Error creating lesson:', error)
+        if (error.code === '23505' && error.message.includes('lessons_course_display_code_unique')) {
+            throw new Error('Энэ хичээлийн дугаар тухайн курст аль хэдийн ашиглагдсан байна.')
+        }
         throw new Error(error.message)
     }
 
@@ -373,6 +378,7 @@ export async function updateLesson(id: string, courseId: string, formData: FormD
     const supabase = await requireAdmin()
 
     const title = String(formData.get('title') ?? '').trim()
+    const display_code = normalizeLessonDisplayCode(formData.get('display_code'))
     const videoSource = await lessonVideoSourceFromForm(formData)
     const position = lessonPositionFromForm(formData.get('order_index'))
     const is_preview = formData.get('is_preview') === 'true'
@@ -384,6 +390,7 @@ export async function updateLesson(id: string, courseId: string, formData: FormD
         .from('lessons')
         .update({
             title,
+            display_code,
             position,
             is_preview,
         })
@@ -391,6 +398,9 @@ export async function updateLesson(id: string, courseId: string, formData: FormD
 
     if (error) {
         console.error('Error updating lesson:', error)
+        if (error.code === '23505' && error.message.includes('lessons_course_display_code_unique')) {
+            throw new Error('Энэ хичээлийн дугаар тухайн курст аль хэдийн ашиглагдсан байна.')
+        }
         throw new Error(error.message)
     }
 

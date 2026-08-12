@@ -15,6 +15,7 @@ import { getCloudflareStreamPlaybackUrl } from '@/lib/cloudflare-stream/playback
 import { getPublicCourseOfferingCheckout } from '@/features/courses/actions/public-course-offering-actions'
 import { CourseOfferingOptions } from '@/features/courses/components/course-offering-options'
 import { CourseDescription } from '@/features/courses/components/course-description'
+import { lessonDisplayLabel } from '@/features/courses/domain/lesson-display-code'
 
 function getYouTubeEmbedUrl(url: string) {
     if (!url) return ''
@@ -141,7 +142,7 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
                                         )}
                                         <div>
                                             <p className={`text-sm ${isActive ? 'text-indigo-200 font-bold' : isCompleted ? 'text-emerald-300 font-medium' : 'text-zinc-300'}`}>
-                                                {index + 1}. {lesson.title}
+                                                {lessonDisplayLabel(lesson.display_code, index + 1)}. {lesson.title}
                                             </p>
                                         </div>
                                     </div>
@@ -314,7 +315,7 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
                                                 )}
                                                 <div>
                                                     <p className={`text-base tracking-tight ${isActive ? 'text-indigo-200 font-bold' : isCompleted ? 'text-emerald-300 font-medium' : 'text-zinc-300'}`}>
-                                                        {index + 1}. {lesson.title}
+                                                        {lessonDisplayLabel(lesson.display_code, index + 1)}. {lesson.title}
                                                     </p>
                                                 </div>
                                             </div>

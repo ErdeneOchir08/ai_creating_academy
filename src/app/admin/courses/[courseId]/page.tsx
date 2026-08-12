@@ -90,7 +90,7 @@ export default async function AdminCourseDetailsPage({
                                 Одоогоор хичээл нэмэгдээгүй байна. &quot;Хичээл нэмэх&quot; дээр дарж хөтөлбөрөө үүсгэж эхэлнэ үү.
                             </div>
                         ) : (
-                            lessons.map((lesson: { id: string; title: string; video_url: string | null; video_provider: 'youtube' | 'cloudflare' | null; provider_video_id: string | null; playback_status: string | null; order_index: number; is_preview: boolean }, index: number) => (
+                            lessons.map((lesson: { id: string; title: string; display_code: string | null; video_url: string | null; video_provider: 'youtube' | 'cloudflare' | null; provider_video_id: string | null; playback_status: string | null; order_index: number; is_preview: boolean }, index: number) => (
                                 <Card key={lesson.id} className="bg-zinc-950 border-zinc-800 text-white overflow-hidden group">
                                     <div className="flex items-center">
                                         <div className="p-2 sm:p-4 flex flex-col justify-center items-center gap-1 border-r border-zinc-800 bg-zinc-900/50 shrink-0 min-w-[3rem]">
@@ -115,7 +115,7 @@ export default async function AdminCourseDetailsPage({
                                         <div className="p-4 flex-1 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="h-8 w-8 rounded-full bg-indigo-600/20 text-indigo-400 flex items-center justify-center font-bold text-sm">
-                                                    {lesson.order_index}
+                                                    {lesson.display_code || lesson.order_index}
                                                 </div>
                                                 <div>
                                                     <div className="flex flex-wrap items-center gap-2">

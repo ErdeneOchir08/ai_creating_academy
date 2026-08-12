@@ -1,10 +1,12 @@
 import { Lock, PlayCircle } from 'lucide-react'
 import Link from 'next/link'
+import { lessonDisplayLabel } from '@/features/courses/domain/lesson-display-code'
 
 type Lesson = {
     id: string
     title: string
     order_index: number
+    display_code: string | null
     is_preview: boolean
 }
 
@@ -27,7 +29,7 @@ export function CourseCurriculumList({ lessons, courseId }: { lessons: Lesson[];
                     >
                         <div className="flex items-center gap-4">
                             <div className="w-6 font-mono text-sm text-zinc-500">
-                                {String(index + 1).padStart(2, '0')}
+                                {lessonDisplayLabel(lesson.display_code, index + 1, true)}
                             </div>
                             <div className={`rounded-full p-2 ${lesson.is_preview ? 'bg-indigo-500/20 text-indigo-300' : 'bg-zinc-800 text-zinc-500'}`}>
                                 <PlayCircle className="w-5 h-5" />

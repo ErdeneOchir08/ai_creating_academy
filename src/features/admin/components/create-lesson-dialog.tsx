@@ -48,6 +48,11 @@ export function CreateLessonDialog({ courseId, nextOrderIndex }: { courseId: str
                         <Input id="title" name="title" required placeholder="Жишээ: Gemini-ийн үндсэн ойлголт" className="border-zinc-800 bg-zinc-900" />
                     </div>
                     <div className="space-y-2">
+                        <Label htmlFor="display_code">Хичээлийн дугаар <span className="font-normal text-zinc-500">(заавал биш)</span></Label>
+                        <Input id="display_code" name="display_code" maxLength={32} placeholder="Жишээ: 0-1" className="border-zinc-800 bg-zinc-900" />
+                        <p className="text-xs leading-5 text-zinc-500">Суралцагчид харагдах дугаар. Хоосон үлдээвэл дарааллын дугаар автоматаар харагдана.</p>
+                    </div>
+                    <div className="space-y-2">
                         <Label htmlFor="video_url">Видео холбоос</Label>
                         <select id="video_provider" name="video_provider" value={videoProvider} onChange={(event) => setVideoProvider(event.target.value as 'youtube' | 'cloudflare')} className="mb-2 h-10 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 text-sm text-white">
                             <option value="youtube">YouTube холбоос</option>

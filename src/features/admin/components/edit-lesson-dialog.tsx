@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { updateLesson } from '@/features/admin/actions/course-actions.admin'
 import { Edit2 } from 'lucide-react'
 
-type Lesson = { id: string; title: string; video_url: string | null; video_provider: 'youtube' | 'cloudflare' | null; provider_video_id: string | null; order_index: number; is_preview: boolean }
+type Lesson = { id: string; title: string; display_code: string | null; video_url: string | null; video_provider: 'youtube' | 'cloudflare' | null; provider_video_id: string | null; order_index: number; is_preview: boolean }
 
 export function EditLessonDialog({ lesson, courseId }: { lesson: Lesson; courseId: string }) {
     const [open, setOpen] = useState(false)
@@ -45,6 +45,11 @@ export function EditLessonDialog({ lesson, courseId }: { lesson: Lesson; courseI
                     <div className="space-y-2">
                         <Label htmlFor="title">Гарчиг <span className="text-red-500">*</span></Label>
                         <Input id="title" name="title" required defaultValue={lesson.title} className="border-zinc-800 bg-zinc-900" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="display_code">Хичээлийн дугаар <span className="font-normal text-zinc-500">(заавал биш)</span></Label>
+                        <Input id="display_code" name="display_code" maxLength={32} defaultValue={lesson.display_code ?? ''} placeholder="Жишээ: 0-1" className="border-zinc-800 bg-zinc-900" />
+                        <p className="text-xs leading-5 text-zinc-500">Суралцагчид харагдах дугаар. Хоосон үлдээвэл дарааллын дугаар автоматаар харагдана.</p>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="video_url">Видео холбоос</Label>
