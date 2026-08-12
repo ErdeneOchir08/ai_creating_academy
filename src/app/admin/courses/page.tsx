@@ -1,6 +1,7 @@
 import { getAllAdminCourses } from '@/features/admin/actions/course-actions.admin'
 import { CreateCourseDialog } from '@/features/admin/components/create-course-dialog'
 import { CourseDeleteButton } from '@/features/admin/components/course-delete-button'
+import { CourseArchiveButton } from '@/features/admin/components/course-archive-button'
 import {
     Table,
     TableBody,
@@ -76,7 +77,9 @@ export default async function AdminCoursesPage() {
                                                 </Link>
                                             </TableCell>
                                             <TableCell>
-                                                {course.published ? (
+                                                {course.archived_at ? (
+                                                    <Badge variant="outline" className="border-zinc-700 text-zinc-400">Архив</Badge>
+                                                ) : course.published ? (
                                                     <Badge className="bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20">Нийтлэгдсэн</Badge>
                                                 ) : (
                                                     <Badge variant="outline" className="text-zinc-500 border-zinc-700">Ноорог</Badge>
@@ -107,7 +110,9 @@ export default async function AdminCoursesPage() {
                                                         </Link>
                                                     </Button>
 
-                                                    <CourseDeleteButton courseId={course.id} courseTitle={course.title} />
+                                                    <CourseArchiveButton courseId={course.id} courseTitle={course.title} archived={Boolean(course.archived_at)} />
+
+                                                    {!course.archived_at && <CourseDeleteButton courseId={course.id} courseTitle={course.title} />}
                                                 </div>
                                             </TableCell>
                                         </TableRow>

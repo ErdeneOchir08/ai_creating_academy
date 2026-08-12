@@ -13,6 +13,7 @@ type AdminCourseRow = {
     price_amount_mnt: number
     original_price_amount_mnt: number | null
     published: boolean
+    archived_at: string | null
     created_at: string
     lessons: Array<{ id: string; lesson_videos: { lesson_id: string; playback_status: string } | null }> | null
 }
@@ -278,6 +279,38 @@ export async function deleteCourse(id: string) {
 
     revalidatePath('/admin/courses')
     revalidatePath('/')
+    revalidatePath(`/course/${id}`)
+    revalidatePath(`/courses/${id}`)
+    return { success: true }
+}
+
+export async function setCourseArchived(id: string, archived: boolean) {
+    const supabase = await requireAdmin()
+    const { error } = await supabase.rpc('set_course_archived', {
+        p_course_id: id,
+        p_archived: archived,
+    })
+
+    if (error) {
+        console.error('Unable to change course archive state:', error.message)
+        return { error: 'Хичээлийн архивын төлөвийг өөрчилж чадсангүй. Дахин оролдоно уу.' }
+    }
+
+    const { data: course, error: verificationError } = await supabase
+        .from('courses')
+        .select('archived_at')
+        .eq('id', id)
+        .maybeSingle()
+    const archiveStateMatches = archived ? Boolean(course?.archived_at) : course?.archived_at === null
+    if (verificationError || !course || !archiveStateMatches) {
+        console.error('Course archive state verification failed:', verificationError?.message ?? 'Unexpected archive state')
+        return { error: 'Хичээлийн архивын төлөв баталгаажсангүй. Дахин оролдоно уу.' }
+    }
+
+    revalidatePath('/admin/courses')
+    revalidatePath(`/admin/courses/${id}`)
+    revalidatePath('/')
+    revalidatePath('/programs')
     revalidatePath(`/course/${id}`)
     revalidatePath(`/courses/${id}`)
     return { success: true }

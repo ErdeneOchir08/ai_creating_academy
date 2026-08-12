@@ -68,18 +68,20 @@ export type OfferingCourseOption = {
     id: string
     title: string
     published: boolean
+    archived_at: string | null
     is_ready_for_offering: boolean
 }
 
 type OfferingCourseReadinessRecord = {
     published: boolean
+    archived_at: string | null
     lessons: Array<{
         lesson_videos: Array<{ playback_status: string }> | { playback_status: string } | null
     }> | null
 }
 
 function isCourseReadyForOffering(course: OfferingCourseReadinessRecord | null | undefined) {
-    return course?.published === true && (course.lessons ?? []).some((lesson) => {
+    return course?.published === true && course.archived_at === null && (course.lessons ?? []).some((lesson) => {
         const videos = Array.isArray(lesson.lesson_videos)
             ? lesson.lesson_videos
             : lesson.lesson_videos
@@ -238,6 +240,7 @@ export async function getOfferingCourseOptions(): Promise<OfferingCourseOption[]
             id,
             title,
             published,
+            archived_at,
             lessons (
                 id,
                 lesson_videos ( playback_status )
@@ -254,6 +257,7 @@ export async function getOfferingCourseOptions(): Promise<OfferingCourseOption[]
         id: course.id,
         title: course.title,
         published: course.published,
+        archived_at: course.archived_at,
         is_ready_for_offering: isCourseReadyForOffering(course),
     }))
 }
@@ -492,6 +496,7 @@ export async function changeTrainingCohortStatus(cohortId: string, programId: st
                 .from('courses')
                 .select(`
                     published,
+                    archived_at,
                     lessons (
                         lesson_videos ( playback_status )
                     )

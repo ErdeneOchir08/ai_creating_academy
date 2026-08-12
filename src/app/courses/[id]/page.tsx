@@ -71,6 +71,10 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
     const isEnrolled = paymentStatus === 'enrolled'
     const isPending = paymentStatus === 'pending'
 
+    if (course.archived_at && !isEnrolled) {
+        notFound()
+    }
+
     const [lessons, progress] = await Promise.all([
         getCourseLessons(id),
         getUserProgress(id)

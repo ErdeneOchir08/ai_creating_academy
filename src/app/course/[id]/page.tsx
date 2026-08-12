@@ -22,6 +22,9 @@ export default async function CourseSalesPage(props: { params: Promise<{ id: str
 
     // Redirect to the player if they are already enrolled
     const paymentStatus = await checkPaymentStatus(id)
+    if (course.archived_at && paymentStatus !== 'enrolled') {
+        notFound()
+    }
     const rejectionReason = paymentStatus === 'rejected' ? await getRejectedPaymentReason(id) : null
     if (paymentStatus === 'enrolled') {
         redirect(`/courses/${id}`)

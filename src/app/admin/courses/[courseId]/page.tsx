@@ -3,6 +3,7 @@ import { deleteLesson, reorderLesson, getAllAdminCourses } from '@/features/admi
 import { CreateLessonDialog } from '@/features/admin/components/create-lesson-dialog'
 import { EditLessonDialog } from '@/features/admin/components/edit-lesson-dialog'
 import { EditCourseDialog } from '@/features/admin/components/edit-course-dialog'
+import { CourseArchiveButton } from '@/features/admin/components/course-archive-button'
 import { CourseCategoryAssignment } from '@/features/admin/components/course-category-assignment'
 import { CourseBonusAssignment } from '@/features/admin/components/course-bonus-assignment'
 import { getAdminCategories, getCourseBonusIds, getCourseCategoryIds } from '@/features/admin/actions/category-actions.admin'
@@ -49,7 +50,9 @@ export default async function AdminCourseDetailsPage({
                 <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                         <h1 className="mb-1 break-words text-2xl font-bold text-white sm:text-3xl">{course.title}</h1>
-                        {course.published ? (
+                        {course.archived_at ? (
+                            <Badge variant="outline" className="border-zinc-700 text-zinc-400">Архив</Badge>
+                        ) : course.published ? (
                             <Badge className="bg-emerald-500/10 text-emerald-400">Нийтлэгдсэн</Badge>
                         ) : (
                             <Badge variant="outline" className="text-zinc-500 border-zinc-700">Ноорог</Badge>
@@ -61,6 +64,7 @@ export default async function AdminCourseDetailsPage({
                 <Button asChild variant="outline" className="self-start border-indigo-400/30 bg-zinc-950">
                     <Link href="/admin/programs">Сургалтад холбох<ArrowRight className="ml-2 h-4 w-4" /></Link>
                 </Button>
+                <CourseArchiveButton courseId={course.id} courseTitle={course.title} archived={Boolean(course.archived_at)} />
             </header>
 
             <div className="grid md:grid-cols-3 gap-8">

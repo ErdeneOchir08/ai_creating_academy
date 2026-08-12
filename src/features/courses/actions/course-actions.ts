@@ -11,6 +11,7 @@ type CourseRow = {
     price_amount_mnt: number
     original_price_amount_mnt: number | null
     published: boolean
+    archived_at: string | null
     created_at: string
 }
 
@@ -70,6 +71,7 @@ export async function getPublishedCourses() {
         .from('courses')
         .select('*, course_category_assignments(category_id, course_categories(id, name))')
         .eq('published', true)
+        .is('archived_at', null)
         .in('id', readyCourseIds)
         .order('created_at', { ascending: false })
 
