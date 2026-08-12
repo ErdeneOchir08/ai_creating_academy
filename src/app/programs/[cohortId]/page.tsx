@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { CalendarDays, FileText, MapPin, Monitor, Users } from 'lucide-react'
+import { CalendarDays, CircleCheck, FileText, MapPin, Monitor, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { withReturnPath } from '@/lib/auth/return-path'
 import { createClient } from '@/lib/supabase/server'
@@ -175,8 +175,11 @@ function OfferingSummary({ checkout }: { checkout: NonNullable<Awaited<ReturnTyp
                     </>
                 )}
             </div>
-            <div className="mt-5 border-t border-zinc-800 pt-5 text-xs leading-relaxed text-zinc-500">
-                Төлбөрийг админ баталгаажуулсны дараа “{checkout.course_title}” хичээл үзэх эрх нээгдэнэ.
+            <div className="mt-5 flex items-start gap-3 rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-3 text-sm leading-relaxed text-emerald-100">
+                <CircleCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" aria-hidden="true" />
+                <p>
+                    Төлбөрийг админ баталгаажуулсны дараа <strong className="font-semibold text-white">“{checkout.course_title}”</strong> хичээл үзэх эрх нээгдэнэ.
+                </p>
             </div>
         </aside>
     )

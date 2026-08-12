@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getPaymentConfiguration } from '@/features/admin/actions/settings-actions.admin'
 import { getPublicCourseOfferingCheckout } from '@/features/courses/actions/public-course-offering-actions'
 import { CourseOfferingOptions } from '@/features/courses/components/course-offering-options'
+import { CourseDescription } from '@/features/courses/components/course-description'
 
 export default async function CourseSalesPage(props: { params: Promise<{ id: string }> }) {
     const { id } = await props.params
@@ -63,14 +64,12 @@ export default async function CourseSalesPage(props: { params: Promise<{ id: str
                                 </span>
                             </div>
 
-                            <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-6">
+                            <h1 className="text-4xl md:text-6xl font-black tracking-tight">
                                 {course.title}
                             </h1>
-
-                            <p className="text-xl text-zinc-400 leading-relaxed font-light">
-                                {course.description}
-                            </p>
                         </div>
+
+                        <CourseDescription description={course.description} />
 
                         {/* Value Props Row */}
                         <div className="flex gap-6 py-6 border-y border-white/5">

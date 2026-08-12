@@ -14,6 +14,7 @@ import { getPaymentConfiguration } from '@/features/admin/actions/settings-actio
 import { getCloudflareStreamPlaybackUrl } from '@/lib/cloudflare-stream/playback'
 import { getPublicCourseOfferingCheckout } from '@/features/courses/actions/public-course-offering-actions'
 import { CourseOfferingOptions } from '@/features/courses/components/course-offering-options'
+import { CourseDescription } from '@/features/courses/components/course-description'
 
 function getYouTubeEmbedUrl(url: string) {
     if (!url) return ''
@@ -223,7 +224,10 @@ export default async function CoursePlayerPage(props: { params: Promise<{ id: st
                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
                         <div className="flex-1">
                             <h1 className="text-4xl font-black mb-4 tracking-tight text-white drop-shadow-sm">{currentLesson?.title || course.title}</h1>
-                            <p className="text-zinc-300 text-lg leading-relaxed max-w-3xl">{course.description || "Энэ хичээлээр та үндсэн ойлголтуудыг сурах болно..."}</p>
+                            <CourseDescription
+                                description={course.description || "Энэ хичээлээр та үндсэн ойлголтуудыг сурах болно..."}
+                                compact
+                            />
                         </div>
 
                         {!isEnrolled && (
