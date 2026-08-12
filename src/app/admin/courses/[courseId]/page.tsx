@@ -34,7 +34,6 @@ export default async function AdminCourseDetailsPage({
         notFound()
     }
 
-    const nextOrderIndex = lessons.length > 0 ? Math.max(...lessons.map((l: { order_index: number }) => l.order_index)) + 1 : 1
     const videoLessonCount = lessons.filter((lesson: { video_url: string | null; provider_video_id: string | null; playback_status: string | null }) => Boolean(lesson.video_url || lesson.provider_video_id) && lesson.playback_status === 'ready').length
     const isReadyForPublication = lessons.length > 0 && videoLessonCount > 0
 
@@ -81,7 +80,7 @@ export default async function AdminCourseDetailsPage({
                     </Card>
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-xl font-bold text-white">Контентын бүтэц</h2>
-                        <CreateLessonDialog courseId={course.id} nextOrderIndex={nextOrderIndex} />
+                        <CreateLessonDialog courseId={course.id} />
                     </div>
 
                     <div className="space-y-3">

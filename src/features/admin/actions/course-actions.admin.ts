@@ -324,24 +324,48 @@ export async function createLesson(formData: FormData) {
     const title = String(formData.get('title') ?? '').trim()
     const display_code = normalizeLessonDisplayCode(formData.get('display_code'))
     const videoSource = await lessonVideoSourceFromForm(formData)
-    const position = lessonPositionFromForm(formData.get('order_index'))
     const is_preview = formData.get('is_preview') === 'true'
 
     if (!title || !course_id) throw new Error('Title and course ID are required')
     if (is_preview && !videoSource) throw new Error('Үнэ төлбөргүй үзэх хичээлд хүчинтэй видео шаардлагатай.')
 
-    const { data: lesson, error } = await supabase
-        .from('lessons')
-        .insert([{ course_id, title, display_code, position, is_preview }])
-        .select('id')
-        .single()
+    let lesson: { id: string } | null = null
+    let lessonError: DatabaseMutationError | null = null
 
-    if (error) {
-        console.error('Error creating lesson:', error)
-        if (error.code === '23505' && error.message.includes('lessons_course_display_code_unique')) {
+    // Student-facing codes do not control sorting. Always append using the
+    // latest database position so a stale admin page cannot reuse an order.
+    for (let attempt = 0; attempt < 3 && !lesson; attempt += 1) {
+        const { data: lastLesson, error: positionError } = await supabase
+            .from('lessons')
+            .select('position')
+            .eq('course_id', course_id)
+            .order('position', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+
+        if (positionError) throw new Error(positionError.message)
+
+        const position = (lastLesson?.position ?? 0) + 1
+        const { data, error } = await supabase
+            .from('lessons')
+            .insert([{ course_id, title, display_code, position, is_preview }])
+            .select('id')
+            .single()
+
+        lesson = data
+        lessonError = error
+        if (error?.code !== '23505' || !error.message.includes('lessons_course_id_position_key')) break
+    }
+
+    if (lessonError || !lesson) {
+        console.error('Error creating lesson:', lessonError)
+        if (lessonError?.code === '23505' && lessonError.message.includes('lessons_course_display_code_unique')) {
             throw new Error('Энэ хичээлийн дугаар тухайн курст аль хэдийн ашиглагдсан байна.')
         }
-        throw new Error(error.message)
+        if (lessonError?.code === '23505' && lessonError.message.includes('lessons_course_id_position_key')) {
+            throw new Error('Хичээлийн дараалал зэрэг өөрчлөгдсөн байна. Дахин оролдоно уу.')
+        }
+        throw new Error(lessonError?.message ?? 'Хичээл нэмэхэд алдаа гарлаа.')
     }
 
     if (videoSource) {

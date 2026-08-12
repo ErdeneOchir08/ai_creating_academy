@@ -7,8 +7,10 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { createLesson } from '@/features/admin/actions/course-actions.admin'
 import { Plus } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
-export function CreateLessonDialog({ courseId, nextOrderIndex }: { courseId: string; nextOrderIndex: number }) {
+export function CreateLessonDialog({ courseId }: { courseId: string }) {
+    const router = useRouter()
     const [open, setOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
@@ -20,6 +22,7 @@ export function CreateLessonDialog({ courseId, nextOrderIndex }: { courseId: str
         try {
             await createLesson(formData)
             setOpen(false)
+            router.refresh()
         } catch (error: unknown) {
             console.error(error)
             setErrorMessage(error instanceof Error ? error.message : 'Хичээл нэмэхэд алдаа гарлаа.')
@@ -67,10 +70,7 @@ export function CreateLessonDialog({ courseId, nextOrderIndex }: { courseId: str
                             <span className="block text-xs leading-5 text-zinc-400">Нэвтрэхгүй хэрэглэгчид энэ хичээлийн видеог үзэж болно. Видео холбоос заавал шаардлагатай.</span>
                         </span>
                     </label>
-                    <div className="space-y-2">
-                        <Label htmlFor="order_index">Дараалал <span className="text-red-500">*</span></Label>
-                        <Input id="order_index" name="order_index" type="number" min="1" required defaultValue={nextOrderIndex} className="border-zinc-800 bg-zinc-900" />
-                    </div>
+                    <p className="rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2 text-xs leading-5 text-zinc-400">Шинэ хичээл жагсаалтын төгсгөлд автоматаар нэмэгдэнэ. Дарааллыг хадгалсны дараа сумтай товчоор өөрчилж болно.</p>
                     {errorMessage && <p className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">{errorMessage}</p>}
                     <DialogFooter className="pt-4">
                         <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="text-zinc-400 hover:text-white">Болих</Button>
