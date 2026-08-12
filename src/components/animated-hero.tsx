@@ -68,7 +68,7 @@ export function AnimatedHero({ settings }: { settings: HeroSettings }) {
       </motion.div>
 
       {/* Main Title */}
-      <motion.h1 variants={item} className="text-6xl md:text-8xl font-black tracking-tighter text-white mb-8 leading-[1.1] drop-shadow-2xl">
+      <motion.h1 variants={item} className="mb-8 text-5xl font-black leading-[1.1] tracking-tighter text-white drop-shadow-2xl min-[380px]:text-6xl md:text-8xl">
         {settings.landing_title_main || 'Өөрийн'} <br />
         <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 hover:from-purple-400 hover:to-indigo-400 transition-all duration-700">
           {settings.landing_title_highlight || 'AI аппликейшн бүтээ'}

@@ -297,7 +297,7 @@ export function BrandSettingsForm({ initialSettings }: { initialSettings: Settin
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-4 border-t border-zinc-800 pt-4 mt-6">
+                        <div className="mt-6 grid grid-cols-1 gap-4 border-t border-zinc-800 pt-4 sm:grid-cols-3">
                             <div className="space-y-2">
                                 <Label htmlFor="aboutStatsStudents" className="text-zinc-300">Үзүүлэлт 1 (Оюутнууд)</Label>
                                 <Input id="aboutStatsStudents" value={aboutStatsStudents} onChange={(e) => setAboutStatsStudents(e.target.value)} className="bg-zinc-950/50 border-zinc-800 text-white" />

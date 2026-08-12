@@ -75,7 +75,7 @@ export function EditCourseDialog({ course }: { course: CourseProps }) {
                         <Textarea id="description" name="description" required defaultValue={course.description} className="bg-zinc-900 border-zinc-800 min-h-[100px]" />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="space-y-2">
                             <Label htmlFor="price_display" className="text-emerald-400">Одоогийн үнэ</Label>
                             <Input id="price_display" name="price_display" defaultValue={course.price_display} className="bg-zinc-900 border-emerald-900/50 focus-visible:ring-emerald-500/50" />
