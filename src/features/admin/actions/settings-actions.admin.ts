@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { isTelegramConfigured, sendTelegramMessage } from '@/lib/telegram/notifications'
+import { isSmtpConfigured, sendSmtpTestEmail } from '@/lib/email/smtp-test'
 import {
     contractIssuerProfileFromFormData,
     contractIssuerProfileSchema,
@@ -274,4 +275,22 @@ export async function sendTelegramTestAlert() {
     const result = await sendTelegramMessage('✅ Mind Academy Telegram мэдэгдлийн туршилт амжилттай илгээгдлээ.')
     if (!result.sent) return { error: 'Telegram туршилтын мэдэгдэл илгээгдсэнгүй. Тохиргоог шалгана уу.' }
     return { success: 'Telegram туршилтын мэдэгдэл илгээгдлээ.' }
+}
+
+export async function getSmtpNotificationStatus() {
+    await requireAdmin()
+    return { configured: isSmtpConfigured() }
+}
+
+export async function sendSmtpTestAlert(formData: FormData) {
+    await requireAdmin()
+    const recipient = String(formData.get('recipient') ?? '').trim()
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient) || recipient.length > 320) {
+        return { error: 'Хүлээн авах и-мэйл хаягаа зөв оруулна уу.' }
+    }
+
+    const result = await sendSmtpTestEmail(recipient)
+    if (!result.sent) return { error: result.error }
+    return { success: 'Туршилтын и-мэйл амжилттай илгээгдлээ.' }
 }
