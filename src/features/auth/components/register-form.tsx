@@ -51,7 +51,7 @@ export function RegisterForm({ returnPath }: { returnPath: string | null }) {
                     {error && <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm font-medium text-red-400">{error}</div>}
                     {success && <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm font-medium text-emerald-300">{success}</div>}
                 </CardContent>
-                <CardFooter className="flex w-full flex-col space-y-5 pt-2">
+                <CardFooter className="flex w-full flex-col space-y-5">
                     <SubmitButton />
                     <div className="w-full text-center text-sm text-zinc-400">Бүртгэлтэй юу? <Link href={withReturnPath('/login', returnPath)} className="font-medium text-indigo-400 transition-colors hover:text-indigo-300 hover:underline">Нэвтрэх</Link></div>
                 </CardFooter>

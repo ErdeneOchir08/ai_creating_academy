@@ -74,7 +74,7 @@ export function LoginForm({ returnPath }: { returnPath: string | null }) {
                         </div>
                     )}
                 </CardContent>
-                <CardFooter className="flex flex-col space-y-5 pt-2">
+                <CardFooter className="flex flex-col space-y-5">
                     <SubmitButton />
                     <div className="text-sm text-center text-zinc-400 w-full">
                         Бүртгэлгүй юу?{' '}
