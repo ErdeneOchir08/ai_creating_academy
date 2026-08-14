@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import type { MyOfferingCheckoutStatus } from '@/features/checkout/domain/offering-checkout'
 import {
-    getOfferingCheckoutStatusPresentation,
+    getEffectiveOfferingCheckoutStatusPresentation,
     type OfferingCheckoutStatusTone,
 } from '../domain/offering-checkout-status-presentation'
 
@@ -35,8 +35,10 @@ function formatDeadline(value: string) {
 
 export function OfferingCheckoutStatusList({
     statuses,
+    serverNow,
 }: {
     statuses: MyOfferingCheckoutStatus[]
+    serverNow: string
 }) {
     return (
         <section className="mb-12" aria-labelledby="offering-checkout-status-heading">
@@ -49,7 +51,10 @@ export function OfferingCheckoutStatusList({
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 {statuses.map((status) => {
-                    const presentation = getOfferingCheckoutStatusPresentation(status.application_status)
+                    const presentation = getEffectiveOfferingCheckoutStatusPresentation(
+                        status.application_status,
+                        { paymentDueAt: status.payment_due_at, serverNow },
+                    )
                     const continueHref = `/programs/${status.offering_id}?application=${encodeURIComponent(status.application_id)}`
 
                     return (

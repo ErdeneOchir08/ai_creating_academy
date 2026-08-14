@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle2, Clock3, FileCheck2, MailCheck, Plus, ShieldCheck, Upload } from 'lucide-react'
+import { CheckCircle2, CircleAlert, Clock3, FileCheck2, MailCheck, Plus, ShieldCheck, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -519,7 +519,7 @@ function PaymentPanel({
     }
 
     return (
-        <section className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 sm:p-7">
+        <section className={`rounded-2xl border p-5 sm:p-7 ${overdue ? 'border-red-500/30 bg-red-500/5' : 'border-emerald-500/20 bg-emerald-500/5'}`}>
             <p className="text-sm font-medium text-emerald-400">{checkout.contract_policy === 'none' ? '2-р алхам' : '3-р алхам'}</p>
             <h2 className="mt-1 text-xl font-semibold">Төлбөрийн баримт илгээх</h2>
             <p className="mt-2 text-3xl font-bold text-emerald-400">₮ {checkout.tuition_amount_mnt.toLocaleString('mn-MN')}</p>
@@ -529,29 +529,44 @@ function PaymentPanel({
                     Эцсийн хугацаа: {new Intl.DateTimeFormat('mn-MN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Ulaanbaatar' }).format(new Date(application.payment_due_at))}
                 </p>
             )}
+            {overdue && (
+                <div role="alert" className="mt-4 flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-100">
+                    <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-red-300" />
+                    <div>
+                        <p className="font-semibold">Төлбөрийн хугацаа дууссан</p>
+                        <p className="mt-1 leading-relaxed text-red-100/80">
+                            Төлбөрийн баримт илгээх боломжгүй байна. Хугацааг дахин нээлгэх бол Mind Academy-тай холбогдоно уу.
+                        </p>
+                    </div>
+                </div>
+            )}
             {application.payment?.status === 'correction_required' && application.payment.rejection_reason && (
                 <p className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
                     <strong>Баримтыг дахин илгээх шалтгаан:</strong> {application.payment.rejection_reason}
                 </p>
             )}
-            {configuration.isTestMode && (
+            {!overdue && configuration.isTestMode && (
                 <p className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm font-medium text-amber-200">Туршилтын горим идэвхтэй байна. Бодит мөнгө шилжүүлэхгүй.</p>
             )}
-            {configured ? (
-                <div className="mt-4 whitespace-pre-wrap rounded-xl border border-zinc-800 bg-zinc-950 p-4 text-sm leading-6 text-zinc-200">{configuration.instructions}</div>
-            ) : (
-                <p className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">Төлбөрийн мэдээлэл тохируулагдаагүй байна. Академийн админтай холбогдоно уу.</p>
+            {!overdue && (
+                <>
+                    {configured ? (
+                        <div className="mt-4 whitespace-pre-wrap rounded-xl border border-zinc-800 bg-zinc-950 p-4 text-sm leading-6 text-zinc-200">{configuration.instructions}</div>
+                    ) : (
+                        <p className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">Төлбөрийн мэдээлэл тохируулагдаагүй байна. Академийн админтай холбогдоно уу.</p>
+                    )}
+                    <form onSubmit={submit} className="mt-5 space-y-4">
+                        <Field label="Төлбөрийн баримтын зураг" required hint="JPG, PNG эсвэл WebP; хамгийн ихдээ 10 MB.">
+                            <Input name="receipt" type="file" required accept="image/jpeg,image/png,image/webp" />
+                        </Field>
+                        <Button type="submit" disabled={pending || !configured} className="bg-emerald-600 hover:bg-emerald-700">
+                            <Upload className="mr-2 h-4 w-4" />{pending ? 'Илгээж байна…' : 'Баримт илгээх'}
+                        </Button>
+                        {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
+                        {message && <p role="status" className="text-sm text-emerald-400">{message}</p>}
+                    </form>
+                </>
             )}
-            <form onSubmit={submit} className="mt-5 space-y-4">
-                <Field label="Төлбөрийн баримтын зураг" required hint="JPG, PNG эсвэл WebP; хамгийн ихдээ 10 MB.">
-                    <Input name="receipt" type="file" required accept="image/jpeg,image/png,image/webp" />
-                </Field>
-                <Button type="submit" disabled={pending || !configured || overdue} className="bg-emerald-600 hover:bg-emerald-700">
-                    <Upload className="mr-2 h-4 w-4" />{pending ? 'Илгээж байна…' : 'Баримт илгээх'}
-                </Button>
-                {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
-                {message && <p role="status" className="text-sm text-emerald-400">{message}</p>}
-            </form>
         </section>
     )
 }

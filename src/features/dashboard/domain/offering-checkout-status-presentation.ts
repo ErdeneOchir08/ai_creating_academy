@@ -14,6 +14,11 @@ export type OfferingCheckoutStatusPresentation = {
     showRejectionReason: boolean
 }
 
+type OfferingPaymentDeadlineContext = {
+    paymentDueAt: string | null
+    serverNow: string
+}
+
 const presentations = {
     draft: {
         label: 'Мэдээлэл дутуу',
@@ -75,6 +80,38 @@ const presentations = {
 
 export function getOfferingCheckoutStatusPresentation(status: OfferingCheckoutStatus) {
     return presentations[status]
+}
+
+export function getEffectiveOfferingCheckoutStatusPresentation(
+    status: OfferingCheckoutStatus,
+    { paymentDueAt, serverNow }: OfferingPaymentDeadlineContext,
+): OfferingCheckoutStatusPresentation {
+    if (!isOfferingPaymentOverdue(status, paymentDueAt, serverNow)) {
+        return getOfferingCheckoutStatusPresentation(status)
+    }
+
+    return {
+        label: 'Төлбөрийн хугацаа дууссан',
+        description: 'Төлбөрийн баримт илгээх хугацаа дууссан байна. Хугацааг дахин нээлгэх бол Mind Academy-тай холбогдоно уу.',
+        actionLabel: 'Дэлгэрэнгүй харах',
+        tone: 'danger',
+        showPaymentDeadline: true,
+        showRejectionReason: status === 'correction_required',
+    }
+}
+
+export function isOfferingPaymentOverdue(
+    status: OfferingCheckoutStatus,
+    paymentDueAt: string | null,
+    serverNow: string,
+) {
+    if (!['ready_for_payment', 'correction_required'].includes(status) || !paymentDueAt) {
+        return false
+    }
+
+    const deadline = new Date(paymentDueAt).getTime()
+    const currentTime = new Date(serverNow).getTime()
+    return Number.isFinite(deadline) && Number.isFinite(currentTime) && deadline < currentTime
 }
 
 export function selectNonApprovedOfferingCheckoutStatuses<

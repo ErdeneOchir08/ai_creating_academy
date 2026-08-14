@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+    getEffectiveOfferingCheckoutStatusPresentation,
     getOfferingCheckoutStatusPresentation,
+    isOfferingPaymentOverdue,
     selectNonApprovedOfferingCheckoutStatuses,
 } from './offering-checkout-status-presentation'
 
@@ -40,5 +42,38 @@ describe('offering checkout status presentation', () => {
 
         expect(selectNonApprovedOfferingCheckoutStatuses(statuses).map((status) => status.id))
             .toEqual(['first', 'second'])
+    })
+
+    it.each([
+        ['before the deadline', '2026-08-13T23:59:59.999Z', false],
+        ['exactly at the deadline', '2026-08-14T00:00:00.000Z', false],
+        ['after the deadline', '2026-08-14T00:00:00.001Z', true],
+    ] as const)('detects payment state %s using the server timestamp', (_label, serverNow, expected) => {
+        expect(isOfferingPaymentOverdue(
+            'ready_for_payment',
+            '2026-08-14T00:00:00.000Z',
+            serverNow,
+        )).toBe(expected)
+    })
+
+    it('does not expire a submitted payment while admin review is pending', () => {
+        expect(isOfferingPaymentOverdue(
+            'pending_review',
+            '2026-08-12T00:00:00.000Z',
+            '2026-08-14T00:00:00.000Z',
+        )).toBe(false)
+    })
+
+    it('presents an overdue correction without losing the rejection details', () => {
+        expect(getEffectiveOfferingCheckoutStatusPresentation('correction_required', {
+            paymentDueAt: '2026-08-12T00:00:00.000Z',
+            serverNow: '2026-08-14T00:00:00.000Z',
+        })).toMatchObject({
+            label: 'Төлбөрийн хугацаа дууссан',
+            actionLabel: 'Дэлгэрэнгүй харах',
+            tone: 'danger',
+            showPaymentDeadline: true,
+            showRejectionReason: true,
+        })
     })
 })

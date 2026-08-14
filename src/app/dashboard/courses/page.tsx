@@ -15,6 +15,7 @@ export default async function DashboardCoursesPage() {
         getMyOfferingCheckoutStatuses(),
     ])
     const nonApprovedOfferingStatuses = selectNonApprovedOfferingCheckoutStatuses(offeringCheckoutStatuses)
+    const serverNow = new Date().toISOString()
 
     return (
         <div className="mx-auto max-w-6xl p-5 sm:p-8">
@@ -77,7 +78,7 @@ export default async function DashboardCoursesPage() {
             )}
 
             {nonApprovedOfferingStatuses.length > 0 && (
-                <OfferingCheckoutStatusList statuses={nonApprovedOfferingStatuses} />
+                <OfferingCheckoutStatusList statuses={nonApprovedOfferingStatuses} serverNow={serverNow} />
             )}
 
             {/* Pending Courses */}
