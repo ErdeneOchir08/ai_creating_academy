@@ -146,6 +146,7 @@ const savedPaymentProofSchema = z.object({
 export const savedOfferingApplicationSchema = z.object({
     application_id: z.string().uuid(),
     client_request_id: z.string().uuid(),
+    payment_reference: z.string().regex(/^MA-[0-9]{8,19}$/),
     learner_id: z.string().uuid(),
     content_access_user_id: z.string().uuid(),
     learner: savedLearnerSchema,

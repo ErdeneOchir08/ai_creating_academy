@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, FileCheck2, Image as ImageIcon, UserRound, XCircle } from 'lucide-react'
+import { CheckCircle2, Clock, FileCheck2, Hash, Image as ImageIcon, UserRound, XCircle } from 'lucide-react'
 
 import { Card, CardContent } from '@/components/ui/card'
 import { OfferingPaymentReviewActions } from '@/features/admin/components/offering-payment-review-actions'
@@ -64,7 +64,11 @@ export function OfferingPaymentList({ payments }: { payments: AdminOfferingPayme
                             </div>
                         </div>
 
-                        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                            <div className="rounded-lg border border-indigo-500/30 bg-indigo-500/10 p-4">
+                                <p className="mb-1 flex items-center gap-1.5 text-xs text-indigo-300"><Hash className="h-3.5 w-3.5" />Гүйлгээний утга</p>
+                                <p className="select-all break-all font-mono font-semibold tracking-wide text-white">{payment.paymentReference}</p>
+                            </div>
                             <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
                                 <p className="mb-1 flex items-center gap-1.5 text-xs text-zinc-500"><UserRound className="h-3.5 w-3.5" />Суралцагч</p>
                                 <p className="font-medium">{payment.learnerName}</p>

@@ -35,6 +35,7 @@ type RawPaymentProof = {
 
 type RawApplication = {
     id: string
+    payment_reference: string
     offering_id: string
     learner_id: string
     applicant_user_id: string
@@ -152,7 +153,7 @@ export async function getCourseOfferingPayments({
     const { data: applicationData, error: applicationError } = await supabase
         .from('course_offering_applications')
         .select(`
-            id, offering_id, learner_id, applicant_user_id, content_access_user_id,
+            id, payment_reference, offering_id, learner_id, applicant_user_id, content_access_user_id,
             contact_email, applicant_relationship, contract_policy_snapshot,
             payment_due_at, status, terms_snapshot
         `)

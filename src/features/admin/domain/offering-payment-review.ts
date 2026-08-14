@@ -36,6 +36,7 @@ const termsSnapshotSchema = z.object({
 
 const applicationSchema = z.object({
     id: z.string().uuid(),
+    payment_reference: z.string().regex(/^MA-[0-9]{8,19}$/),
     offering_id: z.string().uuid(),
     learner_id: z.string().uuid(),
     applicant_user_id: z.string().uuid(),
@@ -73,6 +74,7 @@ export type AdminOfferingPaymentNotification = z.infer<typeof notificationSchema
 export type AdminOfferingPayment = {
     id: string
     applicationId: string
+    paymentReference: string
     offeringId: string
     applicantUserId: string
     contentAccessUserId: string
@@ -213,6 +215,7 @@ export function parseAdminOfferingPayment(value: unknown): AdminOfferingPayment 
     return {
         id: proof.id,
         applicationId: proof.application_id,
+        paymentReference: application.payment_reference,
         offeringId: proof.offering_id,
         applicantUserId: proof.applicant_user_id,
         contentAccessUserId: application.content_access_user_id,
@@ -247,6 +250,7 @@ export function offeringPaymentMatchesSearch(payment: AdminOfferingPayment, sear
     return [
         payment.applicantName,
         payment.applicantEmail,
+        payment.paymentReference,
         payment.learnerName,
         payment.programName,
         payment.offeringName,

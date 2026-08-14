@@ -36,6 +36,7 @@ function reviewContext() {
         },
         application: {
             id: ids.application,
+            payment_reference: 'MA-00000042',
             offering_id: ids.offering,
             learner_id: ids.learner,
             applicant_user_id: ids.applicant,
@@ -82,6 +83,7 @@ describe('offering payment admin review domain', () => {
             courseTitle: 'HTML/CSS',
             contractPolicy: 'required',
             attemptNumber: 2,
+            paymentReference: 'MA-00000042',
         })
     })
 
@@ -109,6 +111,7 @@ describe('offering payment admin review domain', () => {
         const payment = parseAdminOfferingPayment(reviewContext())
 
         expect(offeringPaymentMatchesSearch(payment, 'PARENT@EXAMPLE.COM')).toBe(true)
+        expect(offeringPaymentMatchesSearch(payment, 'ma-00000042')).toBe(true)
         expect(offeringPaymentMatchesSearch(payment, 'бат болд')).toBe(true)
         expect(offeringPaymentMatchesSearch(payment, 'намрын')).toBe(true)
         expect(offeringPaymentMatchesSearch(payment, 'python')).toBe(false)

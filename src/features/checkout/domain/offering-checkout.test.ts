@@ -5,6 +5,7 @@ import {
     parseOfferingCheckoutDraft,
     parseOfferingCheckoutProgress,
     parseOfferingDraftDetails,
+    savedOfferingApplicationSchema,
 } from './offering-checkout'
 
 const validIds = {
@@ -148,6 +149,43 @@ describe('offering checkout domain', () => {
 
         expect(checkout.contract_policy).toBe('none')
         expect(checkout.contract_version_id).toBeNull()
+    })
+
+    it('requires a permanent formatted payment reference on every saved V2 application', () => {
+        const application = {
+            application_id: '6c63ff95-1052-4cf7-b45f-c5c89e3af810',
+            client_request_id: '39e3f5ee-6462-47bc-b7f5-2704ec0af033',
+            payment_reference: 'MA-00000042',
+            learner_id: 'b6b82bc1-ecdf-43c1-ae5f-09bc44e13946',
+            content_access_user_id: validIds.contentAccessUserId,
+            learner: {
+                full_name: 'Бат Болд',
+                birth_date: null,
+                registration_number: null,
+            },
+            applicant_relationship: 'self',
+            signer: {
+                full_name: null,
+                email: null,
+                phone: null,
+                registration_number: null,
+            },
+            answers: {},
+            application_status: 'ready_for_payment',
+            contract_accepted_at: null,
+            payment_due_at: '2026-08-17T03:00:00.000Z',
+            payment: null,
+            enrollment_id: null,
+            enrollment_status: null,
+            created_at: '2026-08-14T03:00:00.000Z',
+            updated_at: '2026-08-14T03:00:00.000Z',
+        }
+
+        expect(savedOfferingApplicationSchema.parse(application).payment_reference).toBe('MA-00000042')
+        expect(savedOfferingApplicationSchema.safeParse({
+            ...application,
+            payment_reference: 'MA-42',
+        }).success).toBe(false)
     })
 
     it('requires signer and learner evidence for a contract-required draft', () => {

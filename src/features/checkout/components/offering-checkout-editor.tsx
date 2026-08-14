@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle2, CircleAlert, Clock3, FileCheck2, MailCheck, Plus, ShieldCheck, Upload } from 'lucide-react'
+import { Check, CheckCircle2, CircleAlert, Clock3, Copy, FileCheck2, MailCheck, Plus, ShieldCheck, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -489,10 +489,22 @@ function PaymentPanel({
     const [pending, startTransition] = useTransition()
     const [error, setError] = useState<string | null>(null)
     const [message, setMessage] = useState<string | null>(null)
+    const [copiedReference, setCopiedReference] = useState<string | null>(null)
     const configured = configuration.instructions.length > 0
     const overdue = application.payment_due_at
         ? new Date(application.payment_due_at).getTime() < new Date(serverNow).getTime()
         : false
+
+    async function copyPaymentReference() {
+        setError(null)
+        try {
+            await navigator.clipboard.writeText(application.payment_reference)
+            setCopiedReference(application.payment_reference)
+        } catch (cause) {
+            console.error('Unable to copy offering payment reference:', cause)
+            setError('Гүйлгээний утгыг хуулж чадсангүй. Кодыг гараар сонгон хуулна уу.')
+        }
+    }
 
     function submit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault()
@@ -550,6 +562,28 @@ function PaymentPanel({
             )}
             {!overdue && (
                 <>
+                    <div className="mt-5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-4">
+                        <p className="text-xs font-medium uppercase tracking-wide text-indigo-300">Гүйлгээний утга</p>
+                        <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <code className="select-all break-all text-xl font-bold tracking-wider text-white">
+                                {application.payment_reference}
+                            </code>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={copyPaymentReference}
+                                className="shrink-0 border-indigo-400/40 bg-transparent text-white hover:bg-indigo-500/20 hover:text-white"
+                            >
+                                {copiedReference === application.payment_reference
+                                    ? <><Check className="mr-2 h-4 w-4" />Хуулсан</>
+                                    : <><Copy className="mr-2 h-4 w-4" />Хуулах</>}
+                            </Button>
+                        </div>
+                        <p className="mt-2 text-sm leading-relaxed text-indigo-100/80">
+                            Банкны шилжүүлгийн утга хэсэгт дээрх кодыг өөрчлөлгүй оруулна уу. Ингэснээр админ таны төлбөрийг зөв хүсэлттэй тулгана.
+                        </p>
+                    </div>
                     {configured ? (
                         <div className="mt-4 whitespace-pre-wrap rounded-xl border border-zinc-800 bg-zinc-950 p-4 text-sm leading-6 text-zinc-200">{configuration.instructions}</div>
                     ) : (
