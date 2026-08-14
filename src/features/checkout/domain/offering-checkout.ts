@@ -251,6 +251,24 @@ export type OfferingCheckoutForm = z.infer<typeof offeringCheckoutFormSchema>
 export type SavedOfferingApplication = z.infer<typeof savedOfferingApplicationSchema>
 export type MyOfferingCheckoutStatus = z.infer<typeof myOfferingCheckoutStatusSchema>
 
+/**
+ * Online offerings do not have a classroom venue. If a published contract uses
+ * the generic location variable, show the academy address already supplied by
+ * the checkout RPC. Offline offerings must keep their explicit venue and never
+ * inherit the academy address implicitly.
+ */
+export function getOfferingContractPreviewValues(
+    checkout: Pick<OfferingCheckoutForm, 'delivery_mode' | 'contract_preview_values'>,
+) {
+    const values = checkout.contract_preview_values
+    if (checkout.delivery_mode !== 'online' || values.location?.trim()) return values
+
+    const academyAddress = values.academy_address?.trim()
+    return academyAddress
+        ? { ...values, location: academyAddress }
+        : values
+}
+
 const nullableTrimmedString = (maximum: number) => z.preprocess(
     (value) => typeof value === 'string' && value.trim() === '' ? null : value,
     z.string().trim().max(maximum).nullable(),

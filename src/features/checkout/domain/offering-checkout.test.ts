@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
     deriveOfferingCheckoutStatus,
+    getOfferingContractPreviewValues,
     parseOfferingCheckoutForm,
     parseOfferingCheckoutDraft,
     parseOfferingCheckoutProgress,
@@ -149,6 +150,38 @@ describe('offering checkout domain', () => {
 
         expect(checkout.contract_policy).toBe('none')
         expect(checkout.contract_version_id).toBeNull()
+    })
+
+    it('uses the academy address as an online-only contract location fallback', () => {
+        const onlineValues = getOfferingContractPreviewValues({
+            delivery_mode: 'online',
+            contract_preview_values: {
+                location: '',
+                academy_address: 'Улаанбаатар, Сүхбаатар дүүрэг',
+            },
+        })
+        const offlineValues = getOfferingContractPreviewValues({
+            delivery_mode: 'offline',
+            contract_preview_values: {
+                location: '',
+                academy_address: 'Улаанбаатар, Сүхбаатар дүүрэг',
+            },
+        })
+
+        expect(onlineValues.location).toBe('Улаанбаатар, Сүхбаатар дүүрэг')
+        expect(offlineValues.location).toBe('')
+    })
+
+    it('preserves an online offering location when the academy supplied one', () => {
+        const values = getOfferingContractPreviewValues({
+            delivery_mode: 'online',
+            contract_preview_values: {
+                location: 'Live online classroom',
+                academy_address: 'Academy address',
+            },
+        })
+
+        expect(values.location).toBe('Live online classroom')
     })
 
     it('requires a permanent formatted payment reference on every saved V2 application', () => {

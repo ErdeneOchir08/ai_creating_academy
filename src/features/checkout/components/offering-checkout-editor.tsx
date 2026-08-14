@@ -10,10 +10,11 @@ import {
     saveOfferingCheckoutDraft,
     submitOfferingPaymentProof,
 } from '@/features/checkout/actions/offering-checkout-actions'
-import type {
-    OfferingCheckoutForm,
-    OfferingApplicantRelationship,
-    SavedOfferingApplication,
+import {
+    getOfferingContractPreviewValues,
+    type OfferingApplicantRelationship,
+    type OfferingCheckoutForm,
+    type SavedOfferingApplication,
 } from '@/features/checkout/domain/offering-checkout'
 import { renderContractApplicationPreview } from '@/features/programs/domain/cohort-application'
 import {
@@ -176,7 +177,7 @@ export function OfferingCheckoutEditor({
     const contractPreview = checkout.contract_content
         ? renderContractApplicationPreview(
             checkout.contract_content,
-            checkout.contract_preview_values,
+            getOfferingContractPreviewValues(checkout),
             previewAnswers,
             checkout.fields,
         )
