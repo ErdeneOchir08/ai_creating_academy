@@ -59,6 +59,9 @@ export async function createOfferingQpayInvoice(applicationId: string, offeringI
     })
     if (reserveError) {
         console.error('Unable to reserve QPay payment:', reserveError.message)
+        if (reserveError.message.includes('QPay is disabled')) {
+            return { error: 'Энэ элсэлтэд шинэ QPay нэхэмжлэл үүсгэхийг түр зогсоосон байна.' }
+        }
         return { error: 'QPay төлбөр эхлүүлэх боломжгүй байна. Хүсэлт, гэрээ болон төлбөрийн хугацаагаа шалгана уу.' }
     }
 

@@ -58,6 +58,8 @@ export default async function ProgramApplicationPage({
                 paymentConfiguration={{
                     ...paymentConfiguration,
                     qpayEnabled: qpay.enabled,
+                    qpayNewInvoicesEnabled: checkout.qpay_enabled,
+                    manualTransferEnabled: checkout.manual_transfer_enabled,
                     qpayEnvironment: qpay.environment,
                 }}
                 initialApplicationId={query.application}
@@ -104,6 +106,8 @@ async function OfferingCheckoutPage({
         instructions: string
         isTestMode: boolean
         qpayEnabled: boolean
+        qpayNewInvoicesEnabled: boolean
+        manualTransferEnabled: boolean
         qpayEnvironment: 'sandbox' | 'production'
     }
     initialApplicationId?: string

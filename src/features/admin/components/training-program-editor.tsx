@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { Archive, ArrowLeft, CalendarDays, CheckCircle2, Eye, FileSignature, ListChecks, PencilLine, Plus, Trash2 } from 'lucide-react'
+import { Archive, ArrowLeft, CalendarDays, CheckCircle2, CopyPlus, CreditCard, Eye, FileSignature, History, ListChecks, PencilLine, Plus, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -14,9 +14,11 @@ import {
     createTrainingCohort,
     deleteTrainingCohortDraft,
     deleteTrainingProgram,
+    duplicateOnlineTrainingCohort,
     setTrainingProgramArchived,
     updateTrainingCohortConfiguration,
     updateTrainingCohortDraft,
+    updateTrainingCohortPaymentMethods,
     updateTrainingProgram,
     type OfferingCourseOption,
     type PublishedContractOption,
@@ -59,6 +61,28 @@ function statusClass(status: CohortStatus) {
     if (status === 'draft') return 'border-amber-500/30 bg-amber-500/10 text-amber-300'
     if (status === 'cancelled') return 'border-red-500/30 bg-red-500/10 text-red-300'
     return 'border-zinc-700 bg-zinc-900 text-zinc-300'
+}
+
+const configurationLabels: Record<string, string> = {
+    name: 'Нэр',
+    display_capacity: 'Ангийн хэмжээ',
+    tuition_amount_mnt: 'Үнэ',
+    payment_due_days: 'Төлөх хугацаа',
+    payment_plan: 'Төлбөрийн нөхцөл',
+    schedule_summary: 'Хуваарь',
+    location: 'Байршил',
+    registration_opens_at: 'Бүртгэл нээх хугацаа',
+    registration_closes_at: 'Бүртгэл хаах хугацаа',
+    starts_on: 'Эхлэх өдөр',
+    ends_on: 'Дуусах өдөр',
+    qpay_enabled: 'QPay',
+    manual_transfer_enabled: 'Банкны шилжүүлэг',
+}
+
+function changedConfigurationLabels(before: Record<string, unknown>, after: Record<string, unknown>) {
+    return Object.keys(configurationLabels)
+        .filter((key) => JSON.stringify(before[key]) !== JSON.stringify(after[key]))
+        .map((key) => configurationLabels[key])
 }
 
 const openingIssueContent: Record<CohortOpeningIssue, { title: string; description: string }> = {
@@ -126,18 +150,20 @@ function CohortFields({
     cohort,
     contracts,
     courses,
+    onlineOnly = false,
 }: {
     cohort?: TrainingCohort
     contracts: PublishedContractOption[]
     courses: OfferingCourseOption[]
+    onlineOnly?: boolean
 }) {
     const isLegacyCheckout = cohort?.checkout_version === 1
     const [contractPolicy, setContractPolicy] = useState<ContractPolicy | ''>(
         isLegacyCheckout ? 'required' : cohort?.contract_policy ?? '',
     )
     const [contractVersionId, setContractVersionId] = useState(cohort?.contract_version_id ?? '')
-    const needsDeliveryChoice = !cohort || (!isLegacyCheckout && cohort.delivery_mode === 'hybrid')
-    const deliveryDefaultValue = needsDeliveryChoice ? '' : cohort?.delivery_mode ?? ''
+    const needsDeliveryChoice = !onlineOnly && (!cohort || (!isLegacyCheckout && cohort.delivery_mode === 'hybrid'))
+    const deliveryDefaultValue = onlineOnly ? 'online' : needsDeliveryChoice ? '' : cohort?.delivery_mode ?? ''
     const [deliveryMode, setDeliveryMode] = useState(deliveryDefaultValue)
     const selectableContracts = contracts.filter((contract) => contract.is_assignable || contract.id === cohort?.contract_version_id)
     return (
@@ -166,7 +192,13 @@ function CohortFields({
                     </span>
                 </label>
             )}
-            <label className="space-y-2 text-sm text-zinc-300">
+            {onlineOnly ? (
+                <label className="space-y-2 text-sm text-zinc-300">
+                    <span>Сургалтын хэлбэр</span>
+                    <input type="hidden" name="delivery_mode" value="online" />
+                    <span className="flex h-10 items-center rounded-md border border-emerald-500/25 bg-emerald-500/10 px-3 text-sm text-emerald-100">Онлайн · өнөөдрийн launch горим</span>
+                </label>
+            ) : <label className="space-y-2 text-sm text-zinc-300">
                 <span>Сургалтын хэлбэр</span>
                 <select name="delivery_mode" required value={deliveryMode} onChange={(event) => setDeliveryMode(event.target.value)} className="h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 text-sm">
                     {needsDeliveryChoice && <option value="" disabled>{cohort ? 'Онлайн эсвэл танхим сонгох' : 'Сургалтын хэлбэр сонгох'}</option>}
@@ -174,7 +206,7 @@ function CohortFields({
                     <option value="online">Онлайн</option>
                     {isLegacyCheckout && <option value="hybrid">Хосолсон · хуучин урсгал</option>}
                 </select>
-            </label>
+            </label>}
             <FormSectionHeading step={2} title="Гэрээ" description="Гэрээ шаардах эсэхийг сонгоно. Шаардлагатай бол зөвхөн нийтлэгдсэн хувилбар ашиглана." />
             <label className="space-y-2 text-sm text-zinc-300">
                 <span>Гэрээ шаардах эсэх</span>
@@ -271,6 +303,19 @@ function CohortFields({
                 <span>Төлбөрийн нөхцөл</span>
                 <Textarea name="payment_plan" maxLength={1_000} defaultValue={cohort?.payment_plan} placeholder="Жишээ: Төлбөрийг бүтнээр шилжүүлнэ" className="min-h-20 border-zinc-700 bg-zinc-900" />
             </label>
+            {!isLegacyCheckout && (
+                <div className="space-y-3 rounded-xl border border-blue-500/20 bg-blue-500/5 p-4 md:col-span-2">
+                    <p className="flex items-center gap-2 text-sm font-semibold text-white"><CreditCard className="h-4 w-4 text-blue-300" />Төлбөрийн аргууд</p>
+                    <label className="flex items-start gap-3 text-sm text-zinc-300">
+                        <input name="qpay_enabled" type="checkbox" defaultChecked={cohort?.qpay_enabled ?? true} className="mt-1" />
+                        <span><strong className="block text-white">QPay</strong>QR болон банкны апп-аар автомат баталгаажуулалт.</span>
+                    </label>
+                    <label className="flex items-start gap-3 text-sm text-zinc-300">
+                        <input name="manual_transfer_enabled" type="checkbox" defaultChecked={cohort?.manual_transfer_enabled ?? true} className="mt-1" />
+                        <span><strong className="block text-white">Банкны шилжүүлэг</strong>Баримтын зураг илгээж админаар шалгуулах нөөц арга.</span>
+                    </label>
+                </div>
+            )}
         </div>
     )
 }
@@ -339,10 +384,12 @@ export function TrainingProgramEditor({
     program,
     contracts,
     courses,
+    qpay,
 }: {
     program: TrainingProgramDetail
     contracts: PublishedContractOption[]
     courses: OfferingCourseOption[]
+    qpay: { enabled: boolean; environment: 'sandbox' | 'production' }
 }) {
     const router = useRouter()
     const [pending, setPending] = useState('')
@@ -434,7 +481,7 @@ export function TrainingProgramEditor({
                 <CardContent>
                     <ol className="grid gap-3 text-sm text-zinc-300 md:grid-cols-2">
                         <li className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4"><strong className="block text-white">1. Контент бэлтгэх</strong><span className="mt-1 block text-zinc-500">Видео хичээл, preview болон ангиллыг “Хичээлийн контент” хэсэгт бэлтгэнэ.</span></li>
-                        <li className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4"><strong className="block text-white">2. Анги / элсэлт үүсгэх</strong><span className="mt-1 block text-zinc-500">Онлайн эсвэл танхим, үнэ, хугацаа, хуваарь болон контентыг сонгоно.</span></li>
+                        <li className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4"><strong className="block text-white">2. Онлайн элсэлт үүсгэх</strong><span className="mt-1 block text-zinc-500">Өнөөдрийн launch-д онлайн хэлбэр, үнэ, хугацаа, хуваарь болон контентыг сонгоно.</span></li>
                         <li className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4"><strong className="block text-white">3. Гэрээ ба төлбөрийг шалгах</strong><span className="mt-1 block text-zinc-500">Гэрээ шаардлагатай бол нийтлэгдсэн хувилбар холбоод урсгалыг preview-ээр шалгана.</span></li>
                         <li className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4"><strong className="block text-white">4. Суралцагчдад нээх</strong><span className="mt-1 block text-zinc-500">Бэлэн байдлын шалгалт амжилттай үед анги / элсэлтийг нээнэ.</span></li>
                     </ol>
@@ -485,6 +532,57 @@ export function TrainingProgramEditor({
                                     <p className="sm:col-span-2"><span className="block text-xs text-zinc-600">Гэрээ</span>{contractPolicyLabels[cohort.contract_policy]}{cohort.contract_policy === 'required' ? ` · ${contract?.is_assignable ? `${contract.template_name} · v${contract.version_number}` : contract ? `${contract.template_name} · v${contract.version_number} · ашиглалтаас гарсан` : cohort.contract_version_id ? 'ашиглалтаас гарсан хувилбар' : 'хувилбар сонгоогүй'}` : ''}</p>
                                 </div>
 
+                                {!isLegacyCheckout && (
+                                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                                        {[
+                                            ['Нийт хүсэлт', cohort.impact.applicationCount],
+                                            ['Идэвхтэй checkout', cohort.impact.activeCheckoutCount],
+                                            ['Хүлээгдэж буй төлбөр', cohort.impact.pendingPaymentCount],
+                                            ['Төлөгдсөн', cohort.impact.paidPaymentCount],
+                                            ['Идэвхтэй суралцагч', cohort.impact.activeEnrollmentCount],
+                                        ].map(([label, value]) => (
+                                            <div key={String(label)} className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
+                                                <p className="text-xs text-zinc-500">{label}</p>
+                                                <p className="mt-1 text-xl font-semibold text-white">{value}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {!isLegacyCheckout && (
+                                    <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4">
+                                        <div className="flex flex-wrap items-center justify-between gap-3">
+                                            <div>
+                                                <p className="flex items-center gap-2 font-semibold text-white"><CreditCard className="h-4 w-4 text-blue-300" />Төлбөрийн удирдлага</p>
+                                                <p className="mt-1 text-xs text-zinc-400">Шинэ төлбөрийн оролдлогод үйлчилнэ. Үүссэн QPay нэхэмжлэл болон төлсөн бүртгэлийг өөрчлөхгүй.</p>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2 text-xs">
+                                                <Badge variant="outline" className={cohort.qpay_enabled && qpay.enabled ? 'border-emerald-500/30 text-emerald-300' : 'border-zinc-700 text-zinc-400'}>
+                                                    QPay {cohort.qpay_enabled && qpay.enabled ? `идэвхтэй · ${qpay.environment}` : 'түр зогссон'}
+                                                </Badge>
+                                                <Badge variant="outline" className={cohort.manual_transfer_enabled ? 'border-emerald-500/30 text-emerald-300' : 'border-zinc-700 text-zinc-400'}>
+                                                    Банкны шилжүүлэг {cohort.manual_transfer_enabled ? 'идэвхтэй' : 'түр зогссон'}
+                                                </Badge>
+                                            </div>
+                                        </div>
+                                        {['open', 'closed'].includes(cohort.status) && (
+                                            <details className="mt-4 border-t border-blue-500/15 pt-3">
+                                                <summary className="cursor-pointer text-sm font-medium text-blue-100">Төлбөрийн аргыг өөрчлөх</summary>
+                                                <form onSubmit={(event) => {
+                                                    event.preventDefault()
+                                                    void run(`${cohort.id}-payment-methods`, () => updateTrainingCohortPaymentMethods(cohort.id, program.id, new FormData(event.currentTarget)))
+                                                }} className="mt-4 space-y-3">
+                                                    <input type="hidden" name="configuration_revision" value={cohort.configuration_revision} />
+                                                    <label className="flex items-start gap-3 text-sm text-zinc-300"><input name="qpay_enabled" type="checkbox" defaultChecked={cohort.qpay_enabled} className="mt-1" /><span><strong className="block text-white">QPay</strong>Шинэ динамик QR нэхэмжлэл үүсгэхийг зөвшөөрөх.</span></label>
+                                                    <label className="flex items-start gap-3 text-sm text-zinc-300"><input name="manual_transfer_enabled" type="checkbox" defaultChecked={cohort.manual_transfer_enabled} className="mt-1" /><span><strong className="block text-white">Банкны шилжүүлэг</strong>Шинэ баримтын зураг хүлээн авах.</span></label>
+                                                    <Textarea name="change_reason" required minLength={5} maxLength={500} placeholder="Жишээ: QPay-г үндсэн төлбөрийн арга болгож банкны баримтыг түр хаав" className="min-h-20 border-zinc-700 bg-zinc-950" />
+                                                    <div className="flex justify-end"><Button type="submit" variant="outline" disabled={!!pending}>Төлбөрийн тохиргоо хадгалах</Button></div>
+                                                </form>
+                                            </details>
+                                        )}
+                                    </div>
+                                )}
+
                                 {!isLegacyCheckout && cohort.status !== 'draft' && ['open', 'closed'].includes(cohort.status) && (
                                     <details className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-4">
                                         <summary className="cursor-pointer text-sm font-medium text-indigo-200">Ирээдүйн элсэгчдэд харагдах нөхцөлийг засах</summary>
@@ -503,6 +601,22 @@ export function TrainingProgramEditor({
                                                 <Button type="submit" variant="outline" disabled={!!pending}>Шинэ нөхцөлийг хадгалах</Button>
                                             </div>
                                         </form>
+                                    </details>
+                                )}
+
+                                {!isLegacyCheckout && cohort.configurationChanges.length > 0 && (
+                                    <details className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-4">
+                                        <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium text-zinc-200"><History className="h-4 w-4 text-indigo-300" />Өөрчлөлтийн түүх · {cohort.configurationChanges.length}</summary>
+                                        <div className="mt-4 space-y-3">
+                                            {cohort.configurationChanges.slice(0, 10).map((change) => {
+                                                const changed = changedConfigurationLabels(change.before_configuration, change.after_configuration)
+                                                return <div key={change.revision} className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-3 text-sm">
+                                                    <div className="flex flex-wrap items-center justify-between gap-2"><strong className="text-white">Хувилбар {change.revision}</strong><span className="text-xs text-zinc-500">{new Intl.DateTimeFormat('mn-MN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Ulaanbaatar' }).format(new Date(change.changed_at))}</span></div>
+                                                    <p className="mt-2 text-zinc-300">{change.reason || 'Ноорог шинэчлэлт'}</p>
+                                                    <p className="mt-1 text-xs text-zinc-500">Өөрчлөгдсөн: {changed.join(', ') || 'Системийн мэдээлэл'}</p>
+                                                </div>
+                                            })}
+                                        </div>
                                     </details>
                                 )}
 
@@ -571,6 +685,14 @@ export function TrainingProgramEditor({
                                         {cohort.status === 'draft' && !canOpen && <span className="text-xs text-amber-300">Дээрх бэлтгэлийн алхмыг дуусгасны дараа элсэлт нээнэ.</span>}
                                     </div>
                                 )}
+                                {!isLegacyCheckout && cohort.delivery_mode === 'online' && cohort.status !== 'draft' && (
+                                    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800 pt-4">
+                                        <p className="max-w-2xl text-xs leading-relaxed text-zinc-500">Хичээлийн контент, гэрээ эсвэл үндсэн хэлбэрийг солих бол одоогийн түүхийг өөрчлөхгүйгээр шинэ ноорог хувилбар үүсгэнэ.</p>
+                                        <Button type="button" variant="outline" disabled={!!pending} onClick={() => void run(`${cohort.id}-duplicate`, () => duplicateOnlineTrainingCohort(cohort.id, program.id))}>
+                                            <CopyPlus className="mr-2 h-4 w-4" />Шинэ ноорог хувилбар
+                                        </Button>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     )
@@ -586,7 +708,7 @@ export function TrainingProgramEditor({
                     <div className="border-t border-zinc-800 p-6">
                         {!contracts.some((contract) => contract.is_assignable) && <p className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">Нийтлэгдсэн идэвхтэй гэрээ алга. Гэрээ шаардлагатай анги / элсэлт нээх бол эхлээд <Link href="/admin/contracts" className="underline">гэрээний сангаас</Link> хувилбар нийтэлнэ үү.</p>}
                         <form onSubmit={addCohort} className="space-y-5">
-                            <CohortFields key={program.cohorts.length} contracts={contracts} courses={courses} />
+                            <CohortFields key={program.cohorts.length} contracts={contracts} courses={courses} onlineOnly />
                             <div className="flex justify-end"><Button disabled={!!pending} className="bg-indigo-600 text-white hover:bg-indigo-700"><Plus className="mr-2 h-4 w-4" />{pending === 'new-cohort' ? 'Үүсгэж байна…' : 'Ноорог үүсгэх'}</Button></div>
                         </form>
                     </div>

@@ -27,6 +27,8 @@ export type TrainingCohort = {
     capacity: number | null
     display_capacity: number | null
     configuration_revision: number
+    qpay_enabled: boolean
+    manual_transfer_enabled: boolean
     tuition_amount_mnt: number | null
     payment_due_days: number | null
     payment_plan: string
@@ -38,6 +40,20 @@ export type TrainingCohort = {
     ends_on: string | null
     created_at: string
     updated_at: string
+    impact: {
+        applicationCount: number
+        activeCheckoutCount: number
+        pendingPaymentCount: number
+        paidPaymentCount: number
+        activeEnrollmentCount: number
+    }
+    configurationChanges: Array<{
+        revision: number
+        reason: string
+        before_configuration: Record<string, unknown>
+        after_configuration: Record<string, unknown>
+        changed_at: string
+    }>
 }
 
 export type TrainingProgramSummary = {
@@ -219,7 +235,7 @@ export async function getTrainingProgram(programId: string): Promise<TrainingPro
             .maybeSingle(),
         supabase
             .from('training_cohorts')
-            .select('id, program_id, name, delivery_mode, status, checkout_version, course_id, contract_policy, contract_version_id, capacity, display_capacity, configuration_revision, tuition_amount_mnt, payment_due_days, payment_plan, schedule_summary, location, registration_opens_at, registration_closes_at, starts_on, ends_on, created_at, updated_at')
+            .select('id, program_id, name, delivery_mode, status, checkout_version, course_id, contract_policy, contract_version_id, capacity, display_capacity, configuration_revision, qpay_enabled, manual_transfer_enabled, tuition_amount_mnt, payment_due_days, payment_plan, schedule_summary, location, registration_opens_at, registration_closes_at, starts_on, ends_on, created_at, updated_at')
             .eq('program_id', programId)
             .order('created_at', { ascending: false }),
     ])
@@ -229,7 +245,56 @@ export async function getTrainingProgram(programId: string): Promise<TrainingPro
         throw new Error('Хөтөлбөрийн мэдээллийг уншиж чадсангүй.')
     }
     if (!programResult.data) return null
-    return { ...programResult.data, cohorts: (cohortsResult.data ?? []) as TrainingCohort[] } as TrainingProgramDetail
+
+    const cohorts = cohortsResult.data ?? []
+    const offeringIds = cohorts.map((cohort) => cohort.id)
+    if (offeringIds.length === 0) {
+        return { ...programResult.data, cohorts: [] } as TrainingProgramDetail
+    }
+
+    const [applicationsResult, paymentsResult, enrollmentsResult, changesResult] = await Promise.all([
+        supabase.from('course_offering_applications').select('offering_id, status').in('offering_id', offeringIds),
+        supabase.from('course_offering_payments').select('offering_id, status').in('offering_id', offeringIds),
+        supabase.from('course_offering_enrollments').select('offering_id, status').in('offering_id', offeringIds),
+        supabase
+            .from('course_offering_configuration_changes')
+            .select('offering_id, revision, reason, before_configuration, after_configuration, changed_at')
+            .in('offering_id', offeringIds)
+            .order('revision', { ascending: false }),
+    ])
+    const operationalError = applicationsResult.error ?? paymentsResult.error ?? enrollmentsResult.error ?? changesResult.error
+    if (operationalError) {
+        console.error('Unable to load offering control data:', operationalError.message)
+        throw new Error('Элсэлтийн удирдлагын мэдээллийг уншиж чадсангүй.')
+    }
+
+    const applications = applicationsResult.data ?? []
+    const payments = paymentsResult.data ?? []
+    const enrollments = enrollmentsResult.data ?? []
+    const changes = changesResult.data ?? []
+
+    return {
+        ...programResult.data,
+        cohorts: cohorts.map((cohort) => ({
+            ...cohort,
+            impact: {
+                applicationCount: applications.filter((item) => item.offering_id === cohort.id).length,
+                activeCheckoutCount: applications.filter((item) => item.offering_id === cohort.id && ['draft', 'submitted'].includes(item.status)).length,
+                pendingPaymentCount: payments.filter((item) => item.offering_id === cohort.id && ['created', 'pending'].includes(item.status)).length,
+                paidPaymentCount: payments.filter((item) => item.offering_id === cohort.id && item.status === 'paid').length,
+                activeEnrollmentCount: enrollments.filter((item) => item.offering_id === cohort.id && item.status === 'active').length,
+            },
+            configurationChanges: changes
+                .filter((item) => item.offering_id === cohort.id)
+                .map((item) => ({
+                    revision: item.revision,
+                    reason: item.reason,
+                    before_configuration: item.before_configuration as Record<string, unknown>,
+                    after_configuration: item.after_configuration as Record<string, unknown>,
+                    changed_at: item.changed_at,
+                })),
+        })) as TrainingCohort[],
+    } as TrainingProgramDetail
 }
 
 export async function getOfferingCourseOptions(): Promise<OfferingCourseOption[]> {
@@ -348,6 +413,8 @@ export async function createTrainingCohort(programId: string, formData: FormData
         .from('training_cohorts')
         .insert({
             ...cohortRecord(input, 2),
+            qpay_enabled: formData.get('qpay_enabled') === 'on',
+            manual_transfer_enabled: formData.get('manual_transfer_enabled') === 'on',
             program_id: programId,
             checkout_version: 2,
             status: 'draft',
@@ -383,7 +450,13 @@ export async function updateTrainingCohortDraft(cohortId: string, programId: str
     const input = cohortInput(formData, current.checkout_version as 1 | 2)
     const { data, error } = await supabase
         .from('training_cohorts')
-        .update(cohortRecord(input, current.checkout_version as 1 | 2))
+        .update({
+            ...cohortRecord(input, current.checkout_version as 1 | 2),
+            ...(current.checkout_version === 2 ? {
+                qpay_enabled: formData.get('qpay_enabled') === 'on',
+                manual_transfer_enabled: formData.get('manual_transfer_enabled') === 'on',
+            } : {}),
+        })
         .eq('id', cohortId)
         .eq('program_id', programId)
         .eq('status', 'draft')
@@ -465,6 +538,97 @@ export async function updateTrainingCohortConfiguration(cohortId: string, progra
         throw new Error('Элсэлтийн шинэ нөхцөлийг хадгалж чадсангүй.')
     }
     refreshPrograms(programId)
+}
+
+export async function updateTrainingCohortPaymentMethods(cohortId: string, programId: string, formData: FormData) {
+    assertUuid(cohortId, 'Элсэлтийн дугаар')
+    assertUuid(programId, 'Хөтөлбөрийн дугаар')
+    const { supabase } = await requireAdmin()
+    const expectedRevision = Number(formData.get('configuration_revision'))
+    if (!Number.isInteger(expectedRevision) || expectedRevision < 1) {
+        throw new Error('Өөрчлөлтийн хувилбар буруу байна. Хуудсыг дахин ачаална уу.')
+    }
+
+    const { error } = await supabase.rpc('update_v2_course_offering_payment_methods', {
+        p_offering_id: cohortId,
+        p_expected_revision: expectedRevision,
+        p_qpay_enabled: formData.get('qpay_enabled') === 'on',
+        p_manual_transfer_enabled: formData.get('manual_transfer_enabled') === 'on',
+        p_reason: String(formData.get('change_reason') ?? ''),
+    })
+    if (error) {
+        console.error('Unable to update offering payment methods:', error.message)
+        if (error.message.includes('changed by another administrator')) {
+            throw new Error('Өөр админ энэ элсэлтийг өөрчилсөн байна. Хуудсыг дахин ачаалаад шалгана уу.')
+        }
+        if (error.message.includes('change reason')) {
+            throw new Error('Төлбөрийн тохиргоо өөрчилсөн шалтгааныг дор хаяж 5 тэмдэгтээр бичнэ үү.')
+        }
+        throw new Error('Төлбөрийн аргуудыг хадгалж чадсангүй.')
+    }
+    refreshPrograms(programId)
+    revalidatePath(`/programs/${cohortId}`)
+}
+
+export async function duplicateOnlineTrainingCohort(cohortId: string, programId: string) {
+    assertUuid(cohortId, 'Элсэлтийн дугаар')
+    assertUuid(programId, 'Хөтөлбөрийн дугаар')
+    const { supabase, user } = await requireAdmin()
+    const { data: current, error: currentError } = await supabase
+        .from('training_cohorts')
+        .select('name, delivery_mode, checkout_version, course_id, contract_policy, contract_version_id, display_capacity, tuition_amount_mnt, payment_due_days, payment_plan, schedule_summary, location, registration_opens_at, registration_closes_at, starts_on, ends_on, qpay_enabled, manual_transfer_enabled')
+        .eq('id', cohortId)
+        .eq('program_id', programId)
+        .maybeSingle()
+
+    if (currentError || !current) throw new Error('Хуулах элсэлт олдсонгүй.')
+    if (current.checkout_version !== 2 || current.delivery_mode !== 'online') {
+        throw new Error('Өнөөдрийн удирдлагын шинэчлэлээр зөвхөн онлайн V2 элсэлтийг хувилж болно.')
+    }
+
+    const suffix = new Intl.DateTimeFormat('sv-SE', {
+        timeZone: 'Asia/Ulaanbaatar',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+    }).format(new Date())
+    const { data, error } = await supabase
+        .from('training_cohorts')
+        .insert({
+            program_id: programId,
+            name: `${current.name.slice(0, 125)} · шинэ ${suffix}`,
+            delivery_mode: 'online',
+            checkout_version: 2,
+            status: 'draft',
+            course_id: current.course_id,
+            contract_policy: current.contract_policy,
+            contract_version_id: current.contract_version_id,
+            capacity: null,
+            display_capacity: current.display_capacity,
+            tuition_amount_mnt: current.tuition_amount_mnt,
+            payment_due_days: current.payment_due_days,
+            payment_plan: current.payment_plan,
+            schedule_summary: current.schedule_summary,
+            location: '',
+            registration_opens_at: current.registration_opens_at,
+            registration_closes_at: current.registration_closes_at,
+            starts_on: current.starts_on,
+            ends_on: current.ends_on,
+            qpay_enabled: current.qpay_enabled,
+            manual_transfer_enabled: current.manual_transfer_enabled,
+            created_by: user.id,
+            status_changed_by: user.id,
+        })
+        .select('id')
+        .single()
+
+    if (error) {
+        console.error('Unable to duplicate online offering:', error.message)
+        throw new Error('Онлайн элсэлтийн шинэ ноорог хувилбар үүсгэж чадсангүй.')
+    }
+    refreshPrograms(programId)
+    return { cohortId: data.id }
 }
 
 export async function changeTrainingCohortStatus(cohortId: string, programId: string, nextStatus: CohortStatus) {

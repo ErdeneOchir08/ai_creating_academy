@@ -146,16 +146,23 @@ export async function getOfferingCheckoutForm(offeringId: string) {
     if (!checkoutResult.data) return null
 
     let displayCapacity: number | null = null
+    let qpayEnabled = true
+    let manualTransferEnabled = true
     if (metadataResult.error) {
         console.error('Unable to load course offering display metadata:', metadataResult.error.message)
     } else {
-        displayCapacity = parseOfferingDisplayMetadataItem(metadataResult.data)?.display_capacity ?? null
+        const metadata = parseOfferingDisplayMetadataItem(metadataResult.data)
+        displayCapacity = metadata?.display_capacity ?? null
+        qpayEnabled = metadata?.qpay_enabled ?? true
+        manualTransferEnabled = metadata?.manual_transfer_enabled ?? true
     }
 
     return parseOfferingCheckoutForm({
         ...(checkoutResult.data as Record<string, unknown>),
         capacity: displayCapacity,
         available_seats: null,
+        qpay_enabled: qpayEnabled,
+        manual_transfer_enabled: manualTransferEnabled,
     })
 }
 
@@ -565,6 +572,9 @@ export async function submitOfferingPaymentProof(
     if (submitError) {
         console.error('Offering checkout submission failed:', submitError.message)
         await removeFailedPaymentReceipt(receiptPath)
+        if (submitError.message.includes('Manual transfer is disabled')) {
+            return { error: 'Энэ элсэлтэд банкны шилжүүлгийн шинэ баримт хүлээн авахыг түр зогсоосон байна.' }
+        }
         return { error: mapCheckoutError(submitError.message, 'Төлбөрийн баримтыг илгээж чадсангүй.') }
     }
 

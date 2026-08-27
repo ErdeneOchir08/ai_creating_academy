@@ -184,6 +184,8 @@ export const offeringCheckoutFormSchema = z.object({
     starts_on: z.string().date().nullable(),
     ends_on: z.string().date().nullable(),
     is_accepting_applications: z.boolean(),
+    qpay_enabled: z.boolean().default(true),
+    manual_transfer_enabled: z.boolean().default(true),
     contract_version_id: z.string().uuid().nullable(),
     contract_title: z.string().nullable(),
     contract_version_number: z.coerce.number().int().positive().nullable(),

@@ -44,11 +44,13 @@ export function QpayPaymentPanel({
     offeringId,
     amountMnt,
     environment,
+    allowNewInvoices,
 }: {
     applicationId: string
     offeringId: string
     amountMnt: number
     environment: 'sandbox' | 'production'
+    allowNewInvoices: boolean
 }) {
     const router = useRouter()
     const [pending, startTransition] = useTransition()
@@ -72,6 +74,11 @@ export function QpayPaymentPanel({
             router.refresh()
         }
     }, [applicationId, router])
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => void loadStatus(), 0)
+        return () => window.clearTimeout(timer)
+    }, [loadStatus])
 
     useEffect(() => {
         if (paymentStatus !== 'pending') return
@@ -137,11 +144,11 @@ export function QpayPaymentPanel({
                 </div>
             </div>
 
-            {!invoice ? (
+            {!invoice && allowNewInvoices ? (
                 <Button type="button" onClick={createInvoice} disabled={pending} className="mt-5 w-full bg-blue-600 text-white hover:bg-blue-700">
                     {pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Үүсгэж байна…</> : <>₮ {amountMnt.toLocaleString('mn-MN')} · QPay нэхэмжлэл үүсгэх</>}
                 </Button>
-            ) : (
+            ) : invoice ? (
                 <div className="mt-5 space-y-4">
                     <div className="grid gap-5 sm:grid-cols-[220px_minmax(0,1fr)] sm:items-start">
                         {invoice.qrImage ? (
@@ -202,6 +209,10 @@ export function QpayPaymentPanel({
                         Төлбөрөө шалгах
                     </Button>
                 </div>
+            ) : (
+                <p className="mt-5 rounded-lg border border-amber-400/20 bg-amber-400/10 p-3 text-sm text-amber-100">
+                    Энэ элсэлтэд шинэ QPay нэхэмжлэл үүсгэхийг түр зогсоосон байна.
+                </p>
             )}
 
             {error && <p role="alert" className="mt-4 text-sm font-medium text-red-300">{error}</p>}

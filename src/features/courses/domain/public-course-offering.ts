@@ -25,6 +25,8 @@ const offeringDisplayMetadataSchema = z.object({
     offering_id: z.string().uuid(),
     display_capacity: z.coerce.number().int().positive().nullable(),
     configuration_revision: z.coerce.number().int().positive(),
+    qpay_enabled: z.boolean().default(true),
+    manual_transfer_enabled: z.boolean().default(true),
 })
 
 export type OfferingDisplayMetadata = z.infer<typeof offeringDisplayMetadataSchema>

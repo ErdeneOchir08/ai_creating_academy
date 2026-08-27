@@ -5,6 +5,7 @@ import {
     getTrainingProgram,
 } from '@/features/admin/actions/training-program-actions.admin'
 import { TrainingProgramEditor } from '@/features/admin/components/training-program-editor'
+import { getQpayPublicState } from '@/lib/qpay/config'
 
 export default async function AdminTrainingProgramPage({ params }: { params: Promise<{ programId: string }> }) {
     const { programId } = await params
@@ -14,5 +15,5 @@ export default async function AdminTrainingProgramPage({ params }: { params: Pro
         getOfferingCourseOptions(),
     ])
     if (!program) notFound()
-    return <TrainingProgramEditor program={program} contracts={contracts} courses={courses} />
+    return <TrainingProgramEditor program={program} contracts={contracts} courses={courses} qpay={getQpayPublicState()} />
 }

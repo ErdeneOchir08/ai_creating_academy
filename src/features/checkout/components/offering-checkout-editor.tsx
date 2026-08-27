@@ -33,6 +33,8 @@ type PaymentConfiguration = {
     instructions: string
     isTestMode: boolean
     qpayEnabled: boolean
+    qpayNewInvoicesEnabled: boolean
+    manualTransferEnabled: boolean
     qpayEnvironment: 'sandbox' | 'production'
 }
 
@@ -573,17 +575,18 @@ function PaymentPanel({
                                 offeringId={checkout.offering_id}
                                 amountMnt={checkout.tuition_amount_mnt}
                                 environment={configuration.qpayEnvironment}
+                                allowNewInvoices={configuration.qpayNewInvoicesEnabled}
                             />
                         </div>
                     )}
-                    {configuration.qpayEnabled && configured && (
+                    {configuration.qpayEnabled && configuration.manualTransferEnabled && configured && (
                         <div className="my-5 flex items-center gap-3 text-xs uppercase tracking-wide text-zinc-500">
                             <span className="h-px flex-1 bg-zinc-800" />
                             Эсвэл банкны шилжүүлэг
                             <span className="h-px flex-1 bg-zinc-800" />
                         </div>
                     )}
-                    <div className="mt-5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-4">
+                    {configuration.manualTransferEnabled && <div className="mt-5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-4">
                         <p className="text-xs font-medium uppercase tracking-wide text-indigo-300">Гүйлгээний утга</p>
                         <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <code className="select-all break-all text-xl font-bold tracking-wider text-white">
@@ -604,13 +607,13 @@ function PaymentPanel({
                         <p className="mt-2 text-sm leading-relaxed text-indigo-100/80">
                             Банкны шилжүүлгийн утга хэсэгт дээрх кодыг өөрчлөлгүй оруулна уу. Ингэснээр админ таны төлбөрийг зөв хүсэлттэй тулгана.
                         </p>
-                    </div>
-                    {configured ? (
+                    </div>}
+                    {configuration.manualTransferEnabled && (configured ? (
                         <div className="mt-4 whitespace-pre-wrap rounded-xl border border-zinc-800 bg-zinc-950 p-4 text-sm leading-6 text-zinc-200">{configuration.instructions}</div>
                     ) : (
                         <p className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">Төлбөрийн мэдээлэл тохируулагдаагүй байна. Академийн админтай холбогдоно уу.</p>
-                    )}
-                    <form onSubmit={submit} className="mt-5 space-y-4">
+                    ))}
+                    {configuration.manualTransferEnabled && <form onSubmit={submit} className="mt-5 space-y-4">
                         <Field label="Төлбөрийн баримтын зураг" required hint="JPG, PNG эсвэл WebP; хамгийн ихдээ 10 MB.">
                             <Input name="receipt" type="file" required accept="image/jpeg,image/png,image/webp" />
                         </Field>
@@ -619,7 +622,12 @@ function PaymentPanel({
                         </Button>
                         {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
                         {message && <p role="status" className="text-sm text-emerald-400">{message}</p>}
-                    </form>
+                    </form>}
+                    {!configuration.qpayEnabled && !configuration.manualTransferEnabled && (
+                        <p className="mt-5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
+                            Төлбөрийн шинэ хүсэлтийг түр зогсоосон байна. Mind Academy-тай холбогдоно уу.
+                        </p>
+                    )}
                 </>
             )}
         </section>
