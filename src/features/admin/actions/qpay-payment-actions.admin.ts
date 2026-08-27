@@ -32,7 +32,7 @@ type PaymentRow = {
     source_site: string
     amount_mnt: number
     created_at: string
-    paid_at: string | null
+    provider_paid_at: string | null
     failure_reason: string | null
 }
 
@@ -82,7 +82,7 @@ export async function getQpayPayments({
 
     const { data: paymentData, error: paymentError } = await admin
         .from('course_offering_payments')
-        .select('id, application_id, status, sender_invoice_no, qpay_invoice_id, qpay_payment_id, source_site, amount_mnt, created_at, paid_at, failure_reason')
+        .select('id, application_id, status, sender_invoice_no, qpay_invoice_id, qpay_payment_id, source_site, amount_mnt, created_at, provider_paid_at, failure_reason')
         .eq('provider', 'qpay')
         .in('status', [...statusGroups[selectedStatus]])
         .order('created_at', { ascending: false })
@@ -129,7 +129,7 @@ export async function getQpayPayments({
             programName: snapshotText(snapshot?.program_name, '—'),
             offeringName: snapshotText(snapshot?.offering_name, '—'),
             createdAt: payment.created_at,
-            paidAt: payment.paid_at,
+            paidAt: payment.provider_paid_at,
             failureReason: payment.failure_reason,
         }]
     })
