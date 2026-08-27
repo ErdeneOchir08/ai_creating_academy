@@ -17,6 +17,7 @@ import { getUlaanbaatarDate } from '@/features/programs/domain/contract-signing'
 import { isProgramRouteId } from '@/features/programs/domain/program-route'
 import { getMyCohortPaymentState } from '@/features/payments/actions/cohort-payment-actions'
 import { CohortPaymentPanel } from '@/features/payments/components/cohort-payment-panel'
+import { getQpayPublicState } from '@/lib/qpay/config'
 
 const deliveryLabels = { online: 'Цахим', offline: 'Танхим', hybrid: 'Хосолсон' } as const
 
@@ -43,6 +44,7 @@ export default async function ProgramApplicationPage({
                 getOfferingPaymentConfiguration(),
             ])
             : [{ data: null }, { instructions: '', isTestMode: true }] as const
+        const qpay = getQpayPublicState()
 
         return (
             <OfferingCheckoutPage
@@ -53,7 +55,11 @@ export default async function ProgramApplicationPage({
                 } : null}
                 currentDate={getUlaanbaatarDate()}
                 serverNow={new Date().toISOString()}
-                paymentConfiguration={paymentConfiguration}
+                paymentConfiguration={{
+                    ...paymentConfiguration,
+                    qpayEnabled: qpay.enabled,
+                    qpayEnvironment: qpay.environment,
+                }}
                 initialApplicationId={query.application}
             />
         )
@@ -94,7 +100,12 @@ async function OfferingCheckoutPage({
     user: { email: string; displayName: string | null } | null
     currentDate: string
     serverNow: string
-    paymentConfiguration: { instructions: string; isTestMode: boolean }
+    paymentConfiguration: {
+        instructions: string
+        isTestMode: boolean
+        qpayEnabled: boolean
+        qpayEnvironment: 'sandbox' | 'production'
+    }
     initialApplicationId?: string
 }) {
     if (!checkout) notFound()

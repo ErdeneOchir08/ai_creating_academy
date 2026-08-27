@@ -17,6 +17,7 @@ import {
     type SavedOfferingApplication,
 } from '@/features/checkout/domain/offering-checkout'
 import { renderContractApplicationPreview } from '@/features/programs/domain/cohort-application'
+import { QpayPaymentPanel } from '@/features/checkout/components/qpay-payment-panel'
 import {
     CONTRACT_SIGNATURE_STATEMENT_MN,
     getSignerRole,
@@ -31,6 +32,8 @@ type VerificationState = {
 type PaymentConfiguration = {
     instructions: string
     isTestMode: boolean
+    qpayEnabled: boolean
+    qpayEnvironment: 'sandbox' | 'production'
 }
 
 const managedContractFields = new Set([
@@ -563,6 +566,23 @@ function PaymentPanel({
             )}
             {!overdue && (
                 <>
+                    {configuration.qpayEnabled && (
+                        <div className="mt-5">
+                            <QpayPaymentPanel
+                                applicationId={application.application_id}
+                                offeringId={checkout.offering_id}
+                                amountMnt={checkout.tuition_amount_mnt}
+                                environment={configuration.qpayEnvironment}
+                            />
+                        </div>
+                    )}
+                    {configuration.qpayEnabled && configured && (
+                        <div className="my-5 flex items-center gap-3 text-xs uppercase tracking-wide text-zinc-500">
+                            <span className="h-px flex-1 bg-zinc-800" />
+                            Эсвэл банкны шилжүүлэг
+                            <span className="h-px flex-1 bg-zinc-800" />
+                        </div>
+                    )}
                     <div className="mt-5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-4">
                         <p className="text-xs font-medium uppercase tracking-wide text-indigo-300">Гүйлгээний утга</p>
                         <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

@@ -4,13 +4,15 @@ import { Card, CardContent } from '@/components/ui/card'
 import { getPayments } from '@/features/admin/actions/admin-actions'
 import { getCohortPayments } from '@/features/admin/actions/cohort-payment-actions.admin'
 import { getCourseOfferingPayments } from '@/features/admin/actions/offering-payment-actions.admin'
+import { getQpayPayments } from '@/features/admin/actions/qpay-payment-actions.admin'
 import { PaymentReviewActions } from '@/features/admin/components/payment-review-actions'
 import { CohortPaymentReviewActions } from '@/features/admin/components/cohort-payment-review-actions'
 import { OfferingPaymentList } from '@/features/admin/components/offering-payment-list'
+import { QpayPaymentList } from '@/features/admin/components/qpay-payment-list'
 
 type SearchParams = { type?: string; status?: string; search?: string }
 type PaymentStatus = 'pending' | 'approved' | 'rejected'
-type PaymentType = 'course' | 'cohort' | 'offering'
+type PaymentType = 'course' | 'cohort' | 'offering' | 'qpay'
 
 const statusLabels: Record<PaymentStatus, string> = {
     pending: 'Хүлээгдэж буй',
@@ -34,7 +36,7 @@ function formatMnt(value: number) {
 
 export default async function AdminPaymentsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
     const params = await searchParams
-    const paymentType: PaymentType = params.type === 'course' || params.type === 'cohort'
+    const paymentType: PaymentType = params.type === 'course' || params.type === 'cohort' || params.type === 'qpay'
         ? params.type
         : 'offering'
     const currentStatus: PaymentStatus = params.status === 'approved' || params.status === 'rejected' ? params.status : 'pending'
@@ -42,12 +44,15 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
     const offeringPayments = paymentType === 'offering'
         ? await getCourseOfferingPayments({ status: currentStatus, search: currentSearch })
         : null
-    const payments = paymentType === 'offering'
+    const qpayPayments = paymentType === 'qpay'
+        ? await getQpayPayments({ status: currentStatus, search: currentSearch })
+        : null
+    const payments = paymentType === 'offering' || paymentType === 'qpay'
         ? []
         : paymentType === 'cohort'
             ? await getCohortPayments({ status: currentStatus, search: currentSearch })
             : await getPayments({ status: currentStatus, search: currentSearch })
-    const paymentCount = offeringPayments?.length ?? payments.length
+    const paymentCount = qpayPayments?.length ?? offeringPayments?.length ?? payments.length
 
     return (
         <div className="min-h-screen bg-[#09090b] p-5 text-white md:p-8">
@@ -57,9 +62,10 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
                     <p className="text-zinc-400">Шинэ нэгдсэн анги / элсэлтийн төлбөрийг үндсэн хэсгээс шалгана. Хуучин урсгалууд түүхэн хүсэлтүүдэд зориулан тусдаа хадгалагдана.</p>
                 </header>
 
-                <nav className="mb-6 grid max-w-3xl grid-cols-1 rounded-xl border border-zinc-800 bg-zinc-900 p-1 sm:grid-cols-3" aria-label="Төлбөрийн төрөл">
+                <nav className="mb-6 grid max-w-4xl grid-cols-1 rounded-xl border border-zinc-800 bg-zinc-900 p-1 sm:grid-cols-4" aria-label="Төлбөрийн төрөл">
                     {([
                         ['offering', 'Анги / элсэлт'],
+                        ['qpay', 'QPay автомат'],
                         ['course', 'Шууд төлбөр · хуучин'],
                         ['cohort', 'Гэрээт урсгал · хуучин'],
                     ] as const).map(([type, label]) => (
@@ -93,7 +99,9 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
                     </h2>
 
                     <div className="grid gap-4">
-                        {paymentType === 'offering'
+                        {paymentType === 'qpay'
+                            ? <QpayPaymentList payments={qpayPayments ?? []} />
+                            : paymentType === 'offering'
                             ? <OfferingPaymentList payments={offeringPayments ?? []} />
                             : paymentType === 'course'
                             ? payments.map((payment) => {

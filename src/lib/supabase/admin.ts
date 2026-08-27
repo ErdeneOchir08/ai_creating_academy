@@ -9,7 +9,7 @@ export function createAdminClient() {
         ?? process.env.SUPABASE_SERVICE_ROLE_KEY
 
     if (!url || !secretKey) {
-        throw new Error('Contract signing service is not configured.')
+        throw new Error('Server-side Supabase access is not configured.')
     }
 
     return createClient(url, secretKey, {
