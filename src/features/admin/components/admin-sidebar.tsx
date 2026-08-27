@@ -2,13 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, BookOpen, CreditCard, LogOut, Settings, MessageSquareText, Tags, FileSignature, CalendarRange, ClipboardList } from 'lucide-react'
+import { LayoutDashboard, Users, BookOpen, CreditCard, LogOut, Settings, MessageSquareText, Tags, FileSignature, GraduationCap, ClipboardList } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
 const adminLinks = [
     { name: 'Тойм', href: '/admin', icon: LayoutDashboard },
-    { name: 'Сургалтууд', href: '/admin/programs', icon: CalendarRange },
+    { name: 'Ангиуд', href: '/admin/classes', icon: GraduationCap },
     { name: 'Хичээлийн контент', href: '/admin/courses', icon: BookOpen },
     { name: 'Ангиллууд', href: '/admin/categories', icon: Tags },
     { name: 'Элсэлтийн хүсэлтүүд', href: '/admin/applications', icon: ClipboardList },

@@ -77,6 +77,7 @@ export async function getAdminOverview() {
   const [
     students,
     teachers,
+    classes,
     courses,
     pendingCoursePayments,
     pendingCohortPayments,
@@ -87,6 +88,7 @@ export async function getAdminOverview() {
   ] = await Promise.all([
     supabase.from('user_roles').select('*', { count: 'exact', head: true }).eq('role', 'student'),
     supabase.from('user_roles').select('*', { count: 'exact', head: true }).eq('role', 'teacher'),
+    supabase.from('training_cohorts').select('*', { count: 'exact', head: true }),
     supabase.from('courses').select('*', { count: 'exact', head: true }),
     supabase.from('payment_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
     supabase.from('cohort_payment_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
@@ -99,6 +101,7 @@ export async function getAdminOverview() {
   const failure = [
     students,
     teachers,
+    classes,
     courses,
     pendingCoursePayments,
     pendingCohortPayments,
@@ -115,6 +118,7 @@ export async function getAdminOverview() {
   return {
     students: students.count ?? 0,
     teachers: teachers.count ?? 0,
+    classes: classes.count ?? 0,
     courses: courses.count ?? 0,
     pendingPayments: (pendingCoursePayments.count ?? 0)
       + (pendingCohortPayments.count ?? 0)

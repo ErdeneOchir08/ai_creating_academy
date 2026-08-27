@@ -6,8 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 export default async function AdminPage() {
     const overview = await getAdminOverview()
     const cards = [
+        { label: 'Ангиуд', value: overview.classes, description: 'Бүх сургалтын анги', href: '/admin/classes', icon: GraduationCap },
         { label: 'Суралцагчид', value: overview.students, description: 'Бүртгэлтэй суралцагч', href: '/admin/users', icon: Users },
-        { label: 'Багш нар', value: overview.teachers, description: 'Багшийн эрхтэй хэрэглэгч', href: '/admin/users', icon: GraduationCap },
+        { label: 'Багш нар', value: overview.teachers, description: 'Багшийн эрхтэй хэрэглэгч', href: '/admin/users', icon: Users },
         { label: 'Хичээлийн контент', value: overview.courses, description: 'Видео хичээлийн бэлэн багц', href: '/admin/courses', icon: BookOpen },
         { label: 'Хүлээгдэж буй төлбөр', value: overview.pendingPayments, description: 'Админы хяналт шаардлагатай', href: '/admin/payments?status=pending', icon: CreditCard },
         { label: 'Хариу хүлээж буй асуулт', value: overview.unansweredQuestions, description: 'Суралцагчийн шинэ асуултууд', href: '/admin/qa', icon: MessageSquareText },
@@ -20,7 +21,7 @@ export default async function AdminPage() {
                 <p className="text-zinc-400">Платформын одоогийн үйл ажиллагааг нэг дороос хянах боломжтой.</p>
             </header>
 
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
                 {cards.map((card) => {
                     const Icon = card.icon
                     return (

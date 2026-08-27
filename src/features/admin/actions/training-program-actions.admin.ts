@@ -13,6 +13,7 @@ import {
     type ContractPolicy,
     type DeliveryMode,
 } from '@/features/programs/domain/training-program'
+import { storedClassType, type ClassType } from '@/features/classes/domain/class-type'
 
 export type TrainingCohort = {
     id: string
@@ -21,6 +22,7 @@ export type TrainingCohort = {
     delivery_mode: DeliveryMode
     status: CohortStatus
     checkout_version: 1 | 2
+    class_type: ClassType | null
     course_id: string | null
     contract_policy: ContractPolicy
     contract_version_id: string | null
@@ -143,6 +145,7 @@ function assertUuid(value: string, label: string) {
 
 function refreshPrograms(programId?: string) {
     revalidatePath('/admin/programs')
+    revalidatePath('/admin/classes')
     if (programId) revalidatePath(`/admin/programs/${programId}`)
 }
 
@@ -179,6 +182,10 @@ function cohortRecord(input: ReturnType<typeof cohortInput>, checkoutVersion: 1 
         delivery_mode: input.deliveryMode,
         course_id: input.courseId,
         contract_policy: input.contractPolicy,
+        class_type: storedClassType({
+            deliveryMode: input.deliveryMode,
+            contractPolicy: input.contractPolicy,
+        }),
         contract_version_id: input.contractVersionId,
         capacity: checkoutVersion === 1 ? input.capacity : null,
         display_capacity: checkoutVersion === 2 ? input.capacity : null,
@@ -235,7 +242,7 @@ export async function getTrainingProgram(programId: string): Promise<TrainingPro
             .maybeSingle(),
         supabase
             .from('training_cohorts')
-            .select('id, program_id, name, delivery_mode, status, checkout_version, course_id, contract_policy, contract_version_id, capacity, display_capacity, configuration_revision, qpay_enabled, manual_transfer_enabled, tuition_amount_mnt, payment_due_days, payment_plan, schedule_summary, location, registration_opens_at, registration_closes_at, starts_on, ends_on, created_at, updated_at')
+            .select('id, program_id, name, delivery_mode, status, checkout_version, class_type, course_id, contract_policy, contract_version_id, capacity, display_capacity, configuration_revision, qpay_enabled, manual_transfer_enabled, tuition_amount_mnt, payment_due_days, payment_plan, schedule_summary, location, registration_opens_at, registration_closes_at, starts_on, ends_on, created_at, updated_at')
             .eq('program_id', programId)
             .order('created_at', { ascending: false }),
     ])
@@ -576,7 +583,7 @@ export async function duplicateOnlineTrainingCohort(cohortId: string, programId:
     const { supabase, user } = await requireAdmin()
     const { data: current, error: currentError } = await supabase
         .from('training_cohorts')
-        .select('name, delivery_mode, checkout_version, course_id, contract_policy, contract_version_id, display_capacity, tuition_amount_mnt, payment_due_days, payment_plan, schedule_summary, location, registration_opens_at, registration_closes_at, starts_on, ends_on, qpay_enabled, manual_transfer_enabled')
+        .select('name, delivery_mode, checkout_version, class_type, course_id, contract_policy, contract_version_id, display_capacity, tuition_amount_mnt, payment_due_days, payment_plan, schedule_summary, location, registration_opens_at, registration_closes_at, starts_on, ends_on, qpay_enabled, manual_transfer_enabled')
         .eq('id', cohortId)
         .eq('program_id', programId)
         .maybeSingle()
@@ -600,6 +607,10 @@ export async function duplicateOnlineTrainingCohort(cohortId: string, programId:
             name: `${current.name.slice(0, 125)} · шинэ ${suffix}`,
             delivery_mode: 'online',
             checkout_version: 2,
+            class_type: current.class_type ?? storedClassType({
+                deliveryMode: current.delivery_mode as DeliveryMode,
+                contractPolicy: current.contract_policy as ContractPolicy,
+            }),
             status: 'draft',
             course_id: current.course_id,
             contract_policy: current.contract_policy,
