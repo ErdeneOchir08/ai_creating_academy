@@ -63,7 +63,9 @@ function nextAction(item: AdminClassControl) {
     if (item.status === 'draft') return {
         title: 'Ангийн тохиргоог дуусгаад нийтэлнэ үү',
         description: 'Видео хичээл, үнэ, хугацаа болон гэрээний мэдээллийг шалгаад суралцагчийн харагдацыг урьдчилан үзнэ.',
-        href: `/admin/programs/${item.programId}`,
+        href: item.checkoutVersion === 2 && item.classType !== 'legacy'
+            ? `/admin/classes/${item.id}/setup?step=2`
+            : `/admin/programs/${item.programId}`,
         label: 'Тохиргоог үргэлжлүүлэх',
         attention: true,
     }
@@ -106,6 +108,9 @@ function nextAction(item: AdminClassControl) {
 
 export function ClassControlCenter({ classControl }: { classControl: AdminClassControl }) {
     const action = nextAction(classControl)
+    const editHref = classControl.status === 'draft' && classControl.checkoutVersion === 2 && classControl.classType !== 'legacy'
+        ? `/admin/classes/${classControl.id}/setup?step=2`
+        : `/admin/programs/${classControl.programId}`
 
     return (
         <div className="mx-auto max-w-7xl space-y-7 p-5 md:p-8">
@@ -125,7 +130,7 @@ export function ClassControlCenter({ classControl }: { classControl: AdminClassC
                     </div>
                     <div className="flex flex-wrap gap-2">
                         <Button asChild variant="outline"><Link href={`/admin/programs/${classControl.programId}/cohorts/${classControl.id}/preview`}><Eye className="mr-2 h-4 w-4" />Урьдчилан харах</Link></Button>
-                        <Button asChild variant="outline"><Link href={`/admin/programs/${classControl.programId}`}><PencilLine className="mr-2 h-4 w-4" />Тохиргоо засах</Link></Button>
+                        <Button asChild variant="outline"><Link href={editHref}><PencilLine className="mr-2 h-4 w-4" />Тохиргоо засах</Link></Button>
                     </div>
                 </div>
             </header>

@@ -98,7 +98,7 @@ export function ClassLibrary({
                     </p>
                 </div>
                 <Button asChild className="bg-indigo-600 text-white hover:bg-indigo-700">
-                    <Link href="/admin/programs"><Plus className="mr-2 h-4 w-4" />Шинэ анги үүсгэх</Link>
+                    <Link href="/admin/classes/new"><Plus className="mr-2 h-4 w-4" />Шинэ анги үүсгэх</Link>
                 </Button>
             </header>
 
@@ -167,9 +167,9 @@ export function ClassLibrary({
                 </section>
             )}
 
-            <p className="flex items-start gap-2 rounded-xl border border-blue-500/20 bg-blue-500/5 p-4 text-sm text-blue-100/80">
-                <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-blue-300" />
-                Видео контент, гэрээ болон төлбөрийн нарийн тохиргоо одоогоор хуучин удирдлагын дэлгэцээр хадгалагдана. Дараагийн үе шатанд шинэ анги үүсгэх богино заавартай болно.
+            <p className="flex items-start gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-sm text-emerald-100/80">
+                <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />
+                Шинэ анги үүсгэх заавар нь зөвхөн тухайн ангид хэрэгтэй мэдээллийг харуулж, алхам бүрийн дараа ноорог хадгална. Хуучин ангийг одоогийн аюулгүй удирдлагын дэлгэцээр үргэлжлүүлэн засаж болно.
             </p>
         </div>
     )

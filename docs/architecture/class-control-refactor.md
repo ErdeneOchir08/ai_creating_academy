@@ -1,6 +1,13 @@
 # Mind Academy class control refactor
 
-Status: proposed production architecture. No database or live workflow change is authorized by this document alone.
+Status: Phase 1 and Phase 2 implemented. Phase 3–5 remain planned.
+
+Implementation progress as of 2026-08-27:
+
+- Phase 1: class types, Classes list and Class Control Center are live.
+- Phase 2: five-step guided class creation, step-by-step draft saving, readiness checks and final publish control are implemented.
+- The proven legacy editor remains available for existing and advanced configuration.
+- Teacher assignments and structured sessions remain Phase 3 work.
 
 ## Goal
 
