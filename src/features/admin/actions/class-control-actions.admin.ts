@@ -36,6 +36,8 @@ export type AdminClassSummary = {
     location: string
     qpayEnabled: boolean
     manualTransferEnabled: boolean
+    teacherName: string | null
+    sessionCount: number
     createdAt: string
     updatedAt: string
     applicationCount: number
@@ -63,6 +65,14 @@ export type AdminClassControl = AdminClassSummary & {
         revision: number
         reason: string
         changedAt: string
+    }>
+    sessions: Array<{
+        id: string
+        title: string
+        startsAt: string
+        endsAt: string
+        meetingUrl: string | null
+        location: string
     }>
 }
 
@@ -141,6 +151,8 @@ export async function getAdminClassSummaries(): Promise<AdminClassSummary[]> {
         legacyApplicationsResult,
         legacyPaymentsResult,
         legacyEnrollmentsResult,
+        assignmentsResult,
+        sessionsResult,
     ] = await Promise.all([
         supabase.from('training_programs').select('id, name, is_archived').in('id', programIds),
         courseIds.length > 0
@@ -155,6 +167,8 @@ export async function getAdminClassSummaries(): Promise<AdminClassSummary[]> {
         supabase.from('cohort_applications').select('cohort_id, status').in('cohort_id', cohortIds),
         supabase.from('cohort_payment_requests').select('cohort_id, status').in('cohort_id', cohortIds),
         supabase.from('cohort_enrollments').select('cohort_id, status').in('cohort_id', cohortIds),
+        supabase.from('class_teacher_assignments').select('class_id, teacher_user_id').in('class_id', cohortIds).is('ended_at', null),
+        supabase.from('class_sessions').select('class_id').in('class_id', cohortIds),
     ])
 
     const firstError = [
@@ -167,6 +181,8 @@ export async function getAdminClassSummaries(): Promise<AdminClassSummary[]> {
         legacyApplicationsResult.error,
         legacyPaymentsResult.error,
         legacyEnrollmentsResult.error,
+        assignmentsResult.error,
+        sessionsResult.error,
     ].find(Boolean)
     if (firstError) {
         console.error('Unable to load class control data:', firstError.message)
@@ -182,6 +198,14 @@ export async function getAdminClassSummaries(): Promise<AdminClassSummary[]> {
     const legacyApplications = legacyApplicationsResult.data ?? []
     const legacyPayments = legacyPaymentsResult.data ?? []
     const legacyEnrollments = legacyEnrollmentsResult.data ?? []
+    const assignments = assignmentsResult.data ?? []
+    const teacherIds = [...new Set(assignments.map((assignment) => assignment.teacher_user_id))]
+    const teacherProfilesResult = teacherIds.length > 0
+        ? await supabase.from('profiles').select('id, display_name').in('id', teacherIds)
+        : { data: [], error: null }
+    if (teacherProfilesResult.error) throw new Error('Багшийн мэдээллийг уншиж чадсангүй.')
+    const teacherProfiles = new Map((teacherProfilesResult.data ?? []).map((profile) => [profile.id, profile.display_name]))
+    const sessions = sessionsResult.data ?? []
 
     return cohorts.map((cohort) => {
         const program = programs.get(cohort.program_id)
@@ -200,6 +224,7 @@ export async function getAdminClassSummaries(): Promise<AdminClassSummary[]> {
         const applicationStatuses = classApplications.map((row) => row.status as string)
         const paymentStatuses = classPayments.map((row) => row.status as string)
         const enrollmentStatuses = classEnrollments.map((row) => row.status as string)
+        const assignment = assignments.find((row) => row.class_id === cohort.id)
         const pendingPaymentCount = countBy(paymentStatuses, (status) => ['created', 'pending'].includes(status))
         const paymentIssueCount = countBy(paymentStatuses, (status) => ['failed', 'rejected', 'expired'].includes(status))
         const activeCheckoutCount = countBy(applicationStatuses, (status) => ['draft', 'submitted'].includes(status))
@@ -234,6 +259,8 @@ export async function getAdminClassSummaries(): Promise<AdminClassSummary[]> {
             location: cohort.location,
             qpayEnabled: cohort.qpay_enabled,
             manualTransferEnabled: cohort.manual_transfer_enabled,
+            teacherName: assignment ? teacherProfiles.get(assignment.teacher_user_id) ?? 'Нэргүй багш' : null,
+            sessionCount: sessions.filter((session) => session.class_id === cohort.id).length,
             createdAt: cohort.created_at,
             updatedAt: cohort.updated_at,
             applicationCount: classApplications.length,
@@ -261,7 +288,7 @@ export async function getAdminClassControl(classId: string): Promise<AdminClassC
         .limit(10)
 
     if (summary.checkoutVersion === 2) {
-        const [applicationsResult, paymentsResult, enrollmentsResult, changesResult] = await Promise.all([
+        const [applicationsResult, paymentsResult, enrollmentsResult, changesResult, sessionsResult] = await Promise.all([
             supabase
                 .from('course_offering_applications')
                 .select('id, learner_id, contact_email, status, created_at')
@@ -277,8 +304,13 @@ export async function getAdminClassControl(classId: string): Promise<AdminClassC
                 .select('application_id, status')
                 .eq('offering_id', classId),
             changesPromise,
+            supabase
+                .from('class_sessions')
+                .select('id, title, starts_at, ends_at, meeting_url, location')
+                .eq('class_id', classId)
+                .order('starts_at'),
         ])
-        const firstError = applicationsResult.error ?? paymentsResult.error ?? enrollmentsResult.error ?? changesResult.error
+        const firstError = applicationsResult.error ?? paymentsResult.error ?? enrollmentsResult.error ?? changesResult.error ?? sessionsResult.error
         if (firstError) throw new Error('Ангийн суралцагчдын мэдээллийг уншиж чадсангүй.')
 
         const applications = applicationsResult.data ?? []
@@ -306,6 +338,14 @@ export async function getAdminClassControl(classId: string): Promise<AdminClassC
                 revision: change.revision,
                 reason: change.reason,
                 changedAt: change.changed_at,
+            })),
+            sessions: (sessionsResult.data ?? []).map((session) => ({
+                id: session.id,
+                title: session.title,
+                startsAt: session.starts_at,
+                endsAt: session.ends_at,
+                meetingUrl: session.meeting_url,
+                location: session.location,
             })),
         }
     }
@@ -351,5 +391,6 @@ export async function getAdminClassControl(classId: string): Promise<AdminClassC
             reason: change.reason,
             changedAt: change.changed_at,
         })),
+        sessions: [],
     }
 }

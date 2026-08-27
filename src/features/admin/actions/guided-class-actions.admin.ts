@@ -36,7 +36,24 @@ export type GuidedClassDraft = {
     endsOn: string | null
     qpayEnabled: boolean
     manualTransferEnabled: boolean
+    teacherUserId: string | null
+    teacherName: string | null
+    sessions: GuidedClassSession[]
     updatedAt: string
+}
+
+export type GuidedClassSession = {
+    id: string
+    title: string
+    startsAt: string
+    endsAt: string
+    meetingUrl: string | null
+    location: string
+}
+
+export type TeacherOption = {
+    id: string
+    name: string
 }
 
 async function requireAdmin() {
@@ -146,12 +163,33 @@ export async function getGuidedClassDraft(classId: string): Promise<GuidedClassD
     if (error) throw new Error('Ангийн нооргийг уншиж чадсангүй.')
     if (!cohort || cohort.status !== 'draft' || cohort.checkout_version !== 2 || !classTypes.includes(cohort.class_type as ClassType)) return null
 
-    const { data: program, error: programError } = await supabase
-        .from('training_programs')
-        .select('name, description')
-        .eq('id', cohort.program_id)
-        .maybeSingle()
-    if (programError || !program) throw new Error('Ангийн ерөнхий мэдээллийг уншиж чадсангүй.')
+    const [programResult, assignmentResult, sessionsResult] = await Promise.all([
+        supabase
+            .from('training_programs')
+            .select('name, description')
+            .eq('id', cohort.program_id)
+            .maybeSingle(),
+        supabase
+            .from('class_teacher_assignments')
+            .select('teacher_user_id')
+            .eq('class_id', classId)
+            .is('ended_at', null)
+            .maybeSingle(),
+        supabase
+            .from('class_sessions')
+            .select('id, title, starts_at, ends_at, meeting_url, location')
+            .eq('class_id', classId)
+            .order('starts_at'),
+    ])
+    if (programResult.error || !programResult.data || assignmentResult.error || sessionsResult.error) {
+        throw new Error('Ангийн ерөнхий мэдээллийг уншиж чадсангүй.')
+    }
+    const program = programResult.data
+    const teacherUserId = assignmentResult.data?.teacher_user_id ?? null
+    const teacherResult = teacherUserId
+        ? await supabase.from('profiles').select('display_name').eq('id', teacherUserId).maybeSingle()
+        : { data: null, error: null }
+    if (teacherResult.error) throw new Error('Багшийн мэдээллийг уншиж чадсангүй.')
 
     return {
         id: cohort.id,
@@ -174,8 +212,40 @@ export async function getGuidedClassDraft(classId: string): Promise<GuidedClassD
         endsOn: cohort.ends_on,
         qpayEnabled: cohort.qpay_enabled,
         manualTransferEnabled: cohort.manual_transfer_enabled,
+        teacherUserId,
+        teacherName: teacherResult.data?.display_name ?? null,
+        sessions: (sessionsResult.data ?? []).map((session) => ({
+            id: session.id,
+            title: session.title,
+            startsAt: session.starts_at,
+            endsAt: session.ends_at,
+            meetingUrl: session.meeting_url,
+            location: session.location,
+        })),
         updatedAt: cohort.updated_at,
     }
+}
+
+export async function getTeacherOptions(): Promise<TeacherOption[]> {
+    const { supabase } = await requireAdmin()
+    const { data: roles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'teacher')
+    if (rolesError) throw new Error('Багшийн жагсаалтыг уншиж чадсангүй.')
+    const teacherIds = (roles ?? []).map((role) => role.user_id)
+    if (teacherIds.length === 0) return []
+
+    const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .in('id', teacherIds)
+        .order('display_name')
+    if (error) throw new Error('Багшийн жагсаалтыг уншиж чадсангүй.')
+    return (profiles ?? []).map((profile) => ({
+        id: profile.id,
+        name: profile.display_name?.trim() || 'Нэргүй багш',
+    }))
 }
 
 async function requireGuidedDraft(classId: string) {
@@ -217,6 +287,56 @@ export async function saveGuidedClassSchedule(classId: string, formData: FormDat
 
     if (!isSelfPaced && (!startsOn || !endsOn)) throw new Error('Багштай болон танхимын ангид эхлэх, дуусах өдрийг оруулна уу.')
     if (startsOn && endsOn && endsOn < startsOn) throw new Error('Дуусах өдөр эхлэх өдрөөс өмнө байж болохгүй.')
+
+    if (!isSelfPaced) {
+        const teacherUserId = optionalUuid(formData, 'teacher_user_id', 'Багш')
+        if (!teacherUserId) throw new Error('Багшаа сонгоно уу.')
+        const titles = formData.getAll('session_title').map((value) => String(value).trim())
+        const starts = formData.getAll('session_starts_at').map(String)
+        const ends = formData.getAll('session_ends_at').map(String)
+        const meetingUrls = formData.getAll('session_meeting_url').map((value) => String(value).trim())
+        const locations = formData.getAll('session_location').map((value) => String(value).trim())
+        if (titles.length === 0 || starts.length !== titles.length || ends.length !== titles.length) {
+            throw new Error('Дор хаяж нэг хичээлийн цаг оруулна уу.')
+        }
+        const sessions = titles.map((title, index) => {
+            if (!title || title.length > 160) throw new Error(`${index + 1}-р хичээлийн нэр буруу байна.`)
+            const sessionStart = new Date(starts[index])
+            const sessionEnd = new Date(ends[index])
+            if (Number.isNaN(sessionStart.getTime()) || Number.isNaN(sessionEnd.getTime()) || sessionEnd <= sessionStart) {
+                throw new Error(`${index + 1}-р хичээлийн цаг буруу байна.`)
+            }
+            if (cohort.class_type === 'instructor_led_online' && meetingUrls[index] && !/^https:\/\/\S+$/i.test(meetingUrls[index])) {
+                throw new Error(`${index + 1}-р хичээлийн холбоос https:// гэж эхэлнэ.`)
+            }
+            const sessionLocation = cohort.class_type === 'offline_with_video' ? (locations[index] || location) : ''
+            if (cohort.class_type === 'offline_with_video' && !sessionLocation) {
+                throw new Error(`${index + 1}-р хичээлийн байршлыг оруулна уу.`)
+            }
+            return {
+                title,
+                starts_at: sessionStart.toISOString(),
+                ends_at: sessionEnd.toISOString(),
+                meeting_url: cohort.class_type === 'instructor_led_online' ? meetingUrls[index] || null : null,
+                location: sessionLocation,
+            }
+        })
+        const { error } = await supabase.rpc('save_guided_class_schedule', {
+            p_class_id: classId,
+            p_teacher_user_id: teacherUserId,
+            p_starts_on: startsOn,
+            p_ends_on: endsOn,
+            p_schedule_summary: scheduleSummary,
+            p_location: location,
+            p_sessions: sessions,
+        })
+        if (error) {
+            console.error('Unable to save guided schedule:', error.message)
+            throw new Error('Багш болон хичээлийн цагийг хадгалж чадсангүй.')
+        }
+        revalidateClass(classId, cohort.program_id)
+        return
+    }
 
     const { error } = await supabase
         .from('training_cohorts')
@@ -284,6 +404,10 @@ export async function publishGuidedClass(classId: string) {
         courseReady: selectedCourse?.is_ready_for_offering === true,
         contractReady: selectedContract?.is_assignable === true,
         qpayAvailable: getQpayPublicState().enabled,
+        teacherAssigned: Boolean(draft.teacherUserId),
+        sessionsReady: draft.sessions.length > 0 && draft.sessions.every((session) => (
+            draft.classType === 'instructor_led_online' ? Boolean(session.meetingUrl) : Boolean(session.location)
+        )),
     })
     const incomplete = readiness.find((item) => !item.complete)
     if (incomplete) throw new Error(`${incomplete.label}: ${incomplete.help}`)

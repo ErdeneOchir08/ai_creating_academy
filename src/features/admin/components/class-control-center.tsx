@@ -5,6 +5,7 @@ import {
     BookOpen,
     CalendarDays,
     CheckCircle2,
+    Clock3,
     CreditCard,
     Eye,
     FileSignature,
@@ -12,6 +13,7 @@ import {
     MapPin,
     PencilLine,
     Settings2,
+    UserRound,
     Users,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -57,6 +59,10 @@ function formatDate(value: string | null) {
     return value
         ? new Intl.DateTimeFormat('mn-MN', { dateStyle: 'medium' }).format(new Date(value))
         : 'Тодорхойгүй'
+}
+
+function formatDateTime(value: string) {
+    return new Intl.DateTimeFormat('mn-MN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
 }
 
 function nextAction(item: AdminClassControl) {
@@ -160,6 +166,8 @@ export function ClassControlCenter({ classControl }: { classControl: AdminClassC
                         <Detail icon={<Users />} label="Ангийн хэмжээ" value={classControl.capacity ? `${classControl.capacity} суралцагч` : 'Хязгааргүй / мэдээлээгүй'} />
                         <Detail icon={<CalendarDays />} label="Хугацаа" value={`${formatDate(classControl.startsOn)} – ${formatDate(classControl.endsOn)}`} />
                         <Detail icon={<BookOpen />} label="Видео хичээл" value={classControl.courseTitle ?? 'Холбоогүй'} />
+                        {classControl.classType !== 'self_paced_online' && <Detail icon={<UserRound />} label="Хариуцах багш" value={classControl.teacherName ?? 'Сонгоогүй'} />}
+                        {classControl.classType !== 'self_paced_online' && <Detail icon={<Clock3 />} label="Хичээлийн цаг" value={`${classControl.sessionCount} удаа`} />}
                         <Detail icon={<FileSignature />} label="Гэрээ" value={classControl.contractPolicy === 'required' ? classControl.contractTitle ?? 'Сонгоогүй' : 'Шаардлагагүй'} />
                         <Detail icon={<MapPin />} label={classControl.deliveryMode === 'offline' ? 'Байршил' : 'Хуваарь'} value={classControl.deliveryMode === 'offline' ? classControl.location || 'Оруулаагүй' : classControl.scheduleSummary || 'Оруулаагүй'} />
                     </CardContent>
@@ -174,6 +182,28 @@ export function ClassControlCenter({ classControl }: { classControl: AdminClassC
                     </CardContent>
                 </Card>
             </section>
+
+            {classControl.classType !== 'self_paced_online' && (
+                <Card className="border-zinc-800 bg-zinc-950 text-white">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><CalendarDays className="h-5 w-5 text-indigo-400" />Хичээлийн хуваарь</CardTitle>
+                        <CardDescription className="text-zinc-500">Багш: {classControl.teacherName ?? 'Сонгоогүй'} · {classControl.sessions.length} хичээл</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        {classControl.sessions.length === 0 ? (
+                            <p className="rounded-xl border border-dashed border-zinc-800 p-7 text-center text-zinc-500">Хичээлийн цаг оруулаагүй байна.</p>
+                        ) : classControl.sessions.map((session) => (
+                            <div key={session.id} className="grid gap-3 rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 md:grid-cols-[1fr_1fr] md:items-center">
+                                <div>
+                                    <p className="font-medium text-white">{session.title}</p>
+                                    <p className="mt-1 text-sm text-zinc-400">{formatDateTime(session.startsAt)} – {formatDateTime(session.endsAt)}</p>
+                                </div>
+                                <p className="break-all text-sm text-zinc-400 md:text-right">{session.meetingUrl ?? session.location}</p>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
 
             <Card id="students" className="border-zinc-800 bg-zinc-950 text-white">
                 <CardHeader><CardTitle>Суралцагчид · {classControl.students.length}</CardTitle><CardDescription className="text-zinc-500">Энэ ангид бүртгүүлсэн хүмүүсийн төлөв.</CardDescription></CardHeader>

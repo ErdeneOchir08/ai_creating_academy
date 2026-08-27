@@ -39,7 +39,26 @@ describe('guided class readiness', () => {
         })
 
         expect(result.find((item) => item.key === 'schedule')?.complete).toBe(false)
+        expect(result.find((item) => item.key === 'teacher')?.complete).toBe(false)
         expect(result.find((item) => item.key === 'contract')?.complete).toBe(false)
+    })
+
+    it('accepts a teacher-led class only after teacher and sessions are ready', () => {
+        const result = guidedClassReadiness(draft({
+            classType: 'instructor_led_online',
+            contractVersionId: 'contract-id',
+            startsOn: '2026-09-01',
+            endsOn: '2026-09-30',
+            scheduleSummary: 'Tuesday and Thursday',
+        }), {
+            courseReady: true,
+            contractReady: true,
+            qpayAvailable: true,
+            teacherAssigned: true,
+            sessionsReady: true,
+        })
+
+        expect(result.every((item) => item.complete)).toBe(true)
     })
 
     it('requires a venue for offline classes', () => {

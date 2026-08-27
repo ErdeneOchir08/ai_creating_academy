@@ -18,8 +18,11 @@ import {
     MapPin,
     MonitorPlay,
     Presentation,
+    Plus,
     Save,
     ShieldCheck,
+    Trash2,
+    UserRound,
     Users,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -34,6 +37,7 @@ import {
     saveGuidedClassPayment,
     saveGuidedClassSchedule,
     type GuidedClassDraft,
+    type TeacherOption,
 } from '@/features/admin/actions/guided-class-actions.admin'
 import type {
     OfferingCourseOption,
@@ -218,23 +222,32 @@ export function GuidedClassWizard({
     currentStep,
     courses,
     contracts,
+    teachers,
     qpay,
 }: {
     draft: GuidedClassDraft
     currentStep: number
     courses: OfferingCourseOption[]
     contracts: PublishedContractOption[]
+    teachers: TeacherOption[]
     qpay: { enabled: boolean; environment: 'sandbox' | 'production' }
 }) {
     const router = useRouter()
     const [pending, setPending] = useState(false)
     const [error, setError] = useState('')
+    const [sessionRows, setSessionRows] = useState(() => draft.sessions.length > 0
+        ? draft.sessions.map((session) => ({ ...session, key: session.id }))
+        : [{ key: crypto.randomUUID(), id: '', title: '', startsAt: '', endsAt: '', meetingUrl: null, location: '' }])
     const selectedCourse = courses.find((course) => course.id === draft.courseId)
     const selectedContract = contracts.find((contract) => contract.id === draft.contractVersionId)
     const readiness = guidedClassReadiness(draft, {
         courseReady: selectedCourse?.is_ready_for_offering === true,
         contractReady: selectedContract?.is_assignable === true,
         qpayAvailable: qpay.enabled,
+        teacherAssigned: Boolean(draft.teacherUserId),
+        sessionsReady: draft.sessions.length > 0 && draft.sessions.every((session) => (
+            draft.classType === 'instructor_led_online' ? Boolean(session.meetingUrl) : Boolean(session.location)
+        )),
     })
     const isReady = readiness.every((item) => item.complete)
     const rules = classTypeRules[draft.classType]
@@ -324,16 +337,85 @@ export function GuidedClassWizard({
                                 <Input name="ends_on" type="date" required={draft.classType !== 'self_paced_online'} defaultValue={draft.endsOn ?? ''} className="border-zinc-700 bg-zinc-900" />
                             </label>
                             {draft.classType !== 'self_paced_online' && (
-                                <label className="space-y-2 text-sm text-zinc-300 md:col-span-2">
-                                    <span>Хичээлийн хуваарь *</span>
-                                    <Textarea name="schedule_summary" required maxLength={2_000} defaultValue={draft.scheduleSummary} placeholder="Жишээ: Мягмар, Пүрэв гарагт 18:00–20:00" className="min-h-24 border-zinc-700 bg-zinc-900" />
-                                </label>
+                                <>
+                                    <label className="space-y-2 text-sm text-zinc-300 md:col-span-2">
+                                        <span className="flex items-center gap-2"><UserRound className="h-4 w-4 text-indigo-300" />Хариуцах багш *</span>
+                                        <select name="teacher_user_id" required defaultValue={draft.teacherUserId ?? ''} className="h-11 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 text-sm">
+                                            <option value="" disabled>Багш сонгох</option>
+                                            {teachers.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.name}</option>)}
+                                        </select>
+                                    </label>
+                                    {teachers.length === 0 && (
+                                        <p className="rounded-lg border border-amber-500/25 bg-amber-500/5 p-3 text-sm text-amber-200 md:col-span-2">
+                                            Багш эрхтэй хэрэглэгч алга байна. Админ → Хэрэглэгчид хэсэгт багшийн бүртгэлийг “Багш” болгоно уу.
+                                        </p>
+                                    )}
+                                    <label className="space-y-2 text-sm text-zinc-300 md:col-span-2">
+                                        <span>Хуваарийн товч тайлбар *</span>
+                                        <Textarea name="schedule_summary" required maxLength={2_000} defaultValue={draft.scheduleSummary} placeholder="Жишээ: Мягмар, Пүрэв гарагт 18:00–20:00" className="min-h-20 border-zinc-700 bg-zinc-900" />
+                                    </label>
+                                </>
                             )}
                             {draft.classType === 'offline_with_video' && (
                                 <label className="space-y-2 text-sm text-zinc-300 md:col-span-2">
                                     <span className="flex items-center gap-2"><MapPin className="h-4 w-4 text-indigo-300" />Танхимын бүтэн байршил *</span>
                                     <Textarea name="location" required maxLength={1_000} defaultValue={draft.location} placeholder="Жишээ: Twin Tower 1, 5 давхар, 502 тоот" className="min-h-24 border-zinc-700 bg-zinc-900" />
                                 </label>
+                            )}
+                            {draft.classType !== 'self_paced_online' && (
+                                <div className="space-y-4 md:col-span-2">
+                                    <div className="flex flex-wrap items-center justify-between gap-3">
+                                        <div>
+                                            <p className="font-semibold text-white">Хичээлийн цагууд *</p>
+                                            <p className="mt-1 text-xs text-zinc-500">Суралцагч яг хэзээ, хаана эсвэл ямар холбоосоор орохыг эндээс харна.</p>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={() => setSessionRows((rows) => [...rows, { key: crypto.randomUUID(), id: '', title: '', startsAt: '', endsAt: '', meetingUrl: null, location: '' }])}
+                                        >
+                                            <Plus className="mr-2 h-4 w-4" />Цаг нэмэх
+                                        </Button>
+                                    </div>
+                                    {sessionRows.map((session, index) => (
+                                        <div key={session.key} className="grid gap-4 rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 md:grid-cols-2">
+                                            <div className="flex items-center justify-between md:col-span-2">
+                                                <strong className="text-sm text-white">{index + 1}-р хичээл</strong>
+                                                {sessionRows.length > 1 && (
+                                                    <Button type="button" variant="ghost" size="sm" onClick={() => setSessionRows((rows) => rows.filter((row) => row.key !== session.key))} className="text-red-300 hover:text-red-200">
+                                                        <Trash2 className="mr-2 h-4 w-4" />Хасах
+                                                    </Button>
+                                                )}
+                                            </div>
+                                            <label className="space-y-2 text-sm text-zinc-300 md:col-span-2">
+                                                <span>Хичээлийн нэр *</span>
+                                                <Input name="session_title" required maxLength={160} defaultValue={session.title} placeholder="Жишээ: Танилцах хичээл" className="border-zinc-700 bg-zinc-950" />
+                                            </label>
+                                            <label className="space-y-2 text-sm text-zinc-300">
+                                                <span>Эхлэх цаг *</span>
+                                                <Input name="session_starts_at" type="datetime-local" required defaultValue={localDateTime(session.startsAt || null)} className="border-zinc-700 bg-zinc-950" />
+                                            </label>
+                                            <label className="space-y-2 text-sm text-zinc-300">
+                                                <span>Дуусах цаг *</span>
+                                                <Input name="session_ends_at" type="datetime-local" required defaultValue={localDateTime(session.endsAt || null)} className="border-zinc-700 bg-zinc-950" />
+                                            </label>
+                                            {draft.classType === 'instructor_led_online' ? (
+                                                <label className="space-y-2 text-sm text-zinc-300 md:col-span-2">
+                                                    <span>Онлайн уулзалтын холбоос</span>
+                                                    <Input name="session_meeting_url" type="url" defaultValue={session.meetingUrl ?? ''} placeholder="https://meet.google.com/..." className="border-zinc-700 bg-zinc-950" />
+                                                    <span className="block text-xs text-zinc-500">Ноорогт хоосон байж болно. Нийтлэхийн өмнө холбоос шаардлагатай.</span>
+                                                </label>
+                                            ) : (
+                                                <label className="space-y-2 text-sm text-zinc-300 md:col-span-2">
+                                                    <span>Энэ цагийн өөр байршил</span>
+                                                    <Input name="session_location" defaultValue={session.location && session.location !== draft.location ? session.location : ''} placeholder="Хоосон бол дээрх үндсэн байршлыг ашиглана" className="border-zinc-700 bg-zinc-950" />
+                                                </label>
+                                            )}
+                                            {draft.classType === 'offline_with_video' && <input type="hidden" name="session_meeting_url" value="" />}
+                                            {draft.classType === 'instructor_led_online' && <input type="hidden" name="session_location" value="" />}
+                                        </div>
+                                    ))}
+                                </div>
                             )}
                             <div className="md:col-span-2"><WizardButtons classId={draft.id} previous={2} pending={pending} /></div>
                         </CardContent>
@@ -428,6 +510,8 @@ export function GuidedClassWizard({
                             <CardContent className="space-y-3 text-sm">
                                 <Summary label="Төрөл" value={classTypeLabels[draft.classType]} />
                                 <Summary label="Видео" value={selectedCourse?.title ?? 'Сонгоогүй'} />
+                                {draft.classType !== 'self_paced_online' && <Summary label="Багш" value={draft.teacherName ?? 'Сонгоогүй'} />}
+                                {draft.classType !== 'self_paced_online' && <Summary label="Хичээлийн цаг" value={`${draft.sessions.length} удаа`} />}
                                 <Summary label="Үнэ" value={draft.tuitionAmountMnt ? `₮ ${draft.tuitionAmountMnt.toLocaleString('mn-MN')}` : 'Тохируулаагүй'} />
                                 <Summary label="Гэрээ" value={rules.contractPolicy === 'none' ? 'Шаардлагагүй' : selectedContract ? `${selectedContract.template_name} · v${selectedContract.version_number}` : 'Сонгоогүй'} />
                                 <Summary label="QPay" value={draft.qpayEnabled && qpay.enabled ? 'Идэвхтэй' : 'Идэвхгүй'} />

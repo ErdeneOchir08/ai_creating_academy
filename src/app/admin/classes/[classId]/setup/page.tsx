@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { getGuidedClassDraft } from '@/features/admin/actions/guided-class-actions.admin'
+import { getGuidedClassDraft, getTeacherOptions } from '@/features/admin/actions/guided-class-actions.admin'
 import {
     getOfferingCourseOptions,
     getPublishedContractOptions,
@@ -15,10 +15,11 @@ export default async function GuidedClassSetupPage({
     searchParams: Promise<{ step?: string }>
 }) {
     const [{ classId }, { step }] = await Promise.all([params, searchParams])
-    const [draft, courses, contracts] = await Promise.all([
+    const [draft, courses, contracts, teachers] = await Promise.all([
         getGuidedClassDraft(classId),
         getOfferingCourseOptions(),
         getPublishedContractOptions(),
+        getTeacherOptions(),
     ])
     if (!draft) notFound()
 
@@ -30,6 +31,7 @@ export default async function GuidedClassSetupPage({
             currentStep={currentStep}
             courses={courses}
             contracts={contracts}
+            teachers={teachers}
             qpay={getQpayPublicState()}
         />
     )

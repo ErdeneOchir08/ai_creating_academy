@@ -28,6 +28,8 @@ export function guidedClassReadiness(
         courseReady: boolean
         contractReady: boolean
         qpayAvailable: boolean
+        teacherAssigned?: boolean
+        sessionsReady?: boolean
     },
 ): GuidedReadinessItem[] {
     const rules = classTypeRules[draft.classType]
@@ -43,8 +45,15 @@ export function guidedClassReadiness(
         {
             key: 'schedule',
             label: scheduled ? 'Хуваарь бүрэн' : 'Суралцах хугацаа тохиромжтой',
-            complete: !scheduled || Boolean(draft.startsOn && draft.endsOn && draft.scheduleSummary),
-            help: scheduled ? 'Эхлэх, дуусах өдөр болон хуваарийг оруулна.' : 'Бие даан суралцах ангид тогтсон хуваарь шаардлагагүй.',
+            complete: !scheduled || Boolean(draft.startsOn && draft.endsOn && draft.scheduleSummary && options.sessionsReady),
+            help: scheduled ? 'Эхлэх, дуусах өдөр болон дор хаяж нэг хичээлийн цаг оруулна.' : 'Бие даан суралцах ангид тогтсон хуваарь шаардлагагүй.',
+            step: 3,
+        },
+        {
+            key: 'teacher',
+            label: scheduled ? 'Багш томилогдсон' : 'Багш шаардлагагүй',
+            complete: !scheduled || options.teacherAssigned === true,
+            help: scheduled ? 'Багш эрхтэй хэрэглэгчээс хариуцах багшийг сонгоно.' : 'Бие даан суралцах ангид багш шаардлагагүй.',
             step: 3,
         },
         {
