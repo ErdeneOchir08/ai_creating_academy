@@ -36,6 +36,8 @@ export type AdminClassSummary = {
     location: string
     qpayEnabled: boolean
     manualTransferEnabled: boolean
+    configurationRevision: number
+    teacherUserId: string | null
     teacherName: string | null
     sessionCount: number
     createdAt: string
@@ -98,6 +100,7 @@ type CohortRow = {
     ends_on: string | null
     qpay_enabled: boolean
     manual_transfer_enabled: boolean
+    configuration_revision: number
     created_at: string
     updated_at: string
 }
@@ -125,7 +128,7 @@ export async function getAdminClassSummaries(): Promise<AdminClassSummary[]> {
     const supabase = await requireAdmin()
     const { data: cohortData, error: cohortsError } = await supabase
         .from('training_cohorts')
-        .select('id, program_id, name, class_type, delivery_mode, status, checkout_version, course_id, contract_policy, contract_version_id, capacity, display_capacity, tuition_amount_mnt, schedule_summary, location, registration_opens_at, registration_closes_at, starts_on, ends_on, qpay_enabled, manual_transfer_enabled, created_at, updated_at')
+        .select('id, program_id, name, class_type, delivery_mode, status, checkout_version, course_id, contract_policy, contract_version_id, capacity, display_capacity, tuition_amount_mnt, schedule_summary, location, registration_opens_at, registration_closes_at, starts_on, ends_on, qpay_enabled, manual_transfer_enabled, configuration_revision, created_at, updated_at')
         .order('updated_at', { ascending: false })
 
     if (cohortsError) {
@@ -259,6 +262,8 @@ export async function getAdminClassSummaries(): Promise<AdminClassSummary[]> {
             location: cohort.location,
             qpayEnabled: cohort.qpay_enabled,
             manualTransferEnabled: cohort.manual_transfer_enabled,
+            configurationRevision: cohort.configuration_revision,
+            teacherUserId: assignment?.teacher_user_id ?? null,
             teacherName: assignment ? teacherProfiles.get(assignment.teacher_user_id) ?? 'Нэргүй багш' : null,
             sessionCount: sessions.filter((session) => session.class_id === cohort.id).length,
             createdAt: cohort.created_at,

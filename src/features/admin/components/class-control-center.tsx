@@ -62,7 +62,11 @@ function formatDate(value: string | null) {
 }
 
 function formatDateTime(value: string) {
-    return new Intl.DateTimeFormat('mn-MN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
+    return new Intl.DateTimeFormat('mn-MN', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+        timeZone: 'Asia/Ulaanbaatar',
+    }).format(new Date(value))
 }
 
 function nextAction(item: AdminClassControl) {
@@ -185,9 +189,16 @@ export function ClassControlCenter({ classControl }: { classControl: AdminClassC
 
             {classControl.classType !== 'self_paced_online' && (
                 <Card className="border-zinc-800 bg-zinc-950 text-white">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><CalendarDays className="h-5 w-5 text-indigo-400" />Хичээлийн хуваарь</CardTitle>
-                        <CardDescription className="text-zinc-500">Багш: {classControl.teacherName ?? 'Сонгоогүй'} · {classControl.sessions.length} хичээл</CardDescription>
+                    <CardHeader className="flex flex-row items-start justify-between gap-4">
+                        <div>
+                            <CardTitle className="flex items-center gap-2"><CalendarDays className="h-5 w-5 text-indigo-400" />Хичээлийн хуваарь</CardTitle>
+                            <CardDescription className="mt-2 text-zinc-500">Багш: {classControl.teacherName ?? 'Сонгоогүй'} · {classControl.sessions.length} хичээл · Улаанбаатарын цаг</CardDescription>
+                        </div>
+                        {classControl.checkoutVersion === 2
+                            && ['instructor_led_online', 'offline_with_video'].includes(classControl.classType)
+                            && ['open', 'closed'].includes(classControl.status) && (
+                            <Button asChild variant="outline" size="sm"><Link href={`/admin/classes/${classControl.id}/schedule`}><PencilLine className="mr-2 h-4 w-4" />Хуваарь засах</Link></Button>
+                        )}
                     </CardHeader>
                     <CardContent className="space-y-3">
                         {classControl.sessions.length === 0 ? (

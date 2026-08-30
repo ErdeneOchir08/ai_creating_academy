@@ -1,6 +1,6 @@
 # Mind Academy class control refactor
 
-Status: Phase 1 and Phase 2 implemented. Phase 3 teacher, session and enrolled-student schedule flow implemented; change notifications remain. Phase 4–5 remain planned.
+Status: Phase 1, Phase 2 and Phase 3 implemented. Phase 4–5 remain planned.
 
 Implementation progress as of 2026-08-27:
 
@@ -9,7 +9,8 @@ Implementation progress as of 2026-08-27:
 - The proven legacy editor remains available for existing and advanced configuration.
 - Phase 3 foundation: real teacher assignments, structured online/offline sessions, participant-only database access, publish readiness checks and Class Control Center schedule display are implemented.
 - Enrolled students can see their assigned teacher, exact class times, online meeting links or classroom locations under **Миний хичээлүүд**. Unrelated accounts cannot read those records.
-- Notifying affected students when a published schedule changes remains the final Phase 3 slice.
+- Admins can safely update a future published schedule from the Class Control Center. The update uses revision locking, records the before/after schedule and reason, refreshes the enrolled-student view, and sends tracked e-mail notifications.
+- Once any session has started, the simple schedule editor locks. Payments, accepted contracts, enrollments and video-access grants are never rewritten by a schedule change.
 
 ## Goal
 
