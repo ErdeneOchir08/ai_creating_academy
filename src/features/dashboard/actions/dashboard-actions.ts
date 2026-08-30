@@ -151,3 +151,102 @@ export async function getStudentProfile() {
 
     return data
 }
+
+export type MyClassSchedule = {
+    classId: string
+    className: string
+    classType: 'instructor_led_online' | 'offline_with_video'
+    teacherName: string
+    scheduleSummary: string
+    startsOn: string | null
+    endsOn: string | null
+    sessions: Array<{
+        id: string
+        title: string
+        startsAt: string
+        endsAt: string
+        meetingUrl: string | null
+        location: string
+    }>
+}
+
+export async function getMyClassSchedules(): Promise<MyClassSchedule[]> {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return []
+
+    const { data: enrollments, error: enrollmentError } = await supabase
+        .from('course_offering_enrollments')
+        .select('offering_id')
+        .eq('content_access_user_id', user.id)
+        .eq('status', 'active')
+    if (enrollmentError) {
+        console.error('Error fetching class schedule enrollments:', enrollmentError.message)
+        return []
+    }
+    const classIds = [...new Set((enrollments ?? []).map((enrollment) => enrollment.offering_id))]
+    if (classIds.length === 0) return []
+
+    const [classesResult, assignmentsResult, sessionsResult] = await Promise.all([
+        supabase
+            .from('training_cohorts')
+            .select('id, name, class_type, schedule_summary, starts_on, ends_on')
+            .in('id', classIds)
+            .in('class_type', ['instructor_led_online', 'offline_with_video']),
+        supabase
+            .from('class_teacher_assignments')
+            .select('class_id, teacher_user_id')
+            .in('class_id', classIds)
+            .is('ended_at', null),
+        supabase
+            .from('class_sessions')
+            .select('id, class_id, title, starts_at, ends_at, meeting_url, location')
+            .in('class_id', classIds)
+            .order('starts_at'),
+    ])
+    const firstError = classesResult.error ?? assignmentsResult.error ?? sessionsResult.error
+    if (firstError) {
+        console.error('Error fetching enrolled class schedules:', firstError.message)
+        return []
+    }
+
+    const assignments = assignmentsResult.data ?? []
+    const teacherIds = [...new Set(assignments.map((assignment) => assignment.teacher_user_id))]
+    const profilesResult = teacherIds.length > 0
+        ? await supabase.from('profiles').select('id, display_name').in('id', teacherIds)
+        : { data: [], error: null }
+    if (profilesResult.error) {
+        console.error('Error fetching enrolled class teachers:', profilesResult.error.message)
+        return []
+    }
+    const teacherNames = new Map((profilesResult.data ?? []).map((profile) => [profile.id, profile.display_name]))
+    const assignmentByClass = new Map(assignments.map((assignment) => [assignment.class_id, assignment]))
+    const sessionsByClass = new Map<string, typeof sessionsResult.data>()
+    for (const session of sessionsResult.data ?? []) {
+        const classSessions = sessionsByClass.get(session.class_id) ?? []
+        classSessions.push(session)
+        sessionsByClass.set(session.class_id, classSessions)
+    }
+
+    return (classesResult.data ?? []).flatMap((classRow) => {
+        if (classRow.class_type !== 'instructor_led_online' && classRow.class_type !== 'offline_with_video') return []
+        const assignment = assignmentByClass.get(classRow.id)
+        return [{
+            classId: classRow.id,
+            className: classRow.name,
+            classType: classRow.class_type,
+            teacherName: assignment ? teacherNames.get(assignment.teacher_user_id)?.trim() || 'Багш' : 'Багш',
+            scheduleSummary: classRow.schedule_summary,
+            startsOn: classRow.starts_on,
+            endsOn: classRow.ends_on,
+            sessions: (sessionsByClass.get(classRow.id) ?? []).map((session) => ({
+                    id: session.id,
+                    title: session.title,
+                    startsAt: session.starts_at,
+                    endsAt: session.ends_at,
+                    meetingUrl: session.meeting_url,
+                    location: session.location,
+            })),
+        }]
+    })
+}

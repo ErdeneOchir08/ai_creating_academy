@@ -1,4 +1,4 @@
-import { getEnrolledCourses, getPendingCourses, getStudentProfile } from '@/features/dashboard/actions/dashboard-actions'
+import { getEnrolledCourses, getMyClassSchedules, getPendingCourses, getStudentProfile } from '@/features/dashboard/actions/dashboard-actions'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Play, Clock } from 'lucide-react'
@@ -6,13 +6,15 @@ import Link from 'next/link'
 import { getMyOfferingCheckoutStatuses } from '@/features/checkout/actions/offering-checkout-actions'
 import { OfferingCheckoutStatusList } from '@/features/dashboard/components/offering-checkout-status-list'
 import { selectNonApprovedOfferingCheckoutStatuses } from '@/features/dashboard/domain/offering-checkout-status-presentation'
+import { MyClassScheduleList } from '@/features/dashboard/components/my-class-schedule-list'
 
 export default async function DashboardCoursesPage() {
-    const [profile, enrollments, pendingCourses, offeringCheckoutStatuses] = await Promise.all([
+    const [profile, enrollments, pendingCourses, offeringCheckoutStatuses, classSchedules] = await Promise.all([
         getStudentProfile(),
         getEnrolledCourses(),
         getPendingCourses(),
         getMyOfferingCheckoutStatuses(),
+        getMyClassSchedules(),
     ])
     const nonApprovedOfferingStatuses = selectNonApprovedOfferingCheckoutStatuses(offeringCheckoutStatuses)
     const serverNow = new Date().toISOString()
@@ -23,6 +25,8 @@ export default async function DashboardCoursesPage() {
                 <h1 className="mb-2 text-2xl font-bold sm:text-3xl">Миний хичээлүүд</h1>
                 <p className="text-zinc-400">Тавтай морилно уу, {profile?.display_name || 'Суралцагч'}. Хичээлээ үргэлжлүүлээрэй!</p>
             </header>
+
+            <MyClassScheduleList schedules={classSchedules} serverNow={serverNow} />
 
             {/* Enrolled Courses */}
             {enrollments && enrollments.length > 0 && (
