@@ -17,16 +17,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { AdminClassSummary } from '@/features/admin/actions/class-control-actions.admin'
 import { classTypeLabels } from '@/features/classes/domain/class-type'
 
-type ClassView = 'all' | 'attention' | 'draft' | 'enrolling' | 'paused' | 'running' | 'finished'
+type ClassView = 'current' | 'attention' | 'draft' | 'enrolling' | 'paused' | 'running' | 'finished' | 'history'
 
 const views: Array<{ value: ClassView; label: string }> = [
-    { value: 'all', label: 'Бүгд' },
+    { value: 'current', label: 'Одоогийн анги' },
     { value: 'attention', label: 'Анхаарах' },
     { value: 'draft', label: 'Ноорог' },
     { value: 'enrolling', label: 'Элсэлттэй' },
     { value: 'paused', label: 'Түр хаасан' },
     { value: 'running', label: 'Явагдаж буй' },
     { value: 'finished', label: 'Дууссан' },
+    { value: 'history', label: 'Түүхэн анги' },
 ]
 
 const statusLabels: Record<AdminClassSummary['status'], string> = {
@@ -39,11 +40,13 @@ const statusLabels: Record<AdminClassSummary['status'], string> = {
 }
 
 function normalizeView(value?: string): ClassView {
-    return views.some((view) => view.value === value) ? value as ClassView : 'all'
+    return views.some((view) => view.value === value) ? value as ClassView : 'current'
 }
 
 function isInView(item: AdminClassSummary, view: ClassView) {
-    if (view === 'all') return true
+    if (view === 'history') return item.checkoutVersion === 1
+    if (item.checkoutVersion !== 2) return false
+    if (view === 'current') return true
     if (view === 'attention') return item.attentionCount > 0
     if (view === 'draft') return item.status === 'draft'
     if (view === 'enrolling') return item.status === 'open'
@@ -82,8 +85,9 @@ export function ClassLibrary({
 }) {
     const activeView = normalizeView(selectedView)
     const visibleClasses = classes.filter((item) => isInView(item, activeView))
-    const activeStudents = classes.reduce((total, item) => total + item.activeEnrollmentCount, 0)
-    const attentionCount = classes.filter((item) => item.attentionCount > 0).length
+    const currentClasses = classes.filter((item) => item.checkoutVersion === 2)
+    const activeStudents = currentClasses.reduce((total, item) => total + item.activeEnrollmentCount, 0)
+    const attentionCount = currentClasses.filter((item) => item.attentionCount > 0).length
 
     return (
         <div className="mx-auto max-w-7xl space-y-7 p-5 md:p-8">
@@ -103,8 +107,8 @@ export function ClassLibrary({
             </header>
 
             <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <SummaryCard label="Нийт анги" value={classes.length} icon={<GraduationCap className="h-5 w-5" />} />
-                <SummaryCard label="Элсэлт нээлттэй" value={classes.filter((item) => item.status === 'open').length} icon={<CirclePlay className="h-5 w-5" />} />
+                <SummaryCard label="Одоогийн анги" value={currentClasses.length} icon={<GraduationCap className="h-5 w-5" />} />
+                <SummaryCard label="Элсэлт нээлттэй" value={currentClasses.filter((item) => item.status === 'open').length} icon={<CirclePlay className="h-5 w-5" />} />
                 <SummaryCard label="Идэвхтэй суралцагч" value={activeStudents} icon={<Users className="h-5 w-5" />} />
                 <SummaryCard label="Анхаарах анги" value={attentionCount} icon={<AlertTriangle className="h-5 w-5" />} attention={attentionCount > 0} />
             </section>
@@ -113,7 +117,7 @@ export function ClassLibrary({
                 {views.map((view) => (
                     <Link
                         key={view.value}
-                        href={view.value === 'all' ? '/admin/classes' : `/admin/classes?view=${view.value}`}
+                        href={view.value === 'current' ? '/admin/classes' : `/admin/classes?view=${view.value}`}
                         className={`shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${activeView === view.value ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:bg-zinc-900 hover:text-white'}`}
                     >
                         {view.label} <span className="ml-1 text-xs opacity-70">{viewCount(classes, view.value)}</span>
@@ -154,7 +158,7 @@ export function ClassLibrary({
                                 </div>
                                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                                     <Count label="Хүсэлт" value={item.applicationCount} />
-                                    <Count label="Төлбөр хүлээж буй" value={item.pendingPaymentCount} attention={item.pendingPaymentCount > 0} />
+                                    <Count label="Төлбөр хүлээж буй" value={item.pendingPaymentCount} />
                                     <Count label="Төлөгдсөн" value={item.paidPaymentCount} />
                                     <Count label="Суралцагч" value={item.activeEnrollmentCount} />
                                 </div>
@@ -169,7 +173,7 @@ export function ClassLibrary({
 
             <p className="flex items-start gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-sm text-emerald-100/80">
                 <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />
-                Шинэ анги үүсгэх заавар нь зөвхөн тухайн ангид хэрэгтэй мэдээллийг харуулж, алхам бүрийн дараа ноорог хадгална. Хуучин ангийг одоогийн аюулгүй удирдлагын дэлгэцээр үргэлжлүүлэн засаж болно.
+                Шинэ анги үүсгэх заавар нь зөвхөн тухайн ангид хэрэгтэй мэдээллийг харуулж, алхам бүрийн дараа ноорог хадгална. Хуучин ангиудыг “Түүхэн анги” хэсгээс тусад нь харна.
             </p>
         </div>
     )

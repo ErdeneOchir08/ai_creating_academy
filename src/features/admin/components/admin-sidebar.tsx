@@ -2,21 +2,52 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, BookOpen, CreditCard, LogOut, Settings, MessageSquareText, Tags, FileSignature, GraduationCap, ClipboardList } from 'lucide-react'
+import {
+    AlertTriangle,
+    BookOpen,
+    ClipboardList,
+    CreditCard,
+    FileSignature,
+    GraduationCap,
+    Layers3,
+    LayoutDashboard,
+    LogOut,
+    MessageSquareText,
+    Settings,
+    Tags,
+    Users,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
-const adminLinks = [
-    { name: 'Тойм', href: '/admin', icon: LayoutDashboard },
-    { name: 'Ангиуд', href: '/admin/classes', icon: GraduationCap },
-    { name: 'Хичээлийн контент', href: '/admin/courses', icon: BookOpen },
-    { name: 'Ангиллууд', href: '/admin/categories', icon: Tags },
-    { name: 'Элсэлтийн хүсэлтүүд', href: '/admin/applications', icon: ClipboardList },
-    { name: 'Төлбөрүүд', href: '/admin/payments', icon: CreditCard },
-    { name: 'Гэрээнүүд', href: '/admin/contracts', icon: FileSignature },
-    { name: 'Хэрэглэгчид', href: '/admin/users', icon: Users },
-    { name: 'Асуулт, хариулт', href: '/admin/qa', icon: MessageSquareText },
-    { name: 'Тохиргоо', href: '/admin/settings', icon: Settings },
+const adminLinkSections = [
+    {
+        label: 'Өдөр тутмын ажил',
+        links: [
+            { name: 'Тойм', href: '/admin', icon: LayoutDashboard },
+            { name: 'Анхаарах ажил', href: '/admin/attention', icon: AlertTriangle },
+            { name: 'Ангиуд', href: '/admin/classes', icon: GraduationCap },
+            { name: 'Төлбөрүүд', href: '/admin/payments', icon: CreditCard },
+            { name: 'Асуулт, хариулт', href: '/admin/qa', icon: MessageSquareText },
+        ],
+    },
+    {
+        label: 'Бэлтгэл ба тохиргоо',
+        links: [
+            { name: 'Сургалтын загвар', href: '/admin/programs', icon: Layers3 },
+            { name: 'Хичээлийн контент', href: '/admin/courses', icon: BookOpen },
+            { name: 'Ангиллууд', href: '/admin/categories', icon: Tags },
+            { name: 'Гэрээнүүд', href: '/admin/contracts', icon: FileSignature },
+            { name: 'Хэрэглэгчид', href: '/admin/users', icon: Users },
+            { name: 'Тохиргоо', href: '/admin/settings', icon: Settings },
+        ],
+    },
+    {
+        label: 'Түүхэн мэдээлэл',
+        links: [
+            { name: 'Хуучин элсэлт', href: '/admin/applications', icon: ClipboardList },
+        ],
+    },
 ]
 
 export function AdminSidebar({ isMobile = false }: { isMobile?: boolean }) {
@@ -34,27 +65,34 @@ export function AdminSidebar({ isMobile = false }: { isMobile?: boolean }) {
                 </Link>
             </div>
 
-            <div className="flex-1 space-y-2 overflow-y-auto px-4 py-6">
-                {adminLinks.map((link) => {
-                    const Icon = link.icon
-                    const isActive = pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/admin')
+            <div className="flex-1 space-y-6 overflow-y-auto px-4 py-6">
+                {adminLinkSections.map((section) => (
+                    <nav key={section.label} aria-label={section.label}>
+                        <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-zinc-600">{section.label}</p>
+                        <div className="space-y-1">
+                            {section.links.map((link) => {
+                                const Icon = link.icon
+                                const isActive = pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/admin')
 
-                    return (
-                        <Link
-                            key={link.href}
-                            href={link.href}
-                            className={cn(
-                                'flex items-center gap-3 rounded-md border px-3 py-2.5 text-sm font-medium transition-colors',
-                                isActive
-                                    ? 'border-indigo-500/20 bg-indigo-500/10 text-indigo-400 shadow-inner'
-                                    : 'border-transparent text-zinc-400 hover:bg-white/5 hover:text-zinc-100',
-                            )}
-                        >
-                            <Icon className="h-4 w-4" />
-                            {link.name}
-                        </Link>
-                    )
-                })}
+                                return (
+                                    <Link
+                                        key={link.href}
+                                        href={link.href}
+                                        className={cn(
+                                            'flex items-center gap-3 rounded-md border px-3 py-2.5 text-sm font-medium transition-colors',
+                                            isActive
+                                                ? 'border-indigo-500/20 bg-indigo-500/10 text-indigo-400 shadow-inner'
+                                                : 'border-transparent text-zinc-400 hover:bg-white/5 hover:text-zinc-100',
+                                        )}
+                                    >
+                                        <Icon className="h-4 w-4" />
+                                        {link.name}
+                                    </Link>
+                                )
+                            })}
+                        </div>
+                    </nav>
+                ))}
             </div>
 
             <div className="border-t border-white/5 p-4">

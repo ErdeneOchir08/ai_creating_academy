@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import {
     deriveClassType,
     type DisplayClassType,
@@ -126,6 +127,7 @@ function countBy<T>(rows: T[], predicate: (row: T) => boolean) {
 
 export async function getAdminClassSummaries(): Promise<AdminClassSummary[]> {
     const supabase = await requireAdmin()
+    const admin = createAdminClient()
     const { data: cohortData, error: cohortsError } = await supabase
         .from('training_cohorts')
         .select('id, program_id, name, class_type, delivery_mode, status, checkout_version, course_id, contract_policy, contract_version_id, capacity, display_capacity, tuition_amount_mnt, schedule_summary, location, registration_opens_at, registration_closes_at, starts_on, ends_on, qpay_enabled, manual_transfer_enabled, configuration_revision, created_at, updated_at')
@@ -165,7 +167,7 @@ export async function getAdminClassSummaries(): Promise<AdminClassSummary[]> {
             ? supabase.from('contract_template_versions').select('id, title, version_number').in('id', contractIds)
             : Promise.resolve({ data: [], error: null }),
         supabase.from('course_offering_applications').select('offering_id, status').in('offering_id', cohortIds),
-        supabase.from('course_offering_payments').select('offering_id, status').in('offering_id', cohortIds),
+        admin.from('course_offering_payments').select('offering_id, provider, status').in('offering_id', cohortIds),
         supabase.from('course_offering_enrollments').select('offering_id, status').in('offering_id', cohortIds),
         supabase.from('cohort_applications').select('cohort_id, status').in('cohort_id', cohortIds),
         supabase.from('cohort_payment_requests').select('cohort_id, status').in('cohort_id', cohortIds),
@@ -218,8 +220,11 @@ export async function getAdminClassSummaries(): Promise<AdminClassSummary[]> {
         const classApplications = isCurrent
             ? applications.filter((row) => row.offering_id === cohort.id)
             : legacyApplications.filter((row) => row.cohort_id === cohort.id)
-        const classPayments = isCurrent
+        const currentClassPayments = isCurrent
             ? payments.filter((row) => row.offering_id === cohort.id)
+            : []
+        const classPayments = isCurrent
+            ? currentClassPayments
             : legacyPayments.filter((row) => row.cohort_id === cohort.id)
         const classEnrollments = isCurrent
             ? enrollments.filter((row) => row.offering_id === cohort.id)
@@ -229,9 +234,16 @@ export async function getAdminClassSummaries(): Promise<AdminClassSummary[]> {
         const enrollmentStatuses = classEnrollments.map((row) => row.status as string)
         const assignment = assignments.find((row) => row.class_id === cohort.id)
         const pendingPaymentCount = countBy(paymentStatuses, (status) => ['created', 'pending'].includes(status))
-        const paymentIssueCount = countBy(paymentStatuses, (status) => ['failed', 'rejected', 'expired'].includes(status))
+        const paymentIssueCount = isCurrent
+            ? countBy(currentClassPayments, (payment) => payment.provider === 'qpay' && ['failed', 'rejected', 'refunded'].includes(payment.status))
+            : 0
+        const manualPaymentReviewCount = isCurrent
+            ? countBy(currentClassPayments, (payment) => payment.provider === 'manual_transfer' && payment.status === 'pending')
+            : 0
         const activeCheckoutCount = countBy(applicationStatuses, (status) => ['draft', 'submitted'].includes(status))
-        const attentionCount = pendingPaymentCount + paymentIssueCount + (cohort.status === 'draft' ? 1 : 0)
+        const attentionCount = isCurrent
+            ? manualPaymentReviewCount + paymentIssueCount + (cohort.status === 'draft' ? 1 : 0)
+            : 0
 
         return {
             id: cohort.id,

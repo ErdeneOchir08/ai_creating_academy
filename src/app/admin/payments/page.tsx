@@ -11,20 +11,28 @@ import { OfferingPaymentList } from '@/features/admin/components/offering-paymen
 import { QpayPaymentList } from '@/features/admin/components/qpay-payment-list'
 
 type SearchParams = { type?: string; status?: string; search?: string }
-type PaymentStatus = 'pending' | 'approved' | 'rejected'
+type ReviewStatus = 'pending' | 'approved' | 'rejected'
+type PaymentStatus = ReviewStatus | 'inactive'
 type PaymentType = 'course' | 'cohort' | 'offering' | 'qpay'
 
-const statusLabels: Record<PaymentStatus, string> = {
+const manualStatusLabels: Record<ReviewStatus, string> = {
     pending: 'Хүлээгдэж буй',
     approved: 'Зөвшөөрсөн',
     rejected: 'Татгалзсан',
+}
+
+const qpayStatusLabels: Record<PaymentStatus, string> = {
+    pending: 'Төлбөр хүлээж буй',
+    approved: 'Амжилттай',
+    rejected: 'Асуудалтай',
+    inactive: 'Дуусаагүй',
 }
 
 function paymentHref(type: PaymentType, status: PaymentStatus, search: string) {
     return `/admin/payments?type=${type}&status=${status}&search=${encodeURIComponent(search)}`
 }
 
-function statusBadge(status: PaymentStatus) {
+function statusBadge(status: ReviewStatus) {
     if (status === 'approved') return <span className="flex items-center gap-2 text-emerald-400"><CheckCircle2 className="h-5 w-5" />Зөвшөөрсөн</span>
     if (status === 'rejected') return <span className="flex items-center gap-2 text-red-400"><XCircle className="h-5 w-5" />Татгалзсан</span>
     return <span className="flex items-center gap-2 text-amber-400"><Clock className="h-5 w-5" />Хүлээгдэж буй</span>
@@ -38,9 +46,23 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
     const params = await searchParams
     const paymentType: PaymentType = params.type === 'course' || params.type === 'cohort' || params.type === 'qpay'
         ? params.type
-        : 'offering'
-    const currentStatus: PaymentStatus = params.status === 'approved' || params.status === 'rejected' ? params.status : 'pending'
+        : params.type === 'offering'
+            ? 'offering'
+            : 'qpay'
+    const defaultStatus: PaymentStatus = paymentType === 'qpay' ? 'approved' : 'pending'
+    const requestedStatus = params.status === 'pending' || params.status === 'approved' || params.status === 'rejected' || params.status === 'inactive'
+        ? params.status as PaymentStatus
+        : null
+    const currentStatus: PaymentStatus = requestedStatus && (paymentType === 'qpay' || requestedStatus !== 'inactive')
+        ? requestedStatus
+        : defaultStatus
     const currentSearch = params.search?.trim() ?? ''
+    const statusOptions = paymentType === 'qpay'
+        ? Object.entries(qpayStatusLabels) as Array<[PaymentStatus, string]>
+        : Object.entries(manualStatusLabels) as Array<[ReviewStatus, string]>
+    const currentStatusLabel = paymentType === 'qpay'
+        ? qpayStatusLabels[currentStatus]
+        : manualStatusLabels[currentStatus as ReviewStatus]
     const offeringPayments = paymentType === 'offering'
         ? await getCourseOfferingPayments({ status: currentStatus, search: currentSearch })
         : null
@@ -58,29 +80,47 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
         <div className="min-h-screen bg-[#09090b] p-5 text-white md:p-8">
             <div className="mx-auto max-w-6xl">
                 <header className="mb-8">
-                    <h1 className="mb-2 text-3xl font-bold">Төлбөрийн хүсэлтүүд</h1>
-                    <p className="text-zinc-400">Шинэ нэгдсэн анги / элсэлтийн төлбөрийг үндсэн хэсгээс шалгана. Хуучин урсгалууд түүхэн хүсэлтүүдэд зориулан тусдаа хадгалагдана.</p>
+                    <h1 className="mb-2 text-3xl font-bold">Төлбөрүүд</h1>
+                    <p className="text-zinc-400">QPay орлогоо хянаж, зөвхөн банкны шилжүүлгийн баримтыг гараар шийдвэрлэнэ.</p>
                 </header>
 
-                <nav className="mb-6 grid max-w-4xl grid-cols-1 rounded-xl border border-zinc-800 bg-zinc-900 p-1 sm:grid-cols-4" aria-label="Төлбөрийн төрөл">
+                <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-600">Одоогийн төлбөр</div>
+                <nav className="mb-5 grid max-w-2xl grid-cols-1 rounded-xl border border-zinc-800 bg-zinc-900 p-1 sm:grid-cols-2" aria-label="Одоогийн төлбөрийн төрөл">
                     {([
-                        ['offering', 'Анги / элсэлт'],
                         ['qpay', 'QPay автомат'],
-                        ['course', 'Шууд төлбөр · хуучин'],
-                        ['cohort', 'Гэрээт урсгал · хуучин'],
+                        ['offering', 'Банкны шилжүүлэг'],
                     ] as const).map(([type, label]) => (
-                        <Link key={type} href={paymentHref(type, currentStatus, currentSearch)} className={`rounded-lg px-4 py-3 text-center text-sm font-medium transition-colors ${paymentType === type ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'}`}>
+                        <Link key={type} href={paymentHref(type, type === 'qpay' ? 'approved' : 'pending', currentSearch)} className={`rounded-lg px-4 py-3 text-center text-sm font-medium transition-colors ${paymentType === type ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'}`}>
                             {label}
                         </Link>
                     ))}
                 </nav>
 
+                <div className={`mb-6 rounded-xl border p-4 text-sm ${paymentType === 'qpay' ? 'border-blue-500/25 bg-blue-500/5 text-blue-100' : paymentType === 'offering' ? 'border-amber-500/25 bg-amber-500/5 text-amber-100' : 'border-zinc-800 bg-zinc-900/50 text-zinc-400'}`}>
+                    {paymentType === 'qpay'
+                        ? 'QPay төлбөр амжилттай болмогц суралцагчийн эрх автоматаар нээгдэнэ. Админ гараар зөвшөөрөхгүй.'
+                        : paymentType === 'offering'
+                            ? 'Энэ хэсэг зөвхөн банкны шилжүүлэг сонгож, баримт илгээсэн суралцагчдад зориулагдсан.'
+                            : 'Энэ бол хуучин системийн түүхэн мэдээлэл. Шинэ анги, төлбөрт ашиглахгүй.'}
+                </div>
+
+                <details className="mb-8 rounded-xl border border-zinc-800 bg-zinc-950/60 p-4" open={paymentType === 'course' || paymentType === 'cohort'}>
+                    <summary className="cursor-pointer text-sm font-medium text-zinc-400">Түүхэн төлбөрүүдийг харах</summary>
+                    <nav className="mt-4 grid max-w-2xl grid-cols-1 rounded-lg border border-zinc-800 bg-zinc-900 p-1 sm:grid-cols-2" aria-label="Түүхэн төлбөрийн төрөл">
+                        {([['course', 'Хуучин шууд төлбөр'], ['cohort', 'Хуучин гэрээт төлбөр']] as const).map(([type, label]) => (
+                            <Link key={type} href={paymentHref(type, 'pending', currentSearch)} className={`rounded-md px-4 py-2.5 text-center text-sm transition-colors ${paymentType === type ? 'bg-zinc-700 text-white' : 'text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200'}`}>
+                                {label}
+                            </Link>
+                        ))}
+                    </nav>
+                </details>
+
                 <section>
                     <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
                         <nav className="flex rounded-lg border border-zinc-800 bg-zinc-900 p-1" aria-label="Төлбөрийн төлөв">
-                            {(Object.keys(statusLabels) as PaymentStatus[]).map((status) => (
+                            {statusOptions.map(([status, label]) => (
                                 <Link key={status} href={paymentHref(paymentType, status, currentSearch)} className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${currentStatus === status ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'}`}>
-                                    {statusLabels[status]}
+                                    {label}
                                 </Link>
                             ))}
                         </nav>
@@ -89,12 +129,12 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
                             <input type="hidden" name="type" value={paymentType} />
                             <input type="hidden" name="status" value={currentStatus} />
                             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
-                            <input type="search" name="search" defaultValue={currentSearch} placeholder={paymentType === 'course' ? 'Оюутан эсвэл хичээлээр хайх' : 'Суралцагч, и-мэйл, сургалтаар хайх'} className="w-full rounded-lg border border-zinc-800 bg-zinc-900 py-2 pl-9 pr-4 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50" />
+                            <input type="search" name="search" defaultValue={currentSearch} placeholder={paymentType === 'course' ? 'Оюутан эсвэл хичээлээр хайх' : 'Суралцагч, и-мэйл, сургалтаар хайх'} className="w-full rounded-lg border border-zinc-800 bg-zinc-900 py-2 pl-9 pr-4 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50" aria-label="Төлбөр хайх" />
                         </form>
                     </div>
 
                     <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
-                        {statusLabels[currentStatus]}
+                        {currentStatusLabel}
                         <span className="rounded-full bg-indigo-600 px-2 py-1 text-xs text-white">{paymentCount}</span>
                     </h2>
 
@@ -149,7 +189,7 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
 
                         {paymentCount === 0 && (
                             <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-12 text-center text-zinc-400">
-                                {currentSearch ? `“${currentSearch}” хайлтад тохирох хүсэлт олдсонгүй.` : `${statusLabels[currentStatus]} төлбөрийн хүсэлт одоогоор алга.`}
+                                {currentSearch ? `“${currentSearch}” хайлтад тохирох хүсэлт олдсонгүй.` : `${currentStatusLabel} төлбөрийн хүсэлт одоогоор алга.`}
                             </div>
                         )}
                     </div>

@@ -73,11 +73,12 @@ export async function getQpayPayments({
 } = {}): Promise<AdminQpayPayment[]> {
     await requireAdmin()
     const admin = createAdminClient()
-    const selectedStatus = status === 'approved' || status === 'rejected' ? status : 'pending'
+    const selectedStatus = status === 'approved' || status === 'rejected' || status === 'inactive' ? status : 'pending'
     const statusGroups = {
         pending: ['created', 'pending'],
-        approved: ['paid', 'refunded'],
-        rejected: ['rejected', 'failed', 'expired', 'cancelled'],
+        approved: ['paid'],
+        rejected: ['rejected', 'failed', 'refunded'],
+        inactive: ['expired', 'cancelled'],
     } as const
 
     const { data: paymentData, error: paymentError } = await admin

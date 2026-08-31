@@ -2,7 +2,9 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { sendPaymentStatusEmail } from '@/lib/email/payment-status'
+import { countAdminAttention, type AdminAttentionCounts } from '@/features/admin/domain/admin-attention'
 
 type PaymentProfile = { display_name: string | null }
 type PaymentCourse = { title: string | null; price_amount_mnt: number | null }
@@ -74,39 +76,37 @@ async function notifyStudentOfPaymentDecision(
 
 export async function getAdminOverview() {
   const { supabase } = await requireAdmin()
+  const admin = createAdminClient()
   const [
-    students,
-    teachers,
-    classes,
+    currentClasses,
     courses,
-    pendingCoursePayments,
-    pendingCohortPayments,
-    pendingOfferingPayments,
-    activeEnrollments,
+    draftClasses,
+    pendingManualPayments,
+    pendingQpayPayments,
+    paidQpayPayments,
+    qpayProblems,
     activeOfferingEnrollments,
     unansweredQuestions,
   ] = await Promise.all([
-    supabase.from('user_roles').select('*', { count: 'exact', head: true }).eq('role', 'student'),
-    supabase.from('user_roles').select('*', { count: 'exact', head: true }).eq('role', 'teacher'),
-    supabase.from('training_cohorts').select('*', { count: 'exact', head: true }),
+    supabase.from('training_cohorts').select('*', { count: 'exact', head: true }).eq('checkout_version', 2),
     supabase.from('courses').select('*', { count: 'exact', head: true }),
-    supabase.from('payment_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-    supabase.from('cohort_payment_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+    supabase.from('training_cohorts').select('*', { count: 'exact', head: true }).eq('checkout_version', 2).eq('status', 'draft'),
     supabase.from('course_offering_payment_proofs').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-    supabase.from('enrollments').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+    admin.from('course_offering_payments').select('*', { count: 'exact', head: true }).eq('provider', 'qpay').in('status', ['created', 'pending']),
+    admin.from('course_offering_payments').select('*', { count: 'exact', head: true }).eq('provider', 'qpay').eq('status', 'paid'),
+    admin.from('course_offering_payments').select('*', { count: 'exact', head: true }).eq('provider', 'qpay').in('status', ['failed', 'rejected', 'refunded']),
     supabase.from('course_offering_enrollments').select('*', { count: 'exact', head: true }).eq('status', 'active'),
     supabase.from('questions').select('*', { count: 'exact', head: true }).eq('is_answered', false),
   ])
 
   const failure = [
-    students,
-    teachers,
-    classes,
+    currentClasses,
     courses,
-    pendingCoursePayments,
-    pendingCohortPayments,
-    pendingOfferingPayments,
-    activeEnrollments,
+    draftClasses,
+    pendingManualPayments,
+    pendingQpayPayments,
+    paidQpayPayments,
+    qpayProblems,
     activeOfferingEnrollments,
     unansweredQuestions,
   ].find((result) => result.error)
@@ -115,16 +115,21 @@ export async function getAdminOverview() {
     throw new Error('Unable to load the admin overview.')
   }
 
-  return {
-    students: students.count ?? 0,
-    teachers: teachers.count ?? 0,
-    classes: classes.count ?? 0,
-    courses: courses.count ?? 0,
-    pendingPayments: (pendingCoursePayments.count ?? 0)
-      + (pendingCohortPayments.count ?? 0)
-      + (pendingOfferingPayments.count ?? 0),
-    activeEnrollments: (activeEnrollments.count ?? 0) + (activeOfferingEnrollments.count ?? 0),
+  const attention: AdminAttentionCounts = {
+    manualPayments: pendingManualPayments.count ?? 0,
+    qpayProblems: qpayProblems.count ?? 0,
     unansweredQuestions: unansweredQuestions.count ?? 0,
+    draftClasses: draftClasses.count ?? 0,
+  }
+
+  return {
+    currentClasses: currentClasses.count ?? 0,
+    courses: courses.count ?? 0,
+    activeEnrollments: activeOfferingEnrollments.count ?? 0,
+    qpayWaiting: pendingQpayPayments.count ?? 0,
+    qpayPaid: paidQpayPayments.count ?? 0,
+    attention,
+    attentionTotal: countAdminAttention(attention),
   }
 }
 
