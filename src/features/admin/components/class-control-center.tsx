@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import type { AdminClassControl } from '@/features/admin/actions/class-control-actions.admin'
 import { classTypeLabels } from '@/features/classes/domain/class-type'
+import { getRegistrationWindowState } from '@/features/classes/domain/registration-window'
 
 const statusLabels: Record<AdminClassControl['status'], string> = {
     draft: 'Ноорог',
@@ -86,7 +87,26 @@ function nextAction(item: AdminClassControl) {
         label: 'Төлбөрүүдийг шалгах',
         attention: true,
     }
-    if (item.status === 'open') return {
+    const registrationState = getRegistrationWindowState({
+        status: item.status,
+        registrationOpensAt: item.registrationOpensAt,
+        registrationClosesAt: item.registrationClosesAt,
+    })
+    if (registrationState === 'scheduled') return {
+        title: 'Элсэлт хараахан эхлээгүй',
+        description: `Элсэлт ${formatDateTime(item.registrationOpensAt!)}-д автоматаар нээгдэнэ.`,
+        href: `/admin/programs/${item.programId}`,
+        label: 'Хугацааг шалгах',
+        attention: false,
+    }
+    if (registrationState === 'expired') return {
+        title: 'Элсэлтийн хугацаа дууссан',
+        description: 'Шинэ суралцагч QPay нэхэмжлэл үүсгэх боломжгүй. Одоогийн суралцагчийн төлбөр, эрх өөрчлөгдөөгүй.',
+        href: `/admin/programs/${item.programId}`,
+        label: 'Шинэ элсэлтийн хугацаа тохируулах',
+        attention: true,
+    }
+    if (registrationState === 'open') return {
         title: 'Элсэлт хэвийн ажиллаж байна',
         description: 'Шинэ суралцагчид бүртгүүлж, QPay төлбөр хийх боломжтой.',
         href: `/programs/${item.id}`,
@@ -116,8 +136,20 @@ function nextAction(item: AdminClassControl) {
     }
 }
 
+function effectiveStatusLabel(item: AdminClassControl) {
+    const registrationState = getRegistrationWindowState({
+        status: item.status,
+        registrationOpensAt: item.registrationOpensAt,
+        registrationClosesAt: item.registrationClosesAt,
+    })
+    if (registrationState === 'scheduled') return 'Элсэлт эхлээгүй'
+    if (registrationState === 'expired') return 'Элсэлтийн хугацаа дууссан'
+    return statusLabels[item.status]
+}
+
 export function ClassControlCenter({ classControl }: { classControl: AdminClassControl }) {
     const action = nextAction(classControl)
+    const classStatusLabel = effectiveStatusLabel(classControl)
     const editHref = classControl.status === 'draft' && classControl.checkoutVersion === 2 && classControl.classType !== 'legacy'
         ? `/admin/classes/${classControl.id}/setup?step=2`
         : `/admin/programs/${classControl.programId}`
@@ -134,7 +166,7 @@ export function ClassControlCenter({ classControl }: { classControl: AdminClassC
                         <h1 className="mt-1 text-3xl font-bold text-white">{classControl.name}</h1>
                         <div className="mt-3 flex flex-wrap gap-2">
                             <Badge className="bg-indigo-500/10 text-indigo-200 hover:bg-indigo-500/10">{classTypeLabels[classControl.classType]}</Badge>
-                            <Badge variant="outline" className="border-zinc-700 text-zinc-300">{statusLabels[classControl.status]}</Badge>
+                            <Badge variant="outline" className="border-zinc-700 text-zinc-300">{classStatusLabel}</Badge>
                             {classControl.checkoutVersion === 1 && <Badge variant="outline" className="border-zinc-700 text-zinc-500">Түүхэн урсгал</Badge>}
                         </div>
                     </div>
@@ -159,7 +191,7 @@ export function ClassControlCenter({ classControl }: { classControl: AdminClassC
                 <Metric icon={<Users />} label="Идэвхтэй суралцагч" value={String(classControl.activeEnrollmentCount)} />
                 <Metric icon={<CreditCard />} label="Төлөгдсөн" value={String(classControl.paidPaymentCount)} />
                 <Metric icon={<AlertTriangle />} label="Хүлээгдэж буй төлбөр" value={String(classControl.pendingPaymentCount)} attention={classControl.pendingPaymentCount > 0} />
-                <Metric icon={<CalendarDays />} label="Ангийн төлөв" value={statusLabels[classControl.status]} />
+                <Metric icon={<CalendarDays />} label="Ангийн төлөв" value={classStatusLabel} />
             </section>
 
             <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">

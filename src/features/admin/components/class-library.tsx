@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { AdminClassSummary } from '@/features/admin/actions/class-control-actions.admin'
 import { classTypeLabels } from '@/features/classes/domain/class-type'
+import { getRegistrationWindowState } from '@/features/classes/domain/registration-window'
 
 type ClassView = 'current' | 'attention' | 'draft' | 'enrolling' | 'paused' | 'running' | 'finished' | 'history'
 
@@ -49,10 +50,25 @@ function isInView(item: AdminClassSummary, view: ClassView) {
     if (view === 'current') return true
     if (view === 'attention') return item.attentionCount > 0
     if (view === 'draft') return item.status === 'draft'
-    if (view === 'enrolling') return item.status === 'open'
+    if (view === 'enrolling') return registrationState(item) === 'open'
     if (view === 'paused') return item.status === 'closed'
     if (view === 'running') return item.status === 'in_progress'
     return item.status === 'completed' || item.status === 'cancelled'
+}
+
+function registrationState(item: AdminClassSummary) {
+    return getRegistrationWindowState({
+        status: item.status,
+        registrationOpensAt: item.registrationOpensAt,
+        registrationClosesAt: item.registrationClosesAt,
+    })
+}
+
+function effectiveStatusLabel(item: AdminClassSummary) {
+    const state = registrationState(item)
+    if (state === 'scheduled') return 'Элсэлт эхлээгүй'
+    if (state === 'expired') return 'Элсэлтийн хугацаа дууссан'
+    return statusLabels[item.status]
 }
 
 function viewCount(classes: AdminClassSummary[], view: ClassView) {
@@ -69,10 +85,10 @@ function formatDate(value: string | null) {
         : 'Тодорхойгүй'
 }
 
-function StatusIcon({ status }: { status: AdminClassSummary['status'] }) {
-    if (status === 'open') return <CirclePlay className="h-4 w-4" />
-    if (status === 'closed') return <CirclePause className="h-4 w-4" />
-    if (status === 'completed' || status === 'cancelled') return <Archive className="h-4 w-4" />
+function StatusIcon({ item }: { item: AdminClassSummary }) {
+    if (registrationState(item) === 'open') return <CirclePlay className="h-4 w-4" />
+    if (item.status === 'closed' || registrationState(item) === 'expired') return <CirclePause className="h-4 w-4" />
+    if (item.status === 'completed' || item.status === 'cancelled') return <Archive className="h-4 w-4" />
     return <CalendarDays className="h-4 w-4" />
 }
 
@@ -108,7 +124,7 @@ export function ClassLibrary({
 
             <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <SummaryCard label="Одоогийн анги" value={currentClasses.length} icon={<GraduationCap className="h-5 w-5" />} />
-                <SummaryCard label="Элсэлт нээлттэй" value={currentClasses.filter((item) => item.status === 'open').length} icon={<CirclePlay className="h-5 w-5" />} />
+                <SummaryCard label="Элсэлт нээлттэй" value={currentClasses.filter((item) => registrationState(item) === 'open').length} icon={<CirclePlay className="h-5 w-5" />} />
                 <SummaryCard label="Идэвхтэй суралцагч" value={activeStudents} icon={<Users className="h-5 w-5" />} />
                 <SummaryCard label="Анхаарах анги" value={attentionCount} icon={<AlertTriangle className="h-5 w-5" />} attention={attentionCount > 0} />
             </section>
@@ -140,8 +156,8 @@ export function ClassLibrary({
                                         <CardTitle className="mt-1 text-xl">{item.name}</CardTitle>
                                     </div>
                                     <Badge variant="outline" className="w-fit border-zinc-700 text-zinc-300">
-                                        <StatusIcon status={item.status} />
-                                        <span className="ml-1.5">{statusLabels[item.status]}</span>
+                                        <StatusIcon item={item} />
+                                        <span className="ml-1.5">{effectiveStatusLabel(item)}</span>
                                     </Badge>
                                 </div>
                                 <div className="flex flex-wrap gap-2">

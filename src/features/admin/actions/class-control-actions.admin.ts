@@ -6,6 +6,7 @@ import {
     deriveClassType,
     type DisplayClassType,
 } from '@/features/classes/domain/class-type'
+import { getRegistrationWindowState } from '@/features/classes/domain/registration-window'
 import type {
     CohortStatus,
     ContractPolicy,
@@ -241,8 +242,16 @@ export async function getAdminClassSummaries(): Promise<AdminClassSummary[]> {
             ? countBy(currentClassPayments, (payment) => payment.provider === 'manual_transfer' && payment.status === 'pending')
             : 0
         const activeCheckoutCount = countBy(applicationStatuses, (status) => ['draft', 'submitted'].includes(status))
+        const registrationState = getRegistrationWindowState({
+            status: cohort.status,
+            registrationOpensAt: cohort.registration_opens_at,
+            registrationClosesAt: cohort.registration_closes_at,
+        })
         const attentionCount = isCurrent
-            ? manualPaymentReviewCount + paymentIssueCount + (cohort.status === 'draft' ? 1 : 0)
+            ? manualPaymentReviewCount
+                + paymentIssueCount
+                + (cohort.status === 'draft' ? 1 : 0)
+                + (registrationState === 'expired' ? 1 : 0)
             : 0
 
         return {
