@@ -2,6 +2,14 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
+import { deliverQpayApprovalNotification, getQpayApprovalNotificationKey } from '@/features/checkout/server/qpay-approval-notification'
+
+export type AdminQpayNotification = {
+    status: 'pending' | 'processing' | 'sent' | 'failed'
+    attempts: number
+    sentAt: string | null
+    lastError: string | null
+}
 
 export type AdminQpayPayment = {
     id: string
@@ -20,6 +28,7 @@ export type AdminQpayPayment = {
     createdAt: string
     paidAt: string | null
     failureReason: string | null
+    notification: AdminQpayNotification | null
 }
 
 type PaymentRow = {
@@ -58,6 +67,12 @@ async function requireAdmin() {
         .eq('user_id', user.id)
         .maybeSingle()
     if (error || role?.role !== 'admin') throw new Error('Админы эрх шаардлагатай.')
+}
+
+function assertUuid(value: string) {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) {
+        throw new Error('QPay төлбөрийн дугаар буруу байна.')
+    }
 }
 
 function snapshotText(value: unknown, fallback: string) {
@@ -107,6 +122,24 @@ export async function getQpayPayments({
         throw new Error('QPay төлбөрийн элсэлтийн мэдээллийг уншиж чадсангүй.')
     }
 
+    const notificationKeys = payments.map((payment) => getQpayApprovalNotificationKey(payment.id))
+    const { data: notificationData, error: notificationError } = await admin
+        .from('notification_outbox')
+        .select('idempotency_key, status, attempts, sent_at, last_error')
+        .in('idempotency_key', notificationKeys)
+    if (notificationError) {
+        console.error('Unable to load QPay notification delivery status:', notificationError.message)
+    }
+    const notificationByKey = new Map((notificationData ?? []).map((notification) => [
+        notification.idempotency_key,
+        {
+            status: notification.status,
+            attempts: Number(notification.attempts),
+            sentAt: notification.sent_at,
+            lastError: notification.last_error,
+        } as AdminQpayNotification,
+    ]))
+
     const applicationById = new Map(((applicationData ?? []) as ApplicationRow[])
         .map((application) => [application.id, application]))
 
@@ -132,6 +165,7 @@ export async function getQpayPayments({
             createdAt: payment.created_at,
             paidAt: payment.provider_paid_at,
             failureReason: payment.failure_reason,
+            notification: notificationByKey.get(getQpayApprovalNotificationKey(payment.id)) ?? null,
         }]
     })
 
@@ -149,4 +183,13 @@ export async function getQpayPayments({
         payment.offeringName,
         payment.sourceSite,
     ].some((value) => value?.toLocaleLowerCase('mn-MN').includes(needle)))
+}
+
+export async function resendQpayPaymentConfirmationEmail(paymentId: string) {
+    assertUuid(paymentId)
+    await requireAdmin()
+
+    const result = await deliverQpayApprovalNotification(paymentId, { force: true })
+    if (!result.sent) return { error: result.error }
+    return { success: true as const }
 }

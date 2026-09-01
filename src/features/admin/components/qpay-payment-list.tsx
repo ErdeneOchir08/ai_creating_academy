@@ -2,6 +2,7 @@ import { CheckCircle2, Clock3, RefreshCcw, TriangleAlert } from 'lucide-react'
 
 import { Card, CardContent } from '@/components/ui/card'
 import type { AdminQpayPayment } from '@/features/admin/actions/qpay-payment-actions.admin'
+import { QpayPaymentConfirmationAction } from '@/features/admin/components/qpay-payment-confirmation-action'
 
 const statusLabels: Record<AdminQpayPayment['status'], string> = {
     created: 'Нэхэмжлэл үүсгэж байна',
@@ -64,6 +65,12 @@ export function QpayPaymentList({ payments }: { payments: AdminQpayPayment[] }) 
                                 {payment.failureReason ? <p className="mt-1 text-red-300">{payment.failureReason}</p> : null}
                             </div>
                         </div>
+                        {payment.status === 'paid' && (
+                            <QpayPaymentConfirmationAction
+                                paymentId={payment.id}
+                                notification={payment.notification}
+                            />
+                        )}
                     </CardContent>
                 </Card>
             ))}

@@ -4,6 +4,7 @@ import { createHash, timingSafeEqual } from 'node:crypto'
 import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifyQpayInvoicePayment } from '@/lib/qpay/client'
+import { deliverQpayApprovalNotification } from '@/features/checkout/server/qpay-approval-notification'
 
 const storedQpayPaymentSchema = z.object({
     id: z.string().uuid(),
@@ -21,6 +22,13 @@ function tokenMatches(token: string, expectedHash: string) {
     const actual = createHash('sha256').update(token).digest()
     const expected = Buffer.from(expectedHash, 'hex')
     return actual.length === expected.length && timingSafeEqual(actual, expected)
+}
+
+async function deliverApprovalNotification(paymentId: string) {
+    const notification = await deliverQpayApprovalNotification(paymentId)
+    if (!notification.sent && !notification.skipped) {
+        console.error('QPay payment finalized but confirmation email failed:', notification.error)
+    }
 }
 
 export async function reconcileCourseOfferingQpayPayment(
@@ -41,6 +49,7 @@ export async function reconcileCourseOfferingQpayPayment(
         throw new Error('QPay callback token is invalid.')
     }
     if (payment.status === 'paid') {
+        await deliverApprovalNotification(payment.id)
         return { status: 'paid' as const, paymentId: payment.id, alreadyFinalized: true }
     }
     if (payment.status !== 'pending' || !payment.qpay_invoice_id) {
@@ -60,6 +69,8 @@ export async function reconcileCourseOfferingQpayPayment(
         console.error('Unable to finalize verified QPay payment:', finalizeError.message)
         throw new Error('QPay payment was verified but enrollment needs administrator review.')
     }
+
+    await deliverApprovalNotification(payment.id)
 
     return {
         status: 'paid' as const,
