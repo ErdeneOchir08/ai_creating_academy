@@ -98,12 +98,17 @@ export async function signup(formData: FormData) {
 
     const { data: signUpData, error } = await supabase.auth.signUp(data)
 
+    const confirmationMessage = 'И-мэйл хаягаа баталгаажуулах шаардлагатай бол и-мэйлээ шалгана уу. Өмнө нь бүртгүүлсэн бол нэвтрэх эсвэл нууц үгээ сэргээх боломжтой.'
+
     if (error) {
+        if (error.code === 'user_already_exists' || error.message.includes('User already registered')) {
+            return { success: confirmationMessage }
+        }
         return { error: authErrorMessage(error.message) }
     }
 
     if (!signUpData.session) {
-        return { success: 'И-мэйл хаяг руу илгээсэн холбоосоор бүртгэлээ баталгаажуулаад нэвтэрнэ үү.' }
+        return { success: confirmationMessage }
     }
 
     revalidatePath('/', 'layout')

@@ -49,11 +49,21 @@ export function RegisterForm({ returnPath }: { returnPath: string | null }) {
                         <Input id="password" name="password" type="password" required minLength={8} autoComplete="new-password" className="h-11 rounded-xl border-zinc-800 bg-zinc-900/50 text-white" />
                     </div>
                     {error && <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm font-medium text-red-400">{error}</div>}
-                    {success && <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm font-medium text-emerald-300">{success}</div>}
+                    {success && <div role="status" className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm font-medium text-emerald-300">{success}</div>}
                 </CardContent>
                 <CardFooter className="flex w-full flex-col space-y-5">
                     <SubmitButton />
-                    <div className="w-full text-center text-sm text-zinc-400">Бүртгэлтэй юу? <Link href={withReturnPath('/login', returnPath)} className="font-medium text-indigo-400 transition-colors hover:text-indigo-300 hover:underline">Нэвтрэх</Link></div>
+                    <div className="w-full space-y-3">
+                        <p className="text-center text-sm text-zinc-400">Өмнө нь бүртгүүлсэн үү?</p>
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <Button asChild variant="outline" className="h-11 border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800">
+                                <Link href={withReturnPath('/login', returnPath)}>Нэвтрэх</Link>
+                            </Button>
+                            <Button asChild variant="outline" className="h-11 border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800">
+                                <Link href="/forgot-password">Нууц үг сэргээх</Link>
+                            </Button>
+                        </div>
+                    </div>
                 </CardFooter>
             </form>
         </Card>
