@@ -145,6 +145,7 @@ const savedPaymentProofSchema = z.object({
 
 export const savedOfferingApplicationSchema = z.object({
     application_id: z.string().uuid(),
+    tuition_amount_mnt_snapshot: z.coerce.number().int().positive().optional(),
     client_request_id: z.string().uuid(),
     payment_reference: z.string().regex(/^MA-[0-9]{8,19}$/),
     learner_id: z.string().uuid(),

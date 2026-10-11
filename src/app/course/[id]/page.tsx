@@ -158,7 +158,11 @@ export default async function CourseSalesPage(props: { params: Promise<{ id: str
                                     </div>
                                 )}
 
-                                {offeringCheckout.usesOfferingCheckout ? (
+                                {paymentStatus === 'pending' ? (
+                                    <div className="w-full rounded-xl border border-yellow-500/20 bg-yellow-500/10 p-4 text-center text-yellow-500">
+                                        Таны өмнөх төлбөрийн баримтыг шалгаж байна. Дахин төлөх шаардлагагүй.
+                                    </div>
+                                ) : offeringCheckout.usesOfferingCheckout ? (
                                     <CourseOfferingOptions
                                         offerings={offeringCheckout.offerings}
                                         lookupFailed={offeringCheckout.lookupFailed}
@@ -166,10 +170,6 @@ export default async function CourseSalesPage(props: { params: Promise<{ id: str
                                 ) : !isPurchasable ? (
                                     <div className="w-full rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-center text-sm font-medium text-amber-200">
                                         Энэ хичээлийн хөтөлбөр бэлэн болоогүй байна. Удахгүй дахин шалгана уу.
-                                    </div>
-                                ) : paymentStatus === 'pending' ? (
-                                    <div className="w-full text-center py-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-yellow-500 font-bold">
-                                        Төлбөр хүлээгдэх төлөвтэй байна
                                     </div>
                                 ) : !user ? (
                                     <Link href="/login" className="block w-full">

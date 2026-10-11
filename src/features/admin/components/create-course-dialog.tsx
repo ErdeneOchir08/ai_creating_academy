@@ -77,6 +77,15 @@ export function CreateCourseDialog() {
                     </div>
 
                     <div className="space-y-2 pt-2">
+                        <Label htmlFor="checkout_mode">Борлуулах хэлбэр</Label>
+                        <select id="checkout_mode" name="checkout_mode" defaultValue="direct" className="w-full rounded-md border border-zinc-800 bg-zinc-900 p-2">
+                            <option value="direct">Бие даан суралцах — QPay автоматаар</option>
+                            <option value="class_only">Зөвхөн багштай / танхимын ангиар</option>
+                        </select>
+                        <p className="text-xs text-zinc-400">Бие даан суралцах хичээлд үнэ оруулж, видео нэмээд нийтлэхэд QPay бэлэн болно. Тусдаа анги үүсгэх шаардлагагүй.</p>
+                    </div>
+
+                    <div className="space-y-2 pt-2">
                         <Label>Хичээлийн зураг</Label>
                         <ImageUpload name="thumbnail_image" />
                     </div>

@@ -24,7 +24,7 @@ export default async function AdminCoursesPage() {
             <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                     <h1 className="text-3xl font-bold text-white mb-2">Хичээлийн контент</h1>
-                    <p className="max-w-2xl text-zinc-400">Сургалтуудад дахин ашиглах видео хичээл, бүлэг, preview болон ангиллыг энд бэлтгэнэ. Үнэ, хуваарь, гэрээг анги / элсэлт дээр тохируулна.</p>
+                    <p className="max-w-2xl text-zinc-400">Бие даан суралцах хичээлийн видео, үнэ, нийтлэлийг энд удирдана. Нийтлэхэд QPay автоматаар холбогдоно. Багштай / танхимын сургалтын хуваарь, гэрээг анги дээр тохируулна.</p>
                 </div>
                 <CreateCourseDialog />
             </header>
@@ -33,7 +33,7 @@ export default async function AdminCoursesPage() {
                 <CardContent className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                         <p className="font-semibold">Ажиллах дараалал</p>
-                        <p className="mt-1 text-sm text-zinc-400">1. Контент бэлтгэх → 2. Сургалтад холбох → 3. Анги / элсэлт нээх</p>
+                        <p className="mt-1 text-sm text-zinc-400">1. Видео нэмэх → 2. Үнэ тохируулах → 3. Нийтлэх — QPay бэлэн</p>
                     </div>
                     <Button asChild variant="outline" className="shrink-0 border-indigo-400/30 bg-zinc-950">
                         <Link href="/admin/programs">Сургалтууд руу очих<ArrowRight className="ml-2 h-4 w-4" /></Link>

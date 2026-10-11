@@ -11,6 +11,7 @@ type CourseRow = {
     price_amount_mnt: number
     original_price_amount_mnt: number | null
     published: boolean
+    checkout_mode: 'direct' | 'class_only'
     archived_at: string | null
     created_at: string
 }

@@ -165,14 +165,17 @@ async function OfferingCheckoutPage({
                         </div>
                     </main>
 
-                    <OfferingSummary checkout={checkout} />
+                    <OfferingSummary checkout={checkout} qpayEnabled={paymentConfiguration.qpayEnabled && checkout.qpay_enabled} />
                 </div>
             </div>
         </div>
     )
 }
 
-function OfferingSummary({ checkout }: { checkout: NonNullable<Awaited<ReturnType<typeof getOfferingCheckoutForm>>> }) {
+function OfferingSummary({ checkout, qpayEnabled }: {
+    checkout: NonNullable<Awaited<ReturnType<typeof getOfferingCheckoutForm>>>
+    qpayEnabled: boolean
+}) {
     return (
         <aside className="h-fit rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 lg:sticky lg:top-24">
             <p className="text-xs text-zinc-500">Сургалтын төлбөр</p>
@@ -193,7 +196,8 @@ function OfferingSummary({ checkout }: { checkout: NonNullable<Awaited<ReturnTyp
             <div className="mt-5 flex items-start gap-3 rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-3 text-sm leading-relaxed text-emerald-100">
                 <CircleCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" aria-hidden="true" />
                 <p>
-                    Төлбөрийг админ баталгаажуулсны дараа <strong className="font-semibold text-white">“{checkout.course_title}”</strong> хичээл үзэх эрх нээгдэнэ.
+                    {qpayEnabled ? 'QPay төлбөр баталгаажмагц' : 'Төлбөрийг админ баталгаажуулсны дараа'} <strong className="font-semibold text-white">“{checkout.course_title}”</strong> хичээл үзэх эрх нээгдэнэ.
+                    {qpayEnabled && checkout.manual_transfer_enabled && <span className="mt-2 block text-xs">Банкны шилжүүлгийн баримтыг админ шалгана.</span>}
                 </p>
             </div>
         </aside>
@@ -220,7 +224,7 @@ function OfferingFacts({
     return (
         <div className="mt-7 grid gap-4 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5 text-sm sm:grid-cols-2">
             <p className="flex items-start gap-3"><Monitor className="mt-0.5 h-4 w-4 text-indigo-400" /><span><span className="block text-xs text-zinc-500">Хэлбэр</span>{deliveryLabels[deliveryMode]}</span></p>
-            <p className="flex items-start gap-3"><CalendarDays className="mt-0.5 h-4 w-4 text-indigo-400" /><span><span className="block text-xs text-zinc-500">Хугацаа</span>{startsOn ?? 'Тодорхойгүй'} – {endsOn ?? 'Тодорхойгүй'}</span></p>
+            {(startsOn || endsOn) && <p className="flex items-start gap-3"><CalendarDays className="mt-0.5 h-4 w-4 text-indigo-400" /><span><span className="block text-xs text-zinc-500">Хугацаа</span>{startsOn ?? 'Тодорхойгүй'} – {endsOn ?? 'Тодорхойгүй'}</span></p>}
             {deliveryMode === 'offline' && location && <p className="flex items-start gap-3"><MapPin className="mt-0.5 h-4 w-4 text-indigo-400" /><span><span className="block text-xs text-zinc-500">Байршил</span>{location}</span></p>}
             {classSize !== null && <p className="flex items-start gap-3"><Users className="mt-0.5 h-4 w-4 text-indigo-400" /><span><span className="block text-xs text-zinc-500">{classSizeIsLimit ? 'Үлдсэн суудал' : 'Ангийн хэмжээ'}</span>{classSizeIsLimit ? classSize : `${classSize} суралцагч`}</span></p>}
             {schedule && <p className="sm:col-span-2"><span className="block text-xs text-zinc-500">Хуваарь</span>{schedule}</p>}

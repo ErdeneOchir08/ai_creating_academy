@@ -27,6 +27,7 @@ type CourseProps = {
     original_price_display?: string | null
     thumbnail_url?: string | null
     published: boolean
+    checkout_mode: 'direct' | 'class_only'
 }
 
 export function EditCourseDialog({ course }: { course: CourseProps }) {
@@ -86,6 +87,15 @@ export function EditCourseDialog({ course }: { course: CourseProps }) {
                             <Input id="original_price_display" name="original_price_display" defaultValue={course.original_price_display || ''} className="bg-zinc-900 border-zinc-800 text-zinc-400 line-through decoration-zinc-500" />
                             <p className="text-[10px] text-zinc-500">Хямдралыг харуулахад.</p>
                         </div>
+                    </div>
+
+                    <div className="space-y-2 pt-2">
+                        <Label htmlFor="checkout_mode">Борлуулах хэлбэр</Label>
+                        <select id="checkout_mode" name="checkout_mode" defaultValue={course.checkout_mode} className="w-full rounded-md border border-zinc-800 bg-zinc-900 p-2">
+                            <option value="direct">Бие даан суралцах — QPay автоматаар</option>
+                            <option value="class_only">Зөвхөн багштай / танхимын ангиар</option>
+                        </select>
+                        <p className="text-xs text-zinc-400">QPay үнэ автоматаар шинэчлэгдэнэ. Өмнөх нэхэмжлэл, төлбөр, суралцагчийн эрх өөрчлөгдөхгүй. Борлуулалтыг зогсоохдоо архивлана уу.</p>
                     </div>
 
                     <div className="space-y-2 pt-2">

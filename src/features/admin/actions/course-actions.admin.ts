@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { validateImageFile } from '@/lib/uploads/image-validation'
 import { getCloudflareStreamVideoReadiness } from '@/lib/cloudflare-stream/playback'
 import { normalizeLessonDisplayCode } from '@/features/courses/domain/lesson-display-code'
+import { parseCourseCheckoutMode } from '@/features/courses/domain/course-checkout-mode'
 
 type AdminCourseRow = {
     id: string
@@ -14,6 +15,7 @@ type AdminCourseRow = {
     price_amount_mnt: number
     original_price_amount_mnt: number | null
     published: boolean
+    checkout_mode: 'direct' | 'class_only'
     archived_at: string | null
     created_at: string
     lessons: Array<{ id: string; lesson_videos: { lesson_id: string; playback_status: string } | null }> | null
@@ -181,6 +183,7 @@ export async function getAllAdminCourses() {
 
 export async function createCourse(formData: FormData) {
     const supabase = await requireAdmin()
+    const checkoutMode = parseCourseCheckoutMode(formData.get('checkout_mode'))
 
     const title = String(formData.get('title') ?? '').trim()
     const description = String(formData.get('description') ?? '').trim()
@@ -206,7 +209,8 @@ export async function createCourse(formData: FormData) {
                 price_amount_mnt: priceAmount ?? 0,
                 original_price_amount_mnt: originalPriceAmount,
                 thumbnail_path,
-                published: false
+                published: false,
+                checkout_mode: checkoutMode,
             }
         ])
         .select()
@@ -459,6 +463,9 @@ export async function reorderLesson(courseId: string, lessonId: string, directio
 
 export async function updateCourse(id: string, formData: FormData) {
     const supabase = await requireAdmin()
+    // Older open editor tabs must not reset class-only content to direct sales.
+    const checkoutMode = formData.has('checkout_mode')
+        ? parseCourseCheckoutMode(formData.get('checkout_mode')) : undefined
 
     const title = String(formData.get('title') ?? '').trim()
     const description = String(formData.get('description') ?? '').trim()
@@ -507,7 +514,8 @@ export async function updateCourse(id: string, formData: FormData) {
             price_amount_mnt: priceAmount ?? 0,
             original_price_amount_mnt: originalPriceAmount,
             ...(thumbnail_path ? { thumbnail_path } : {}),
-            published
+            published,
+            ...(checkoutMode ? { checkout_mode: checkoutMode } : {}),
         })
         .eq('id', id)
 
@@ -520,4 +528,7 @@ export async function updateCourse(id: string, formData: FormData) {
     revalidatePath('/admin/courses')
     revalidatePath(`/admin/courses/${id}`)
     revalidatePath('/')
+    revalidatePath(`/course/${id}`)
+    revalidatePath('/programs', 'layout')
+    revalidatePath('/admin/classes', 'layout')
 }

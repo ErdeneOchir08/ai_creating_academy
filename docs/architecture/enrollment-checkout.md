@@ -2,6 +2,40 @@
 
 Status: accepted direction; rollout is versioned and incremental.
 
+## October 2026: automatic direct-course QPay
+
+The default course editor workflow is now **add videos → set a positive price → publish**.
+`courses.checkout_mode = direct` automatically creates one internal, evergreen,
+self-paced V2 offer with QPay enabled, no teacher and no contract. Administrators
+do not need to create a second class to sell a video course. Manual transfer is
+an optional alternative controlled by the existing payment-method settings.
+
+`class_only` content is sold exclusively through deliberately configured classes.
+Existing class-linked courses were migrated to this mode to preserve contract and
+schedule requirements. Select it when preparing content only for teacher-led or
+offline delivery; publishing that content does not open enrollment by itself.
+
+The automatically managed offer has no calendar deadline or capacity limit.
+Each new application has a seven-day payment deadline. Course price/title edits
+update that offer through the existing revision/audit RPC; applications and
+invoices retain their original snapshots. Archiving closes new direct sales,
+restoring reopens them, and neither action revokes existing entitlements. Use
+archive rather than unpublishing customer-committed content. Global QPay controls
+remain the emergency stop; the managed offer cannot accidentally disable QPay.
+
+The database trigger executes under existing admin RLS and validates publication
+atomically. It does not generate an external invoice. Invoice creation, callback
+verification, payment checking, email and access granting retain the established
+V2 implementation. Legacy receipts awaiting review block new payment attempts.
+
+Release verification: run `supabase/tests/automatic_course_qpay_checkout.sql` as
+the database migration role. Its fixtures execute as an authenticated existing
+admin, then roll back in a subtransaction. It tests publishing, idempotent saves,
+QPay reservation, price snapshot preservation, change audit, archiving/restoring,
+class-only isolation and accidental QPay disabling. No external payment occurs.
+For the initial release this gate was appended to the migration execution, so a
+failed assertion would roll back the entire schema change and backfill.
+
 ## Product model
 
 - A **course** is reusable learning content and its subject categories.

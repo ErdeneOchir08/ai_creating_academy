@@ -10,6 +10,7 @@ import { sendOfferingPaymentSubmittedAlert } from '@/lib/telegram/notifications'
 import { validateImageFile } from '@/lib/uploads/image-validation'
 import { removeFailedPaymentReceipt } from '@/lib/uploads/payment-receipt-cleanup'
 import { parseOfferingDisplayMetadataItem } from '@/features/courses/domain/public-course-offering'
+import { applicationPaymentAmount } from '@/features/checkout/domain/application-payment-amount'
 import {
     parseMyOfferingCheckoutStatuses,
     parseOfferingCheckoutForm,
@@ -157,13 +158,33 @@ export async function getOfferingCheckoutForm(offeringId: string) {
         manualTransferEnabled = metadata?.manual_transfer_enabled ?? true
     }
 
-    return parseOfferingCheckoutForm({
+    const checkout = parseOfferingCheckoutForm({
         ...(checkoutResult.data as Record<string, unknown>),
         capacity: displayCapacity,
         available_seats: null,
         qpay_enabled: qpayEnabled,
         manual_transfer_enabled: manualTransferEnabled,
     })
+    if (checkout.my_applications.length === 0) return checkout
+
+    // The existing public RPC predates mutable catalogue prices. Read only the
+    // caller's returned application IDs under RLS, then fail closed if missing.
+    const { data: amounts, error: amountError } = await supabase
+        .from('course_offering_applications')
+        .select('id, tuition_amount_mnt_snapshot')
+        .eq('offering_id', offeringId)
+        .in('id', checkout.my_applications.map((application) => application.application_id))
+    if (amountError) throw new Error('Хүсэлтийн төлбөрийн дүнг уншиж чадсангүй.')
+    const amountsById = new Map((amounts ?? []).map((row) => [row.id, row.tuition_amount_mnt_snapshot]))
+    return {
+        ...checkout,
+        my_applications: checkout.my_applications.map((application) => ({
+            ...application,
+            tuition_amount_mnt_snapshot: applicationPaymentAmount({
+                tuition_amount_mnt_snapshot: amountsById.get(application.application_id),
+            }),
+        })),
+    }
 }
 
 export async function getOfferingPaymentConfiguration() {

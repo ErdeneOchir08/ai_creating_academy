@@ -18,6 +18,7 @@ import {
 } from '@/features/checkout/domain/offering-checkout'
 import { renderContractApplicationPreview } from '@/features/programs/domain/cohort-application'
 import { QpayPaymentPanel } from '@/features/checkout/components/qpay-payment-panel'
+import { applicationPaymentAmount } from '@/features/checkout/domain/application-payment-amount'
 import {
     CONTRACT_SIGNATURE_STATEMENT_MN,
     getSignerRole,
@@ -497,6 +498,7 @@ function PaymentPanel({
     const [message, setMessage] = useState<string | null>(null)
     const [copiedReference, setCopiedReference] = useState<string | null>(null)
     const configured = configuration.instructions.length > 0
+    const amountMnt = applicationPaymentAmount(application)
     const overdue = application.payment_due_at
         ? new Date(application.payment_due_at).getTime() < new Date(serverNow).getTime()
         : false
@@ -539,8 +541,9 @@ function PaymentPanel({
     return (
         <section className={`rounded-2xl border p-5 sm:p-7 ${overdue ? 'border-red-500/30 bg-red-500/5' : 'border-emerald-500/20 bg-emerald-500/5'}`}>
             <p className="text-sm font-medium text-emerald-400">{checkout.contract_policy === 'none' ? '2-р алхам' : '3-р алхам'}</p>
-            <h2 className="mt-1 text-xl font-semibold">Төлбөрийн баримт илгээх</h2>
-            <p className="mt-2 text-3xl font-bold text-emerald-400">₮ {checkout.tuition_amount_mnt.toLocaleString('mn-MN')}</p>
+            <h2 className="mt-1 text-xl font-semibold">Төлбөр төлөх</h2>
+            <p className="mt-2 text-3xl font-bold text-emerald-400">₮ {amountMnt.toLocaleString('mn-MN')}</p>
+            {amountMnt !== checkout.tuition_amount_mnt && <p className="mt-2 text-sm text-zinc-400">Таны хүсэлт үүсгэх үеийн үнэ хадгалагдсан.</p>}
             {checkout.payment_plan && <p className="mt-2 text-sm text-zinc-400">{checkout.payment_plan}</p>}
             {application.payment_due_at && (
                 <p className={`mt-3 text-sm ${overdue ? 'text-red-300' : 'text-zinc-400'}`}>
@@ -573,7 +576,7 @@ function PaymentPanel({
                             <QpayPaymentPanel
                                 applicationId={application.application_id}
                                 offeringId={checkout.offering_id}
-                                amountMnt={checkout.tuition_amount_mnt}
+                                amountMnt={amountMnt}
                                 environment={configuration.qpayEnvironment}
                                 allowNewInvoices={configuration.qpayNewInvoicesEnabled}
                             />
