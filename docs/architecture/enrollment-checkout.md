@@ -38,6 +38,20 @@ failed assertion would roll back the entire schema change and backfill.
 
 ## Product model
 
+### Direct self-learning purchase experience
+
+Managed `self_paced_online` offers have a separate account-owned checkout:
+select course → sign in → QPay → verified course access. No learner form,
+registration number, birth date, guardian, contract, or receipt upload is shown.
+The server accepts only the offering ID, derives the owner from authenticated
+`getUser()`, checks effective access, and resumes any existing order before making
+a new one. A stable account/offering request UUID protects multi-tab retries.
+The existing payment ledger keeps an account display label (not verified legal
+identity) for compatibility, with personal identity and signer fields null.
+Teacher-led/offline and non-managed class checkout retain the separate learner
+model below. Existing pending receipts block another purchase; expired or
+withdrawn historical orders require support rather than silent replacement.
+
 - A **course** is reusable learning content and its subject categories.
 - A **training cohort** is the commercial offering a person can join. It owns delivery mode (`online` or `offline`), dates, capacity, tuition, payment deadline, contract policy, and the linked course.
 - An **application/order** records the learner and the account that submitted the request.

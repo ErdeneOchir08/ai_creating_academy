@@ -43,13 +43,21 @@ export function CourseOfferingOptions({
 
     return (
         <div className={compact ? 'space-y-3' : 'space-y-4'}>
-            {!compact && (
+            {!compact && offerings.some((offering) => !offering.direct_purchase) && (
                 <div>
                     <h3 className="text-lg font-bold text-white">Элсэлтийн сонголт</h3>
                     <p className="mt-1 text-sm text-zinc-400">Танд тохирох хэлбэр, хуваарьтай элсэлтийг сонгоно уу.</p>
                 </div>
             )}
             {offerings.map((offering) => (
+                offering.direct_purchase ? (
+                    <div key={offering.offering_id} className="space-y-3">
+                        <p className="text-sm text-zinc-400">QPay-аар төлөөд шууд хичээлээ үзээрэй.</p>
+                        <Button asChild className="w-full bg-indigo-600 font-bold text-white hover:bg-indigo-700">
+                            <Link href={`/programs/${offering.offering_id}`}>Худалдаж авах · {formatMnt(offering.tuition_amount_mnt)}</Link>
+                        </Button>
+                    </div>
+                ) : (
                     <article key={offering.offering_id} className="rounded-xl border border-zinc-700 bg-zinc-950/70 p-4 text-left">
                         <div className="flex flex-wrap items-start justify-between gap-2">
                             <div>
@@ -87,6 +95,7 @@ export function CourseOfferingOptions({
                             </Button>
                         </div>
                     </article>
+                )
             ))}
         </div>
     )

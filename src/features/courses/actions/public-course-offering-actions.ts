@@ -1,6 +1,8 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { isDirectCourseCheckout } from '@/features/checkout/domain/direct-course-checkout'
 import {
     parseCourseUsesOfferingCheckout,
     parseOfferingDisplayMetadata,
@@ -54,6 +56,11 @@ export async function getPublicCourseOfferingCheckout(
 
     try {
         const offerings = parsePublicCourseOfferings(offeringsResult.data, courseId)
+        const classifications = offerings.length ? await createAdminClient().from('training_cohorts')
+            .select('id, course_managed, class_type, contract_policy, delivery_mode')
+            .in('id', offerings.map((offering) => offering.offering_id)) : { data: [], error: null }
+        if (classifications.error) throw new Error('Unable to classify course checkout')
+        const directIds = new Set((classifications.data ?? []).filter(isDirectCourseCheckout).map((item) => item.id))
         const metadata = metadataResult.error
             ? []
             : parseOfferingDisplayMetadata(metadataResult.data)
@@ -65,6 +72,7 @@ export async function getPublicCourseOfferingCheckout(
             usesOfferingCheckout: true,
             offerings: offerings.map((offering) => ({
                 ...offering,
+                direct_purchase: directIds.has(offering.offering_id),
                 capacity: metadataByOffering.get(offering.offering_id)?.display_capacity ?? null,
                 available_seats: null,
             })),

@@ -29,7 +29,7 @@ const offering = {
 
 describe('public course offering domain', () => {
     it('parses the fixed public RPC row contract', () => {
-        expect(parsePublicCourseOfferings([offering], courseId)).toEqual([offering])
+        expect(parsePublicCourseOfferings([offering], courseId)).toEqual([{ ...offering, direct_purchase: false }])
     })
 
     it('coerces aggregate seat counts returned as strings', () => {

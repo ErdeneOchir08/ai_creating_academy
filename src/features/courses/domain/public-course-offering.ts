@@ -8,6 +8,7 @@ export const publicCourseOfferingSchema = z.object({
     offering_name: z.string(),
     delivery_mode: z.enum(['online', 'offline']),
     contract_policy: z.enum(['required', 'none']),
+    direct_purchase: z.boolean().default(false),
     capacity: z.coerce.number().int().positive().nullable(),
     available_seats: z.coerce.number().int().nonnegative().nullable(),
     tuition_amount_mnt: z.coerce.number().int().positive(),

@@ -14,6 +14,22 @@ Do not enable direct sales for content intended to require a class contract.
 
 ## Verified
 
+### Simplified direct-purchase follow-up
+
+- Course page: `Худалдаж авах` → login if needed → `QPay-аар төлөх`.
+- Signed-in direct buyers must see no learner-name, relationship, birth-date,
+  registration-number, guardian, contract, or receipt-upload form.
+- QPay button creates/resumes the account-owned order and displays the QR.
+  Do not scan/pay during a display-only check; this is a real production charge.
+- Already-owned courses show `Хичээлээ үзэх`. Pending receipt reviews and
+  expired/withdrawn orders must not start an additional charge.
+- Teacher-led/offline/non-managed class screens retain the existing form.
+- Existing orders retain saved prices and account ownership; no schema migration
+  or historical record rewrite is needed for this follow-up.
+- Regression: 251 tests, typecheck, lint, production build; rollback-only SQL
+  gate verifies null identity/signer details and successful QPay reservation.
+- Security advisors unchanged from the baseline below. No privileges expanded.
+
 - 241 unit tests; TypeScript, ESLint and optimized production build passed.
 - Authenticated-admin SQL release gate passed with all fixtures rolled back.
 - AI контент бүтээгч: direct, self-paced, no contract, QPay on, 69,000 MNT.

@@ -45,17 +45,21 @@ export function QpayPaymentPanel({
     amountMnt,
     environment,
     allowNewInvoices,
+    initialInvoice = null,
+    directPurchase = false,
 }: {
     applicationId: string
     offeringId: string
     amountMnt: number
     environment: 'sandbox' | 'production'
     allowNewInvoices: boolean
+    initialInvoice?: QpayInvoicePresentation | null
+    directPurchase?: boolean
 }) {
     const router = useRouter()
     const [pending, startTransition] = useTransition()
-    const [invoice, setInvoice] = useState<QpayInvoicePresentation | null>(null)
-    const [paymentStatus, setPaymentStatus] = useState<string | null>(null)
+    const [invoice, setInvoice] = useState<QpayInvoicePresentation | null>(initialInvoice)
+    const [paymentStatus, setPaymentStatus] = useState<string | null>(initialInvoice ? 'pending' : null)
     const [error, setError] = useState<string | null>(null)
     const [message, setMessage] = useState<string | null>(null)
 
@@ -122,7 +126,8 @@ export function QpayPaymentPanel({
                     <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-emerald-400" />
                     <div>
                         <h3 className="font-semibold text-white">QPay төлбөр баталгаажсан</h3>
-                        <p className="mt-1 text-sm text-emerald-100/80">Таны элсэлт болон хичээл үзэх эрх автоматаар нээгдсэн.</p>
+                        <p className="mt-1 text-sm text-emerald-100/80">{directPurchase ? 'Таны хичээл үзэх эрх нээгдсэн.' : 'Таны элсэлт болон хичээл үзэх эрх автоматаар нээгдсэн.'}</p>
+                        {directPurchase && <a href="/dashboard/courses" className="mt-3 inline-block underline">Хичээлээ үзэх</a>}
                     </div>
                 </div>
             </div>

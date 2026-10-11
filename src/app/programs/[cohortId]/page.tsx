@@ -9,6 +9,8 @@ import {
     getOfferingPaymentConfiguration,
 } from '@/features/checkout/actions/offering-checkout-actions'
 import { OfferingCheckoutEditor } from '@/features/checkout/components/offering-checkout-editor'
+import { DirectCoursePurchase } from '@/features/checkout/components/direct-course-purchase'
+import { hasEffectiveCourseAccess } from '@/features/courses/actions/effective-course-access'
 import { getOpenCohortApplicationForm } from '@/features/programs/actions/cohort-application-actions'
 import { ApprovedContractSnapshot } from '@/features/programs/components/approved-contract-snapshot'
 import { CohortApplicationEditor } from '@/features/programs/components/cohort-application-form'
@@ -45,10 +47,13 @@ export default async function ProgramApplicationPage({
             ])
             : [{ data: null }, { instructions: '', isTestMode: true }] as const
         const qpay = getQpayPublicState()
+        const owned = user && checkout.direct_purchase
+            ? await hasEffectiveCourseAccess(supabase, checkout.course_id) : false
 
         return (
             <OfferingCheckoutPage
                 checkout={checkout}
+                owned={owned}
                 user={user ? {
                     email: user.email ?? '',
                     displayName: profileResult.data?.display_name ?? null,
@@ -92,6 +97,7 @@ export default async function ProgramApplicationPage({
 
 async function OfferingCheckoutPage({
     checkout,
+    owned,
     user,
     currentDate,
     serverNow,
@@ -99,6 +105,7 @@ async function OfferingCheckoutPage({
     initialApplicationId,
 }: {
     checkout: NonNullable<Awaited<ReturnType<typeof getOfferingCheckoutForm>>>
+    owned: boolean
     user: { email: string; displayName: string | null } | null
     currentDate: string
     serverNow: string
@@ -125,7 +132,7 @@ async function OfferingCheckoutPage({
                         <p className="text-sm font-medium text-indigo-400">{checkout.program_name}</p>
                         <h1 className="mt-2 text-3xl font-bold sm:text-4xl">{checkout.offering_name}</h1>
                         <p className="mt-4 max-w-3xl leading-relaxed text-zinc-400">{checkout.program_description}</p>
-                        <OfferingFacts
+                        {!checkout.direct_purchase && <OfferingFacts
                             deliveryMode={checkout.delivery_mode}
                             startsOn={checkout.starts_on}
                             endsOn={checkout.ends_on}
@@ -133,18 +140,22 @@ async function OfferingCheckoutPage({
                             classSize={checkout.capacity}
                             classSizeIsLimit={false}
                             schedule={checkout.schedule_summary}
-                        />
+                        />}
 
                         <div className="mt-8">
                             {!user ? (
                                 <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/10 p-6">
-                                    <h2 className="text-xl font-semibold">Элсэхийн тулд нэвтэрнэ үү</h2>
-                                    <p className="mt-2 text-sm text-zinc-300">Таны хүсэлт, гэрээ, төлбөр болон хичээл үзэх эрх нэг бүртгэлд найдвартай хадгалагдана.</p>
+                                    <h2 className="text-xl font-semibold">{checkout.direct_purchase ? 'Хичээл худалдаж авахын тулд нэвтэрнэ үү' : 'Элсэхийн тулд нэвтэрнэ үү'}</h2>
+                                    <p className="mt-2 text-sm text-zinc-300">{checkout.direct_purchase ? 'Нэвтрээд QPay-аар төлнө. Төлбөр баталгаажмагц хичээлээ үзэх боломжтой.' : 'Таны хүсэлт, гэрээ, төлбөр болон хичээл үзэх эрх нэг бүртгэлд найдвартай хадгалагдана.'}</p>
                                     <div className="mt-5 flex flex-wrap gap-3">
                                         <Button asChild><Link href={withReturnPath('/login', returnPath)}>Нэвтрэх</Link></Button>
                                         <Button asChild variant="outline"><Link href={withReturnPath('/register', returnPath)}>Бүртгүүлэх</Link></Button>
                                     </div>
                                 </div>
+                            ) : checkout.direct_purchase ? (
+                                <DirectCoursePurchase checkout={checkout} owned={owned}
+                                    qpayEnabled={paymentConfiguration.qpayEnabled}
+                                    environment={paymentConfiguration.qpayEnvironment} serverNow={serverNow} />
                             ) : !checkout.is_accepting_applications && checkout.my_applications.length === 0 ? (
                                 <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-6">
                                     <h2 className="text-xl font-semibold text-amber-100">Элсэлт хаагдсан байна</h2>
@@ -181,7 +192,7 @@ function OfferingSummary({ checkout, qpayEnabled }: {
             <p className="text-xs text-zinc-500">Сургалтын төлбөр</p>
             <p className="mt-1 text-3xl font-bold text-emerald-400">₮ {checkout.tuition_amount_mnt.toLocaleString('mn-MN')}</p>
             {checkout.payment_plan && <p className="mt-4 text-sm leading-relaxed text-zinc-400">{checkout.payment_plan}</p>}
-            <div className="mt-6 border-t border-zinc-800 pt-5">
+            {!checkout.direct_purchase && <div className="mt-6 border-t border-zinc-800 pt-5">
                 <p className="flex items-center gap-2 text-sm font-medium">
                     <FileText className="h-4 w-4 text-indigo-400" />
                     {checkout.contract_policy === 'required' ? 'Гэрээ шаардлагатай' : 'Гэрээ шаардлагагүй'}
@@ -192,12 +203,12 @@ function OfferingSummary({ checkout, qpayEnabled }: {
                         <p className="mt-2 text-xs leading-relaxed text-zinc-600">Гэрээний энэ хувилбар хүсэлттэй өөрчлөгдөхгүйгээр холбогдоно.</p>
                     </>
                 )}
-            </div>
+            </div>}
             <div className="mt-5 flex items-start gap-3 rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-3 text-sm leading-relaxed text-emerald-100">
                 <CircleCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" aria-hidden="true" />
                 <p>
-                    {qpayEnabled ? 'QPay төлбөр баталгаажмагц' : 'Төлбөрийг админ баталгаажуулсны дараа'} <strong className="font-semibold text-white">“{checkout.course_title}”</strong> хичээл үзэх эрх нээгдэнэ.
-                    {qpayEnabled && checkout.manual_transfer_enabled && <span className="mt-2 block text-xs">Банкны шилжүүлгийн баримтыг админ шалгана.</span>}
+                    {checkout.direct_purchase && !qpayEnabled ? 'QPay төлбөр түр зогссон байна.' : <>{qpayEnabled ? 'QPay төлбөр баталгаажмагц' : 'Төлбөрийг админ баталгаажуулсны дараа'} <strong className="font-semibold text-white">“{checkout.course_title}”</strong> хичээл үзэх эрх нээгдэнэ.</>}
+                    {!checkout.direct_purchase && qpayEnabled && checkout.manual_transfer_enabled && <span className="mt-2 block text-xs">Банкны шилжүүлгийн баримтыг админ шалгана.</span>}
                 </p>
             </div>
         </aside>

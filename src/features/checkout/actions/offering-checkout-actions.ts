@@ -11,6 +11,9 @@ import { validateImageFile } from '@/lib/uploads/image-validation'
 import { removeFailedPaymentReceipt } from '@/lib/uploads/payment-receipt-cleanup'
 import { parseOfferingDisplayMetadataItem } from '@/features/courses/domain/public-course-offering'
 import { applicationPaymentAmount } from '@/features/checkout/domain/application-payment-amount'
+import { directCourseApplication, isDirectCourseCheckout } from '@/features/checkout/domain/direct-course-checkout'
+import { hasEffectiveCourseAccess } from '@/features/courses/actions/effective-course-access'
+import { directPurchaseDetails } from '@/features/checkout/server/direct-purchase-details'
 import {
     parseMyOfferingCheckoutStatuses,
     parseOfferingCheckoutForm,
@@ -146,6 +149,13 @@ export async function getOfferingCheckoutForm(offeringId: string) {
     }
     if (!checkoutResult.data) return null
 
+    // Public RPC has already established visibility. Read only classification,
+    // never private student/payment records, with the server-only client.
+    const { data: classification, error: classificationError } = await createAdminClient()
+        .from('training_cohorts').select('course_managed, class_type, contract_policy, delivery_mode')
+        .eq('id', offeringId).single()
+    if (classificationError) throw new Error('Төлбөрийн төрлийг уншиж чадсангүй.')
+
     let displayCapacity: number | null = null
     let qpayEnabled = true
     let manualTransferEnabled = true
@@ -164,6 +174,7 @@ export async function getOfferingCheckoutForm(offeringId: string) {
         available_seats: null,
         qpay_enabled: qpayEnabled,
         manual_transfer_enabled: manualTransferEnabled,
+        direct_purchase: isDirectCourseCheckout(classification),
     })
     if (checkout.my_applications.length === 0) return checkout
 
@@ -203,6 +214,39 @@ export async function getOfferingPaymentConfiguration() {
     return {
         instructions: data?.instructions?.trim() ?? '',
         isTestMode: data?.is_test_mode ?? true,
+    }
+}
+
+/** Account-owned purchase; accepts no learner, signer, price or access-owner input. */
+export async function prepareDirectCoursePurchase(offeringId: string) {
+    try {
+        assertUuid(offeringId)
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) throw new Error('Хичээл худалдаж авахын тулд нэвтэрнэ үү.')
+        const checkout = await getOfferingCheckoutForm(offeringId)
+        if (!checkout?.direct_purchase) throw new Error('Энэ хичээл шууд худалдан авах төрөл биш байна.')
+        if (await hasEffectiveCourseAccess(supabase, checkout.course_id)) return { owned: true as const }
+        const previous = directCourseApplication(checkout.my_applications)
+        if (previous) return { application: previous }
+        if (!checkout.is_accepting_applications) throw new Error('Энэ хичээлийн худалдаа түр хаагдсан байна.')
+
+        // One stable request per account/offering, including retries and multiple tabs.
+        const { data: profile } = await supabase.from('profiles').select('display_name').eq('id', user.id).maybeSingle()
+        // Compatibility label for the existing ledger, not a claim of verified identity.
+        const accountLabel = (profile?.display_name?.trim() || user.email || 'Mind Academy account').slice(0, 240)
+        const { data: applicationId, error } = await supabase.rpc('save_course_offering_checkout_draft', {
+            p_offering_id: offeringId,
+            p_content_access_user_id: user.id,
+            p_details: directPurchaseDetails(user.id, offeringId, accountLabel),
+        })
+        if (error || !applicationId) throw new Error('Худалдан авалтыг эхлүүлж чадсангүй. Дахин оролдоно уу.')
+        const updated = await getOfferingCheckoutForm(offeringId)
+        const application = updated?.my_applications.find((item) => item.application_id === String(applicationId))
+        if (!application) throw new Error('Худалдан авалтын мэдээллийг уншиж чадсангүй.')
+        return { application }
+    } catch (error) {
+        return { error: error instanceof Error ? error.message : 'Худалдан авалтыг эхлүүлж чадсангүй.' }
     }
 }
 

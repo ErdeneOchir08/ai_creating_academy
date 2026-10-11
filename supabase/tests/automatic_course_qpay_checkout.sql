@@ -49,6 +49,14 @@ begin
     test_application_id := public.save_course_offering_checkout_draft(offer.id, actor,
       jsonb_build_object('schema_version', 1, 'client_request_id', gen_random_uuid(),
         'learner_full_name', 'Rollback verification learner', 'applicant_relationship', 'self'));
+    if not exists (
+      select 1 from public.course_offering_applications a
+      join public.learners l on l.id = a.learner_id
+      where a.id = test_application_id and a.content_access_user_id = actor
+        and l.birth_date is null and l.registration_number is null
+        and a.signer_full_name is null and a.signer_registration_number is null
+        and a.contract_policy_snapshot = 'none'
+    ) then raise exception 'Account-only checkout unexpectedly requires identity or contract details.'; end if;
     select a.terms_snapshot into original_snapshot from public.course_offering_applications a where id = test_application_id;
     reservation := public.reserve_course_offering_qpay_payment(test_application_id, repeat('a', 64));
     if (reservation->>'amount_mnt')::integer <> 69000 then
