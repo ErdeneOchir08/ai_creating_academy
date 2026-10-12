@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { EmailDeliveryHelp } from './email-delivery-help'
 
 function SubmitButton() {
     const { pending } = useFormStatus()
@@ -40,6 +41,7 @@ export function ForgotPasswordForm() {
                     </div>
                     {error && <p className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm font-medium text-red-400">{error}</p>}
                     {success && <p className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm font-medium text-emerald-300">{success}</p>}
+                    {success && <EmailDeliveryHelp />}
                 </CardContent>
                 <CardFooter className="flex flex-col gap-5">
                     <SubmitButton />

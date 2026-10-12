@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { withReturnPath } from '@/lib/auth/return-path'
 import Link from 'next/link'
+import { ResendConfirmationForm } from './resend-confirmation-form'
 
 function SubmitButton() {
     const { pending } = useFormStatus()
@@ -18,13 +19,18 @@ function SubmitButton() {
 export function RegisterForm({ returnPath }: { returnPath: string | null }) {
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState<string | null>(null)
+    const [confirmation, setConfirmation] = useState<{ email: string; requestedAt: number } | null>(null)
 
     async function clientAction(formData: FormData) {
         setError(null)
         setSuccess(null)
+        setConfirmation(null)
         const result = await signup(formData)
         if (result?.error) setError(result.error)
-        if (result?.success) setSuccess(result.success)
+        if (result?.success) {
+            setSuccess(result.success)
+            setConfirmation({ email: String(formData.get('email') ?? ''), requestedAt: Date.now() })
+        }
     }
 
     return (
@@ -66,6 +72,7 @@ export function RegisterForm({ returnPath }: { returnPath: string | null }) {
                     </div>
                 </CardFooter>
             </form>
+            {confirmation && <ResendConfirmationForm key={confirmation.requestedAt} {...confirmation} returnPath={returnPath} />}
         </Card>
     )
 }

@@ -121,6 +121,28 @@ export async function logout() {
     redirect('/login')
 }
 
+export async function resendConfirmation(formData: FormData) {
+    const email = String(formData.get('email') ?? '').trim().toLowerCase()
+    if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return { error: 'И-мэйл хаягаа зөв оруулна уу.' }
+    }
+    const supabase = await createClient()
+    const returnPath = getSafeReturnPath(formData.get('next'))
+    const emailRedirectTo = await getAuthRedirectUrl('/auth/confirm', returnPath)
+    // Supabase enforces the configured email rate limit, independently of the UI countdown.
+    const { error } = await supabase.auth.resend({
+        type: 'signup', email,
+        options: { ...(emailRedirectTo ? { emailRedirectTo } : {}) },
+    })
+    if (error?.status === 429 || error?.code === 'over_email_send_rate_limit') {
+        return { error: 'Түр хүлээгээд дахин оролдоно уу. И-мэйлийн илгээх хязгаарт хүрсэн байна.' }
+    }
+    if (error && !['email_not_confirmed', 'user_not_found', 'email_exists', 'user_already_exists'].includes(error.code ?? '')) {
+        return { error: 'И-мэйл илгээх хүсэлтийг гүйцэтгэж чадсангүй. Түр хүлээгээд дахин оролдоно уу.' }
+    }
+    return { success: 'Энэ хаяг баталгаажуулаагүй бүртгэлтэй бол баталгаажуулах и-мэйл илгээгдэнэ. Аль хэдийн баталгаажуулсан бол нэвтэрнэ үү.' }
+}
+
 export async function updateProfileName(formData: FormData) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
