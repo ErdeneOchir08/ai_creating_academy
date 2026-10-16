@@ -9,6 +9,7 @@ import { PaymentReviewActions } from '@/features/admin/components/payment-review
 import { CohortPaymentReviewActions } from '@/features/admin/components/cohort-payment-review-actions'
 import { OfferingPaymentList } from '@/features/admin/components/offering-payment-list'
 import { QpayPaymentList } from '@/features/admin/components/qpay-payment-list'
+import { QpayMerchantCheck } from '@/features/admin/components/qpay-merchant-check'
 
 type SearchParams = { type?: string; status?: string; search?: string }
 type ReviewStatus = 'pending' | 'approved' | 'rejected'
@@ -83,6 +84,8 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
                     <h1 className="mb-2 text-3xl font-bold">Төлбөрүүд</h1>
                     <p className="text-zinc-400">QPay орлогоо хянаж, зөвхөн банкны шилжүүлгийн баримтыг гараар шийдвэрлэнэ.</p>
                 </header>
+
+                {paymentType === 'qpay' && <QpayMerchantCheck />}
 
                 <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-600">Одоогийн төлбөр</div>
                 <nav className="mb-5 grid max-w-2xl grid-cols-1 rounded-xl border border-zinc-800 bg-zinc-900 p-1 sm:grid-cols-2" aria-label="Одоогийн төлбөрийн төрөл">

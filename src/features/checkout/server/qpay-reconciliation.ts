@@ -13,6 +13,7 @@ const storedQpayPaymentSchema = z.object({
     amount_mnt: z.coerce.number().int().positive(),
     currency: z.literal('MNT'),
     status: z.enum(['created', 'pending', 'paid', 'rejected', 'failed', 'expired', 'cancelled', 'refunded']),
+    merchant_key: z.enum(['legacy', 'zurkhai']),
     qpay_invoice_id: z.string().min(1).nullable(),
     qpay_payment_id: z.string().min(1).nullable(),
     callback_token_hash: z.string().regex(/^[0-9a-f]{64}$/),
@@ -38,7 +39,7 @@ export async function reconcileCourseOfferingQpayPayment(
     const admin = createAdminClient()
     const { data, error } = await admin
         .from('course_offering_payments')
-        .select('id, application_id, applicant_user_id, amount_mnt, currency, status, qpay_invoice_id, qpay_payment_id, callback_token_hash')
+        .select('id, application_id, applicant_user_id, amount_mnt, currency, status, merchant_key, qpay_invoice_id, qpay_payment_id, callback_token_hash')
         .eq('id', paymentId)
         .eq('provider', 'qpay')
         .maybeSingle()
@@ -56,7 +57,7 @@ export async function reconcileCourseOfferingQpayPayment(
         throw new Error('QPay payment is not awaiting verification.')
     }
 
-    const verified = await verifyQpayInvoicePayment(payment.qpay_invoice_id, payment.amount_mnt)
+    const verified = await verifyQpayInvoicePayment(payment.qpay_invoice_id, payment.amount_mnt, payment.merchant_key)
     if (!verified) return { status: 'pending' as const, paymentId: payment.id }
 
     const { data: finalized, error: finalizeError } = await admin.rpc('finalize_course_offering_qpay_payment', {

@@ -1,17 +1,17 @@
 import 'server-only'
 
 import { createAdminClient } from '@/lib/supabase/admin'
-import { getQpayConfig } from '@/lib/qpay/config'
+import { getQpayConfig, type QpayMerchant } from '@/lib/qpay/config'
 import {
     qpayInvoiceResponseSchema,
     qpayPaymentCheckResponseSchema,
     qpayPaymentResponseSchema,
     qpayTokenResponseSchema,
-} from '@/lib/qpay/schemas'
+} from './schemas'
 
 const REQUEST_TIMEOUT_MS = 15_000
 const TOKEN_EXPIRY_BUFFER_MS = 60_000
-let tokenRequest: Promise<string> | null = null
+const tokenRequests = new Map<QpayMerchant, Promise<string>>()
 
 export class QpayApiError extends Error {
     constructor(message: string, readonly status?: number) {
@@ -48,18 +48,20 @@ async function requestJson(url: string, init: RequestInit) {
     }
 }
 
-async function loadOrCreateToken() {
+async function loadOrCreateToken(merchant: QpayMerchant) {
+    const config = getQpayConfig(merchant)
     const admin = createAdminClient()
     const { data: cached } = await admin
-        .from('qpay_token_cache')
+        .from('qpay_merchant_token_cache')
         .select('access_token, access_expires_at')
-        .eq('id', true)
+        .eq('merchant_key', merchant)
+        .eq('client_id', config.clientId)
+        .eq('base_url', config.baseUrl)
         .maybeSingle()
     if (cached && new Date(cached.access_expires_at).getTime() > Date.now() + TOKEN_EXPIRY_BUFFER_MS) {
         return cached.access_token as string
     }
 
-    const config = getQpayConfig()
     const basic = Buffer.from(`${config.clientId}:${config.clientSecret}`, 'utf8').toString('base64')
     const rawToken = await requestJson(`${config.baseUrl}/v2/auth/token`, {
         method: 'POST',
@@ -69,8 +71,10 @@ async function loadOrCreateToken() {
     const accessExpiresAt = expiryDate(token.expires_in)
     const refreshExpiresAt = token.refresh_expires_in ? expiryDate(token.refresh_expires_in) : null
 
-    const { error } = await admin.from('qpay_token_cache').upsert({
-        id: true,
+    const { error } = await admin.from('qpay_merchant_token_cache').upsert({
+        merchant_key: merchant,
+        client_id: config.clientId,
+        base_url: config.baseUrl,
         access_token: token.access_token,
         refresh_token: token.refresh_token ?? null,
         access_expires_at: accessExpiresAt.toISOString(),
@@ -81,14 +85,23 @@ async function loadOrCreateToken() {
     return token.access_token
 }
 
-async function getAccessToken() {
-    if (!tokenRequest) tokenRequest = loadOrCreateToken().finally(() => { tokenRequest = null })
-    return tokenRequest
+async function getAccessToken(merchant: QpayMerchant) {
+    let request = tokenRequests.get(merchant)
+    if (!request) {
+        request = loadOrCreateToken(merchant).finally(() => { tokenRequests.delete(merchant) })
+        tokenRequests.set(merchant, request)
+    }
+    return request
 }
 
-async function authorizedRequest(path: string, body?: unknown, method = 'POST') {
-    const config = getQpayConfig()
-    const token = await getAccessToken()
+// Server-only readiness check: never return credentials or tokens to callers.
+export async function checkQpayMerchantConnection(merchant: QpayMerchant) {
+    await getAccessToken(merchant)
+}
+
+async function authorizedRequest(merchant: QpayMerchant, path: string, body?: unknown, method = 'POST') {
+    const config = getQpayConfig(merchant)
+    const token = await getAccessToken(merchant)
     return requestJson(`${config.baseUrl}${path}`, {
         method,
         headers: {
@@ -100,13 +113,14 @@ async function authorizedRequest(path: string, body?: unknown, method = 'POST') 
 }
 
 export async function createQpayInvoice(input: {
+    merchant: QpayMerchant
     senderInvoiceNo: string
     description: string
     amountMnt: number
     callbackUrl: string
 }) {
-    const config = getQpayConfig()
-    const raw = await authorizedRequest('/v2/invoice', {
+    const config = getQpayConfig(input.merchant)
+    const raw = await authorizedRequest(input.merchant, '/v2/invoice', {
         invoice_code: config.invoiceCode,
         sender_invoice_no: input.senderInvoiceNo,
         invoice_receiver_code: 'terminal',
@@ -128,8 +142,8 @@ export type VerifiedQpayPayment = {
     paidAt: string
 }
 
-export async function verifyQpayInvoicePayment(invoiceId: string, expectedAmountMnt: number) {
-    const rawCheck = await authorizedRequest('/v2/payment/check', {
+export async function verifyQpayInvoicePayment(invoiceId: string, expectedAmountMnt: number, merchant: QpayMerchant) {
+    const rawCheck = await authorizedRequest(merchant, '/v2/payment/check', {
         object_type: 'INVOICE',
         object_id: invoiceId,
         offset: { page_number: 1, page_limit: 10 },
@@ -139,7 +153,7 @@ export async function verifyQpayInvoicePayment(invoiceId: string, expectedAmount
     if (paidRows.length === 0) return null
     if (paidRows.length !== 1) throw new QpayApiError('QPay returned an ambiguous paid-payment result.')
 
-    const rawPayment = await authorizedRequest(`/v2/payment/${encodeURIComponent(paidRows[0].payment_id)}`, undefined, 'GET')
+    const rawPayment = await authorizedRequest(merchant, `/v2/payment/${encodeURIComponent(paidRows[0].payment_id)}`, undefined, 'GET')
     const payment = qpayPaymentResponseSchema.parse(rawPayment)
     if (payment.payment_status.toUpperCase() !== 'PAID') return null
     if (payment.payment_amount !== expectedAmountMnt) throw new QpayApiError('QPay payment amount does not match the order.')

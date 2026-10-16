@@ -12,6 +12,7 @@ const qpayEnvironmentSchema = z.object({
 })
 
 export type QpayConfig = {
+    merchant: QpayMerchant
     baseUrl: string
     clientId: string
     clientSecret: string
@@ -19,6 +20,14 @@ export type QpayConfig = {
     sourceSite: 'ai-creator-academy'
     siteUrl: string
     environment: 'sandbox' | 'production'
+}
+
+export type QpayMerchant = 'legacy' | 'zurkhai'
+
+export function getActiveQpayMerchant(): QpayMerchant {
+    const merchant = process.env.QPAY_ACTIVE_MERCHANT?.trim() || 'legacy'
+    if (merchant !== 'legacy' && merchant !== 'zurkhai') throw new Error('QPay merchant configuration is invalid.')
+    return merchant
 }
 
 export function isQpayEnabled() {
@@ -33,12 +42,14 @@ export function getQpayPublicState() {
     }
 }
 
-export function getQpayConfig(): QpayConfig {
+export function getQpayConfig(merchant: QpayMerchant = getActiveQpayMerchant()): QpayConfig {
+    if (merchant !== 'legacy' && merchant !== 'zurkhai') throw new Error('QPay merchant configuration is invalid.')
+    const prefix = merchant === 'legacy' ? 'QPAY_' : 'QPAY_ZURKHAI_'
     const parsed = qpayEnvironmentSchema.safeParse({
         QPAY_BASE_URL: process.env.QPAY_BASE_URL?.trim(),
-        QPAY_CLIENT_ID: process.env.QPAY_CLIENT_ID?.trim(),
-        QPAY_CLIENT_SECRET: process.env.QPAY_CLIENT_SECRET?.trim(),
-        QPAY_INVOICE_CODE: process.env.QPAY_INVOICE_CODE?.trim(),
+        QPAY_CLIENT_ID: process.env[`${prefix}CLIENT_ID`]?.trim(),
+        QPAY_CLIENT_SECRET: process.env[`${prefix}CLIENT_SECRET`]?.trim(),
+        QPAY_INVOICE_CODE: process.env[`${prefix}INVOICE_CODE`]?.trim(),
         QPAY_SOURCE_SITE: process.env.QPAY_SOURCE_SITE?.trim(),
     })
     if (!parsed.success) throw new Error('QPay server configuration is incomplete.')
@@ -47,6 +58,7 @@ export function getQpayConfig(): QpayConfig {
     if (!siteUrl) throw new Error('A valid HTTPS NEXT_PUBLIC_SITE_URL is required for QPay callbacks.')
 
     return {
+        merchant,
         baseUrl: parsed.data.QPAY_BASE_URL.replace(/\/$/, ''),
         clientId: parsed.data.QPAY_CLIENT_ID,
         clientSecret: parsed.data.QPAY_CLIENT_SECRET,

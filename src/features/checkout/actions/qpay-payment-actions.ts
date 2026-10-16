@@ -104,7 +104,19 @@ export async function createOfferingQpayInvoice(applicationId: string, offeringI
 
     const admin = createAdminClient()
     try {
+        // Persist the owner before contacting QPay. Reused pending invoices above
+        // retain their original merchant, regardless of the active configuration.
+        const { data: assigned, error: assignError } = await admin
+            .from('course_offering_payments')
+            .update({ merchant_key: config.merchant })
+            .eq('id', reservation.payment_id)
+            .eq('status', 'created')
+            .is('qpay_invoice_id', null)
+            .select('id')
+            .single()
+        if (assignError || !assigned) throw new Error('QPay merchant assignment failed before invoice creation.')
         const invoice = await createQpayInvoice({
+            merchant: config.merchant,
             senderInvoiceNo: reservation.sender_invoice_no,
             description: `Mind Academy сургалтын төлбөр ${reservation.sender_invoice_no} · ${config.sourceSite}`,
             amountMnt: reservation.amount_mnt,

@@ -17,7 +17,7 @@ import { reconcileCourseOfferingQpayPayment } from './qpay-reconciliation'
 
 const paymentId = 'f91bc9c0-b64f-44d1-a940-a1ce05d0d8bf'
 
-function paymentQuery(status: 'pending' | 'paid') {
+function paymentQuery(status: 'pending' | 'paid', merchant = 'legacy') {
     const chain: Record<string, unknown> = {}
     chain.select = vi.fn(() => chain)
     chain.eq = vi.fn(() => chain)
@@ -29,6 +29,7 @@ function paymentQuery(status: 'pending' | 'paid') {
             amount_mnt: 490000,
             currency: 'MNT',
             status,
+            merchant_key: merchant,
             qpay_invoice_id: 'invoice-1',
             qpay_payment_id: status === 'paid' ? 'payment-1' : null,
             callback_token_hash: 'a'.repeat(64),
@@ -55,6 +56,19 @@ describe('QPay reconciliation notifications', () => {
         })
         expect(mocks.verifyPayment).not.toHaveBeenCalled()
         expect(mocks.deliverNotification).toHaveBeenCalledWith(paymentId)
+    })
+
+    it.each(['legacy', 'zurkhai'])('checks a %s invoice with its stored merchant', async (merchant) => {
+        mocks.createAdminClient.mockReturnValue({ from: vi.fn(() => paymentQuery('pending', merchant)) })
+        mocks.verifyPayment.mockResolvedValue(null)
+        await expect(reconcileCourseOfferingQpayPayment(paymentId)).resolves.toMatchObject({ status: 'pending' })
+        expect(mocks.verifyPayment).toHaveBeenCalledWith('invoice-1', 490000, merchant)
+    })
+
+    it('fails closed for an unknown merchant instead of checking with the active merchant', async () => {
+        mocks.createAdminClient.mockReturnValue({ from: vi.fn(() => paymentQuery('pending', 'unknown')) })
+        await expect(reconcileCourseOfferingQpayPayment(paymentId)).rejects.toThrow()
+        expect(mocks.verifyPayment).not.toHaveBeenCalled()
     })
 
     it('delivers the confirmation after QPay is verified and enrollment is finalized', async () => {
