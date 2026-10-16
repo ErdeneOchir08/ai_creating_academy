@@ -2,8 +2,24 @@
 
 ## Status
 
-Prepared dual-merchant implementation. Activation requires production credentials,
-database migration, deployment, and verification. This document is not proof of activation.
+Activated on 2026-10-16 with `QPAY_ACTIVE_MERCHANT=zurkhai` in Production.
+Code commit: `44d90c9b51e34afa816370559f9f04487bf2da09`.
+Production deployment: `dpl_4scXccxpcW6SGjUiasUEg7MG2mxe` (READY, mindacademy.mn).
+Both merchants authenticated through the admin-only connection check; server-side
+cache metadata confirmed valid tokens without revealing them. All 280 automated
+tests, targeted lint, and production build passed before release.
+
+At activation, four paid payments (207,500 MNT total) and two pending payments
+(138,000 MNT total) remained unchanged and assigned to `legacy`.
+No new-merchant invoice or real payment has yet been tested end-to-end. Verify
+the receiving account and complete an authorized small purchase before treating
+new-merchant settlement and course unlock as fully verified.
+
+The temporary admin connection-check UI and its server action were removed after
+authentication was verified. Merchant routing, credentials, payment history,
+token isolation, and regression tests remain in place. Customer-facing invoice
+descriptions use Mind Academy; bank-controlled recipient names still require
+confirmation with QPay/the receiving bank.
 
 ## Configuration
 

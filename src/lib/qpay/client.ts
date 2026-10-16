@@ -94,11 +94,6 @@ async function getAccessToken(merchant: QpayMerchant) {
     return request
 }
 
-// Server-only readiness check: never return credentials or tokens to callers.
-export async function checkQpayMerchantConnection(merchant: QpayMerchant) {
-    await getAccessToken(merchant)
-}
-
 async function authorizedRequest(merchant: QpayMerchant, path: string, body?: unknown, method = 'POST') {
     const config = getQpayConfig(merchant)
     const token = await getAccessToken(merchant)
