@@ -1,11 +1,14 @@
 'use client'
 
+import { useTranslations } from '@/components/language-provider'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSafeReturnPath, withReturnPath } from '@/lib/auth/return-path'
 import { createClient } from '@/lib/supabase/client'
 
 export default function EmailConfirmationPage() {
+    const t = useTranslations()
+
     const router = useRouter()
     const [message, setMessage] = useState('И-мэйл баталгаажуулж байна...')
 
@@ -35,7 +38,7 @@ export default function EmailConfirmationPage() {
 
     return (
         <main className="flex min-h-screen items-center justify-center bg-[#09090b] p-6 text-white">
-            <p className="text-center text-zinc-300">{message}</p>
+            <p className="text-center text-zinc-300">{t(message)}</p>
         </main>
     )
 }

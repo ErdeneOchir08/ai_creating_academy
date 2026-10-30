@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from '@/components/language-provider'
 import { useDeferredValue, useMemo, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle2, FileText, MailCheck, Save, ShieldCheck, Undo2 } from 'lucide-react'
@@ -60,6 +61,8 @@ export function CohortApplicationEditor({
     hasContractSnapshot: boolean
     mode?: 'live' | 'admin-preview'
 }) {
+    const t = useTranslations()
+
     const previewOnly = mode === 'admin-preview'
     const router = useRouter()
     const formRef = useRef<HTMLFormElement>(null)
@@ -202,8 +205,8 @@ export function CohortApplicationEditor({
             <div className="space-y-5 rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <p className="text-sm text-zinc-500">Өргөдлийн төлөв</p>
-                        <h2 className="mt-1 text-xl font-semibold text-white">{statusLabels[application.status]}</h2>
+                        <p className="text-sm text-zinc-500">{t("Өргөдлийн төлөв")}</p>
+                        <h2 className="mt-1 text-xl font-semibold text-white">{t(statusLabels[application.status])}</h2>
                     </div>
                     {application.status === 'approved' && <CheckCircle2 className="h-8 w-8 text-emerald-400" />}
                 </div>
@@ -215,37 +218,31 @@ export function CohortApplicationEditor({
                             value={application.answers[field.key]}
                         />
                     ))}
-                    <ApplicationValue label="Суралцагчийн төрсөн огноо" value={application.student_birth_date} />
+                    <ApplicationValue label={t("Суралцагчийн төрсөн огноо")} value={application.student_birth_date} />
                     <ApplicationValue
-                        label="Гэрээ байгуулсан тал"
-                        value={application.signer_role === 'self' ? 'Суралцагч өөрөө' : 'Эцэг, эх / хууль ёсны асран хамгаалагч'}
+                        label={t("Гэрээ байгуулсан тал")}
+                        value={application.signer_role === 'self' ? t("Суралцагч өөрөө") : t("Эцэг, эх / хууль ёсны асран хамгаалагч")}
                     />
-                    <ApplicationValue label="Гарын үсэг зурсан хүний нэр" value={application.signer_name} />
-                    <ApplicationValue label="Гарын үсэг зурсан хүний и-мэйл" value={application.signer_email} />
+                    <ApplicationValue label={t("Гарын үсэг зурсан хүний нэр")} value={application.signer_name} />
+                    <ApplicationValue label={t("Гарын үсэг зурсан хүний и-мэйл")} value={application.signer_email} />
                 </dl>
                 {application.signed_at && (
                     <p className="rounded-xl border border-indigo-500/20 bg-indigo-500/10 p-4 text-sm text-indigo-200">
-                        {cohort.contract_title} гэрээний v{cohort.contract_version_number} хувилбарыг{' '}
-                        {new Date(application.signed_at).toLocaleString('mn-MN')} үед зөвшөөрсөн.
-                    </p>
+                        {cohort.contract_title} {t("гэрээний v")}{cohort.contract_version_number} {t("хувилбарыг")}{' '}
+                        {new Date(application.signed_at).toLocaleString('mn-MN')} {t("үед зөвшөөрсөн.")}</p>
                 )}
                 {application.status === 'submitted' && cohort.is_accepting_applications && (
                     <Button type="button" variant="outline" disabled={pending} onClick={withdraw}>
-                        <Undo2 className="mr-2 h-4 w-4" />Өргөдлийг буцаан татах
-                    </Button>
+                        <Undo2 className="mr-2 h-4 w-4" />{t("Өргөдлийг буцаан татах")}</Button>
                 )}
                 {application.status === 'approved' && !hasContractSnapshot && (
-                    <p className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">
-                        Өргөдөл зөвшөөрөгдсөн боловч гэрээний түгжигдсэн эх олдсонгүй. Админтай холбогдоно уу.
-                    </p>
+                    <p className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">{t("Өргөдөл зөвшөөрөгдсөн боловч гэрээний түгжигдсэн эх олдсонгүй. Админтай холбогдоно уу.")}</p>
                 )}
                 {!cohort.is_accepting_applications && application.status !== 'approved' && (
-                    <p className="rounded-xl border border-zinc-700 bg-zinc-900 p-4 text-sm text-zinc-300">
-                        Элсэлт хаагдсан тул энэ өргөдлийг одоо засварлах эсвэл дахин илгээх боломжгүй.
-                    </p>
+                    <p className="rounded-xl border border-zinc-700 bg-zinc-900 p-4 text-sm text-zinc-300">{t("Элсэлт хаагдсан тул энэ өргөдлийг одоо засварлах эсвэл дахин илгээх боломжгүй.")}</p>
                 )}
-                {error && <p className="text-sm text-red-400">{error}</p>}
-                {message && <p className="text-sm text-emerald-400">{message}</p>}
+                {error && <p className="text-sm text-red-400">{t(error)}</p>}
+                {message && <p className="text-sm text-emerald-400">{t(message)}</p>}
             </div>
         )
     }
@@ -258,37 +255,31 @@ export function CohortApplicationEditor({
         >
             {previewOnly && (
                 <div role="status" className="rounded-xl border border-sky-500/30 bg-sky-500/10 p-4 text-sm text-sky-100">
-                    <p className="font-semibold">Админы урьдчилсан харагдац</p>
-                    <p className="mt-1 leading-relaxed text-sky-100/75">
-                        Энэ маягтад оруулсан мэдээлэл хадгалагдахгүй, өргөдөл үүсэхгүй, и-мэйл эсвэл баталгаажуулах код илгээгдэхгүй.
-                    </p>
+                    <p className="font-semibold">{t("Админы урьдчилсан харагдац")}</p>
+                    <p className="mt-1 leading-relaxed text-sky-100/75">{t("Энэ маягтад оруулсан мэдээлэл хадгалагдахгүй, өргөдөл үүсэхгүй, и-мэйл эсвэл баталгаажуулах код илгээгдэхгүй.")}</p>
                 </div>
             )}
             <div className="flex items-start gap-3">
                 <FileText className="mt-0.5 h-5 w-5 shrink-0 text-indigo-400" />
                 <div>
-                    <h2 className="text-xl font-semibold text-white">Элсэлтийн мэдээлэл</h2>
-                    <p className="mt-1 text-sm leading-relaxed text-zinc-500">
-                        Суралцагчийн мэдээллийг оруулсны дараа хэн гэрээ зөвшөөрөхийг систем автоматаар тодорхойлно.
-                    </p>
+                    <h2 className="text-xl font-semibold text-white">{t("Элсэлтийн мэдээлэл")}</h2>
+                    <p className="mt-1 text-sm leading-relaxed text-zinc-500">{t("Суралцагчийн мэдээллийг оруулсны дараа хэн гэрээ зөвшөөрөхийг систем автоматаар тодорхойлно.")}</p>
                 </div>
             </div>
 
             {application?.status === 'rejected' && (
                 <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-200">
-                    <p className="font-medium">Өргөдлийг засварлуулахаар буцаасан.</p>
+                    <p className="font-medium">{t("Өргөдлийг засварлуулахаар буцаасан.")}</p>
                     <p className="mt-1 text-amber-100/80">{application.rejection_reason}</p>
                 </div>
             )}
 
             {!hasRequiredStudentIdentity && (
-                <p className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-200">
-                    Энэ гэрээний хувилбарт суралцагчийн нэр эсвэл регистрийн талбар дутуу байна. Элсэлт нээсэн админ гэрээний хувилбарыг засах шаардлагатай.
-                </p>
+                <p className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-200">{t("Энэ гэрээний хувилбарт суралцагчийн нэр эсвэл регистрийн талбар дутуу байна. Элсэлт нээсэн админ гэрээний хувилбарыг засах шаардлагатай.")}</p>
             )}
 
             <section className="space-y-5">
-                <h3 className="text-base font-semibold text-white">1. Суралцагчийн мэдээлэл</h3>
+                <h3 className="text-base font-semibold text-white">{t("1. Суралцагчийн мэдээлэл")}</h3>
                 <div className="grid gap-5 sm:grid-cols-2">
                     {visibleFields.map((field) => (
                         <label key={field.key} className="space-y-2 text-sm text-zinc-300">
@@ -311,7 +302,7 @@ export function CohortApplicationEditor({
                         </label>
                     ))}
                     <label className="space-y-2 text-sm text-zinc-300">
-                        <span className="font-medium">Суралцагчийн төрсөн огноо</span>
+                        <span className="font-medium">{t("Суралцагчийн төрсөн огноо")}</span>
                         <Input
                             type="date"
                             name="student_birth_date"
@@ -324,9 +315,7 @@ export function CohortApplicationEditor({
                             }}
                             className="border-zinc-700 bg-zinc-900 [color-scheme:dark]"
                         />
-                        <span className="block text-xs leading-relaxed text-zinc-500">
-                            Энэ огноогоор суралцагч өөрөө эсвэл асран хамгаалагч гэрээ зөвшөөрөхийг тодорхойлно.
-                        </span>
+                        <span className="block text-xs leading-relaxed text-zinc-500">{t("Энэ огноогоор суралцагч өөрөө эсвэл асран хамгаалагч гэрээ зөвшөөрөхийг тодорхойлно.")}</span>
                     </label>
                 </div>
             </section>
@@ -334,16 +323,16 @@ export function CohortApplicationEditor({
             {signerRole && (
                 <section className="space-y-5 border-t border-zinc-800 pt-6">
                     <div>
-                        <h3 className="text-base font-semibold text-white">2. Гэрээ зөвшөөрөх хүний мэдээлэл</h3>
+                        <h3 className="text-base font-semibold text-white">{t("2. Гэрээ зөвшөөрөх хүний мэдээлэл")}</h3>
                         <p className="mt-2 rounded-xl border border-indigo-500/20 bg-indigo-500/10 p-3 text-sm text-indigo-100">
                             {signerRole === 'self'
-                                ? 'Суралцагч 18 нас хүрсэн тул гэрээг өөрөө зөвшөөрнө.'
-                                : 'Суралцагч 18 нас хүрээгүй тул эцэг, эх эсвэл хууль ёсны асран хамгаалагч гэрээг зөвшөөрнө.'}
+                                ? t("Суралцагч 18 нас хүрсэн тул гэрээг өөрөө зөвшөөрнө.")
+                                : t("Суралцагч 18 нас хүрээгүй тул эцэг, эх эсвэл хууль ёсны асран хамгаалагч гэрээг зөвшөөрнө.")}
                         </p>
                     </div>
                     <div className="grid gap-5 sm:grid-cols-2">
                         <label className="space-y-2 text-sm text-zinc-300">
-                            <span className="font-medium">Овог нэр</span>
+                            <span className="font-medium">{t("Овог нэр")}</span>
                             <Input
                                 name="signer_name"
                                 required
@@ -357,11 +346,11 @@ export function CohortApplicationEditor({
                                 className="border-zinc-700 bg-zinc-900"
                             />
                             {signerRole === 'self' && (
-                                <span className="block text-xs text-zinc-500">Суралцагчийн овог нэртэй ижил байна.</span>
+                                <span className="block text-xs text-zinc-500">{t("Суралцагчийн овог нэртэй ижил байна.")}</span>
                             )}
                         </label>
                         <label className="space-y-2 text-sm text-zinc-300">
-                            <span className="font-medium">Утасны дугаар</span>
+                            <span className="font-medium">{t("Утасны дугаар")}</span>
                             <Input
                                 name="signer_phone"
                                 required
@@ -378,7 +367,7 @@ export function CohortApplicationEditor({
                         {signerRole === 'guardian' ? (
                             <>
                                 <label className="space-y-2 text-sm text-zinc-300">
-                                    <span className="font-medium">И-мэйл хаяг</span>
+                                    <span className="font-medium">{t("И-мэйл хаяг")}</span>
                                     <Input
                                         type="email"
                                         name="signer_email"
@@ -392,10 +381,10 @@ export function CohortApplicationEditor({
                                         autoComplete="email"
                                         className="border-zinc-700 bg-zinc-900"
                                     />
-                                    <span className="block text-xs text-zinc-500">Шаардлагатай үед 6 оронтой код энэ хаягт очно.</span>
+                                    <span className="block text-xs text-zinc-500">{t("Шаардлагатай үед 6 оронтой код энэ хаягт очно.")}</span>
                                 </label>
                                 <label className="space-y-2 text-sm text-zinc-300">
-                                    <span className="font-medium">Регистрийн дугаар</span>
+                                    <span className="font-medium">{t("Регистрийн дугаар")}</span>
                                     <Input
                                         name="signer_registration_number"
                                         required
@@ -410,7 +399,7 @@ export function CohortApplicationEditor({
                                     />
                                 </label>
                                 <label className="space-y-2 text-sm text-zinc-300 sm:col-span-2">
-                                    <span className="font-medium">Суралцагчтай ямар холбоотой вэ?</span>
+                                    <span className="font-medium">{t("Суралцагчтай ямар холбоотой вэ?")}</span>
                                     <select
                                         name="signer_relationship"
                                         required
@@ -421,10 +410,10 @@ export function CohortApplicationEditor({
                                         }}
                                         className="h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-100"
                                     >
-                                        <option value="">Сонгоно уу</option>
-                                        <option value="Эцэг">Эцэг</option>
-                                        <option value="Эх">Эх</option>
-                                        <option value="Хууль ёсны асран хамгаалагч">Хууль ёсны асран хамгаалагч</option>
+                                        <option value="">{t("Сонгоно уу")}</option>
+                                        <option value="Эцэг">{t("Эцэг")}</option>
+                                        <option value="Эх">{t("Эх")}</option>
+                                        <option value="Хууль ёсны асран хамгаалагч">{t("Хууль ёсны асран хамгаалагч")}</option>
                                     </select>
                                 </label>
                             </>
@@ -434,7 +423,7 @@ export function CohortApplicationEditor({
                                 <input type="hidden" name="signer_registration_number" value={effectiveSignerRegistration} />
                                 <input type="hidden" name="signer_relationship" value="Өөрөө" />
                                 <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 text-sm sm:col-span-2">
-                                    <p className="text-xs text-zinc-500">Баталгаажсан бүртгэлийн и-мэйл</p>
+                                    <p className="text-xs text-zinc-500">{t("Баталгаажсан бүртгэлийн и-мэйл")}</p>
                                     <p className="mt-1 break-all text-zinc-200">{userEmail}</p>
                                 </div>
                             </>
@@ -445,26 +434,22 @@ export function CohortApplicationEditor({
 
             <section className="space-y-4 border-t border-zinc-800 pt-6">
                 <div>
-                    <h3 className="text-base font-semibold text-white">3. Гэрээг хянаж зөвшөөрөх</h3>
-                    <p className="mt-1 text-sm text-zinc-500">Үндсэн мэдээллийг шалгаад шаардлагатай бол гэрээг бүтнээр нь нээнэ үү.</p>
+                    <h3 className="text-base font-semibold text-white">{t("3. Гэрээг хянаж зөвшөөрөх")}</h3>
+                    <p className="mt-1 text-sm text-zinc-500">{t("Үндсэн мэдээллийг шалгаад шаардлагатай бол гэрээг бүтнээр нь нээнэ үү.")}</p>
                 </div>
                 <div className="grid gap-3 rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 text-sm sm:grid-cols-2">
-                    <SummaryValue label="Сургалт" value={`${cohort.program_name} · ${cohort.cohort_name}`} />
-                    <SummaryValue label="Гэрээ" value={`${cohort.contract_title} · v${cohort.contract_version_number}`} />
-                    <SummaryValue label="Суралцагч" value={answers.student_name} />
+                    <SummaryValue label={t("Сургалт")} value={`${cohort.program_name} · ${cohort.cohort_name}`} />
+                    <SummaryValue label={t("Гэрээ")} value={`${cohort.contract_title} · v${cohort.contract_version_number}`} />
+                    <SummaryValue label={t("Суралцагч")} value={answers.student_name} />
                     <SummaryValue
-                        label="Гэрээ зөвшөөрөх тал"
-                        value={signerRole === 'self' ? 'Суралцагч өөрөө' : signerRole === 'guardian' ? 'Эцэг, эх / асран хамгаалагч' : 'Төрсөн огноог оруулна уу'}
+                        label={t("Гэрээ зөвшөөрөх тал")}
+                        value={signerRole === 'self' ? t("Суралцагч өөрөө") : signerRole === 'guardian' ? t("Эцэг, эх / асран хамгаалагч") : t("Төрсөн огноог оруулна уу")}
                     />
                 </div>
                 <details className="rounded-xl border border-zinc-800 bg-zinc-900/40">
-                    <summary className="cursor-pointer px-5 py-4 text-sm font-medium text-zinc-200">
-                        Гэрээг бүтнээр нь харах
-                    </summary>
+                    <summary className="cursor-pointer px-5 py-4 text-sm font-medium text-zinc-200">{t("Гэрээг бүтнээр нь харах")}</summary>
                     <div className="border-t border-zinc-800 px-4 py-5 sm:px-5">
-                        <p className="mb-4 text-xs leading-relaxed text-zinc-500">
-                            Гэрээний дугаар болон огноо өргөдлийг админ зөвшөөрөх үед автоматаар үүснэ.
-                        </p>
+                        <p className="mb-4 text-xs leading-relaxed text-zinc-500">{t("Гэрээний дугаар болон огноо өргөдлийг админ зөвшөөрөх үед автоматаар үүснэ.")}</p>
                         <pre className="max-h-[32rem] overflow-auto whitespace-pre-wrap break-words rounded-xl bg-zinc-950 p-4 font-sans text-sm leading-7 text-zinc-300">
                             {contractPreview}
                         </pre>
@@ -488,10 +473,9 @@ export function CohortApplicationEditor({
                     <div className="flex items-start gap-3">
                         <MailCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
                         <div>
-                            <h3 className="font-semibold text-white">И-мэйл кодоор баталгаажуулах</h3>
+                            <h3 className="font-semibold text-white">{t("И-мэйл кодоор баталгаажуулах")}</h3>
                             <p className="mt-1 text-sm leading-relaxed text-emerald-100/70">
-                                {verification.maskedEmail} хаягт илгээсэн 6 оронтой кодыг {verification.expiresInMinutes} минутын дотор оруулна уу.
-                            </p>
+                                {verification.maskedEmail} {t("хаягт илгээсэн 6 оронтой кодыг")} {verification.expiresInMinutes} {t("минутын дотор оруулна уу.")}</p>
                         </div>
                     </div>
                     <div className="flex flex-col gap-3 sm:flex-row">
@@ -502,7 +486,7 @@ export function CohortApplicationEditor({
                             pattern="[0-9]{6}"
                             maxLength={6}
                             required
-                            aria-label="6 оронтой баталгаажуулах код"
+                            aria-label={t("6 оронтой баталгаажуулах код")}
                             className="border-emerald-500/30 bg-zinc-950 text-center text-lg tracking-[0.35em] sm:max-w-56"
                         />
                         <Button
@@ -513,8 +497,7 @@ export function CohortApplicationEditor({
                             }}
                             className="bg-emerald-600 hover:bg-emerald-700"
                         >
-                            <ShieldCheck className="mr-2 h-4 w-4" />Кодоор баталгаажуулах
-                        </Button>
+                            <ShieldCheck className="mr-2 h-4 w-4" />{t("Кодоор баталгаажуулах")}</Button>
                     </div>
                     <button
                         type="button"
@@ -525,21 +508,16 @@ export function CohortApplicationEditor({
                             submitContract()
                         }}
                         className="text-sm text-emerald-200 underline-offset-4 hover:underline disabled:opacity-50"
-                    >
-                        Код дахин илгээх
-                    </button>
+                    >{t("Код дахин илгээх")}</button>
                 </section>
             )}
 
             {previewOnly ? (
-                <div className="rounded-xl border border-dashed border-zinc-700 bg-zinc-900/40 p-4 text-sm text-zinc-400">
-                    Бодит хэрэглэгчийн орчинд энд “Ноорог хадгалах” болон “Гэрээг зөвшөөрөх” үйлдлүүд харагдана. Урьдчилсан харагдацад эдгээр үйлдлийг зориуд идэвхгүй болгосон.
-                </div>
+                <div className="rounded-xl border border-dashed border-zinc-700 bg-zinc-900/40 p-4 text-sm text-zinc-400">{t("Бодит хэрэглэгчийн орчинд энд “Ноорог хадгалах” болон “Гэрээг зөвшөөрөх” үйлдлүүд харагдана. Урьдчилсан харагдацад эдгээр үйлдлийг зориуд идэвхгүй болгосон.")}</div>
             ) : (
                 <div className="flex flex-wrap gap-3 border-t border-zinc-800 pt-5">
                     <Button type="button" variant="outline" disabled={pending} onClick={saveDraft}>
-                        <Save className="mr-2 h-4 w-4" />Ноорог хадгалах
-                    </Button>
+                        <Save className="mr-2 h-4 w-4" />{t("Ноорог хадгалах")}</Button>
                     {!verification && (
                         <Button
                             type="button"
@@ -550,13 +528,13 @@ export function CohortApplicationEditor({
                             }}
                         >
                             <ShieldCheck className="mr-2 h-4 w-4" />
-                            {pending ? 'Баталгаажуулж байна…' : 'Гэрээг зөвшөөрөх'}
+                            {pending ? t("Баталгаажуулж байна…") : t("Гэрээг зөвшөөрөх")}
                         </Button>
                     )}
                 </div>
             )}
-            {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
-            {message && <p role="status" className="text-sm text-emerald-400">{message}</p>}
+            {error && <p role="alert" className="text-sm text-red-400">{t(error)}</p>}
+            {message && <p role="status" className="text-sm text-emerald-400">{t(message)}</p>}
         </form>
     )
 }

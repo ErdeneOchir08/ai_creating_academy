@@ -2,6 +2,9 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* A saved HTML snapshot contains escaped class names and is not app source. */
+@source not "../../temp.html";
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

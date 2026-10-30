@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from '@/components/language-provider'
 import { useState } from 'react'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
@@ -8,15 +9,19 @@ import { updatePassword } from '@/features/auth/actions/auth-actions'
 import { useFormStatus } from 'react-dom'
 
 function SubmitPasswordButton() {
+    const t = useTranslations()
+
     const { pending } = useFormStatus()
     return (
         <Button type="submit" disabled={pending} variant="secondary" className="bg-zinc-800 text-white hover:bg-zinc-700 mt-2 border border-zinc-700 font-semibold">
-            {pending ? 'Шинэчилж байна...' : 'Нууц үг өөрчлөх'}
+            {pending ? t("Шинэчилж байна...") : t("Нууц үг өөрчлөх")}
         </Button>
     )
 }
 
 export function PasswordForm() {
+    const t = useTranslations()
+
     const [message, setMessage] = useState<{ type: 'error' | 'success', text: string } | null>(null)
     const [confirmation, setConfirmation] = useState('')
 
@@ -42,7 +47,7 @@ export function PasswordForm() {
     return (
         <form action={handleAction} className="space-y-4 max-w-md">
             <div className="space-y-2">
-                <Label htmlFor="password" className="text-zinc-300">Шинэ нууц үг</Label>
+                <Label htmlFor="password" className="text-zinc-300">{t("Шинэ нууц үг")}</Label>
                 <Input
                     id="password"
                     name="password"
@@ -53,11 +58,11 @@ export function PasswordForm() {
                     className="bg-zinc-900 border-zinc-700 focus-visible:ring-indigo-500 text-white"
                     placeholder="••••••••"
                 />
-                <p className="text-xs text-zinc-500">Доод тал нь 6 тэмдэгт байх ёстой.</p>
+                <p className="text-xs text-zinc-500">{t("Доод тал нь 8 тэмдэгт байх ёстой.")}</p>
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="password_confirmation" className="text-zinc-300">Нууц үгээ давтана уу</Label>
+                <Label htmlFor="password_confirmation" className="text-zinc-300">{t("Нууц үгээ давтана уу")}</Label>
                 <Input
                     id="password_confirmation"
                     name="password_confirmation"
@@ -73,7 +78,7 @@ export function PasswordForm() {
 
             {message && (
                 <div className={`p-3 rounded-lg border text-sm font-medium ${message.type === 'error' ? 'bg-red-500/10 border-red-500/20 text-red-500' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'}`}>
-                    {message.text}
+                    {t(message.text)}
                 </div>
             )}
 

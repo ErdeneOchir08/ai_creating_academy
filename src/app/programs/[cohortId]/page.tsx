@@ -1,3 +1,4 @@
+import { getTranslations } from '@/lib/i18n/server'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { CalendarDays, CircleCheck, FileText, MapPin, Monitor, Users } from 'lucide-react'
@@ -119,14 +120,14 @@ async function OfferingCheckoutPage({
     }
     initialApplicationId?: string
 }) {
+    const t = await getTranslations()
+
     if (!checkout) notFound()
     const returnPath = `/programs/${encodeURIComponent(checkout.offering_id)}`
     return (
         <div className="min-h-[calc(100vh-64px)] bg-zinc-950 px-4 py-10 text-white">
             <div className="mx-auto max-w-6xl">
-                <Link href={`/course/${checkout.course_id}`} className="text-sm text-zinc-400 hover:text-white">
-                    ← Хичээлийн мэдээлэл рүү буцах
-                </Link>
+                <Link href={`/course/${checkout.course_id}`} className="text-sm text-zinc-400 hover:text-white">{t("← Хичээлийн мэдээлэл рүү буцах")}</Link>
                 <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
                     <main className="min-w-0">
                         <p className="text-sm font-medium text-indigo-400">{checkout.program_name}</p>
@@ -145,11 +146,11 @@ async function OfferingCheckoutPage({
                         <div className="mt-8">
                             {!user ? (
                                 <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/10 p-6">
-                                    <h2 className="text-xl font-semibold">{checkout.direct_purchase ? 'Хичээл худалдаж авахын тулд нэвтэрнэ үү' : 'Элсэхийн тулд нэвтэрнэ үү'}</h2>
-                                    <p className="mt-2 text-sm text-zinc-300">{checkout.direct_purchase ? 'Нэвтрээд QPay-аар төлнө. Төлбөр баталгаажмагц хичээлээ үзэх боломжтой.' : 'Таны хүсэлт, гэрээ, төлбөр болон хичээл үзэх эрх нэг бүртгэлд найдвартай хадгалагдана.'}</p>
+                                    <h2 className="text-xl font-semibold">{checkout.direct_purchase ? t("Хичээл худалдаж авахын тулд нэвтэрнэ үү") : t("Элсэхийн тулд нэвтэрнэ үү")}</h2>
+                                    <p className="mt-2 text-sm text-zinc-300">{checkout.direct_purchase ? t("Нэвтрээд QPay-аар төлнө. Төлбөр баталгаажмагц хичээлээ үзэх боломжтой.") : t("Таны хүсэлт, гэрээ, төлбөр болон хичээл үзэх эрх нэг бүртгэлд найдвартай хадгалагдана.")}</p>
                                     <div className="mt-5 flex flex-wrap gap-3">
-                                        <Button asChild><Link href={withReturnPath('/login', returnPath)}>Нэвтрэх</Link></Button>
-                                        <Button asChild variant="outline"><Link href={withReturnPath('/register', returnPath)}>Бүртгүүлэх</Link></Button>
+                                        <Button asChild><Link href={withReturnPath('/login', returnPath)}>{t("Нэвтрэх")}</Link></Button>
+                                        <Button asChild variant="outline"><Link href={withReturnPath('/register', returnPath)}>{t("Бүртгүүлэх")}</Link></Button>
                                     </div>
                                 </div>
                             ) : checkout.direct_purchase ? (
@@ -158,8 +159,8 @@ async function OfferingCheckoutPage({
                                     environment={paymentConfiguration.qpayEnvironment} serverNow={serverNow} />
                             ) : !checkout.is_accepting_applications && checkout.my_applications.length === 0 ? (
                                 <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-6">
-                                    <h2 className="text-xl font-semibold text-amber-100">Элсэлт хаагдсан байна</h2>
-                                    <p className="mt-2 text-sm text-amber-100/70">Энэ элсэлт одоогоор шинэ хүсэлт хүлээн авахгүй байна.</p>
+                                    <h2 className="text-xl font-semibold text-amber-100">{t("Элсэлт хаагдсан байна")}</h2>
+                                    <p className="mt-2 text-sm text-amber-100/70">{t("Энэ элсэлт одоогоор шинэ хүсэлт хүлээн авахгүй байна.")}</p>
                                 </div>
                             ) : (
                                 <OfferingCheckoutEditor
@@ -183,39 +184,41 @@ async function OfferingCheckoutPage({
     )
 }
 
-function OfferingSummary({ checkout, qpayEnabled }: {
+async function OfferingSummary({ checkout, qpayEnabled }: {
     checkout: NonNullable<Awaited<ReturnType<typeof getOfferingCheckoutForm>>>
     qpayEnabled: boolean
 }) {
+    const t = await getTranslations()
+
     return (
         <aside className="h-fit rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 lg:sticky lg:top-24">
-            <p className="text-xs text-zinc-500">Сургалтын төлбөр</p>
+            <p className="text-xs text-zinc-500">{t("Сургалтын төлбөр")}</p>
             <p className="mt-1 text-3xl font-bold text-emerald-400">₮ {checkout.tuition_amount_mnt.toLocaleString('mn-MN')}</p>
             {checkout.payment_plan && <p className="mt-4 text-sm leading-relaxed text-zinc-400">{checkout.payment_plan}</p>}
             {!checkout.direct_purchase && <div className="mt-6 border-t border-zinc-800 pt-5">
                 <p className="flex items-center gap-2 text-sm font-medium">
                     <FileText className="h-4 w-4 text-indigo-400" />
-                    {checkout.contract_policy === 'required' ? 'Гэрээ шаардлагатай' : 'Гэрээ шаардлагагүй'}
+                    {checkout.contract_policy === 'required' ? t("Гэрээ шаардлагатай") : t("Гэрээ шаардлагагүй")}
                 </p>
                 {checkout.contract_policy === 'required' && (
                     <>
                         <p className="mt-2 text-sm text-zinc-400">{checkout.contract_title} · v{checkout.contract_version_number}</p>
-                        <p className="mt-2 text-xs leading-relaxed text-zinc-600">Гэрээний энэ хувилбар хүсэлттэй өөрчлөгдөхгүйгээр холбогдоно.</p>
+                        <p className="mt-2 text-xs leading-relaxed text-zinc-600">{t("Гэрээний энэ хувилбар хүсэлттэй өөрчлөгдөхгүйгээр холбогдоно.")}</p>
                     </>
                 )}
             </div>}
             <div className="mt-5 flex items-start gap-3 rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-3 text-sm leading-relaxed text-emerald-100">
                 <CircleCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" aria-hidden="true" />
                 <p>
-                    {checkout.direct_purchase && !qpayEnabled ? 'QPay төлбөр түр зогссон байна.' : <>{qpayEnabled ? 'QPay төлбөр баталгаажмагц' : 'Төлбөрийг админ баталгаажуулсны дараа'} <strong className="font-semibold text-white">“{checkout.course_title}”</strong> хичээл үзэх эрх нээгдэнэ.</>}
-                    {!checkout.direct_purchase && qpayEnabled && checkout.manual_transfer_enabled && <span className="mt-2 block text-xs">Банкны шилжүүлгийн баримтыг админ шалгана.</span>}
+                    {checkout.direct_purchase && !qpayEnabled ? t("QPay төлбөр түр зогссон байна.") : <>{qpayEnabled ? t("QPay төлбөр баталгаажмагц") : t("Төлбөрийг админ баталгаажуулсны дараа")} <strong className="font-semibold text-white">“{checkout.course_title}”</strong> {t("хичээл үзэх эрх нээгдэнэ.")}</>}
+                    {!checkout.direct_purchase && qpayEnabled && checkout.manual_transfer_enabled && <span className="mt-2 block text-xs">{t("Банкны шилжүүлгийн баримтыг админ шалгана.")}</span>}
                 </p>
             </div>
         </aside>
     )
 }
 
-function OfferingFacts({
+async function OfferingFacts({
     deliveryMode,
     startsOn,
     endsOn,
@@ -232,18 +235,20 @@ function OfferingFacts({
     classSizeIsLimit: boolean
     schedule: string
 }) {
+    const t = await getTranslations()
+
     return (
         <div className="mt-7 grid gap-4 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5 text-sm sm:grid-cols-2">
-            <p className="flex items-start gap-3"><Monitor className="mt-0.5 h-4 w-4 text-indigo-400" /><span><span className="block text-xs text-zinc-500">Хэлбэр</span>{deliveryLabels[deliveryMode]}</span></p>
-            {(startsOn || endsOn) && <p className="flex items-start gap-3"><CalendarDays className="mt-0.5 h-4 w-4 text-indigo-400" /><span><span className="block text-xs text-zinc-500">Хугацаа</span>{startsOn ?? 'Тодорхойгүй'} – {endsOn ?? 'Тодорхойгүй'}</span></p>}
-            {deliveryMode === 'offline' && location && <p className="flex items-start gap-3"><MapPin className="mt-0.5 h-4 w-4 text-indigo-400" /><span><span className="block text-xs text-zinc-500">Байршил</span>{location}</span></p>}
-            {classSize !== null && <p className="flex items-start gap-3"><Users className="mt-0.5 h-4 w-4 text-indigo-400" /><span><span className="block text-xs text-zinc-500">{classSizeIsLimit ? 'Үлдсэн суудал' : 'Ангийн хэмжээ'}</span>{classSizeIsLimit ? classSize : `${classSize} суралцагч`}</span></p>}
-            {schedule && <p className="sm:col-span-2"><span className="block text-xs text-zinc-500">Хуваарь</span>{schedule}</p>}
+            <p className="flex items-start gap-3"><Monitor className="mt-0.5 h-4 w-4 text-indigo-400" /><span><span className="block text-xs text-zinc-500">{t("Хэлбэр")}</span>{t(deliveryLabels[deliveryMode])}</span></p>
+            {(startsOn || endsOn) && <p className="flex items-start gap-3"><CalendarDays className="mt-0.5 h-4 w-4 text-indigo-400" /><span><span className="block text-xs text-zinc-500">{t("Хугацаа")}</span>{startsOn ?? t("Тодорхойгүй")} – {endsOn ?? t("Тодорхойгүй")}</span></p>}
+            {deliveryMode === 'offline' && location && <p className="flex items-start gap-3"><MapPin className="mt-0.5 h-4 w-4 text-indigo-400" /><span><span className="block text-xs text-zinc-500">{t("Байршил")}</span>{location}</span></p>}
+            {classSize !== null && <p className="flex items-start gap-3"><Users className="mt-0.5 h-4 w-4 text-indigo-400" /><span><span className="block text-xs text-zinc-500">{classSizeIsLimit ? t("Үлдсэн суудал") : t("Ангийн хэмжээ")}</span>{classSizeIsLimit ? classSize : t("{value0} суралцагч", { value0: classSize })}</span></p>}
+            {schedule && <p className="sm:col-span-2"><span className="block text-xs text-zinc-500">{t("Хуваарь")}</span>{schedule}</p>}
         </div>
     )
 }
 
-function LegacyCohortApplicationPage({
+async function LegacyCohortApplicationPage({
     cohort,
     user,
     contractSnapshot,
@@ -254,11 +259,13 @@ function LegacyCohortApplicationPage({
     contractSnapshot: Awaited<ReturnType<typeof getMyApprovedContractSnapshot>>
     paymentState: Awaited<ReturnType<typeof getMyCohortPaymentState>>
 }) {
+    const t = await getTranslations()
+
     const returnPath = `/programs/${encodeURIComponent(cohort.cohort_id)}`
     return (
         <div className="min-h-[calc(100vh-64px)] bg-zinc-950 px-4 py-10 text-white">
             <div className="mx-auto max-w-6xl">
-                <Link href="/programs" className="text-sm text-zinc-400 hover:text-white">← Бүх сургалтууд</Link>
+                <Link href="/programs" className="text-sm text-zinc-400 hover:text-white">{t("← Бүх сургалтууд")}</Link>
                 <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
                     <div>
                         <p className="text-sm font-medium text-indigo-400">{cohort.program_name}</p>
@@ -278,10 +285,10 @@ function LegacyCohortApplicationPage({
                                 <CohortApplicationEditor cohort={cohort} profileName={user.displayName} userEmail={user.email} currentDate={getUlaanbaatarDate()} hasContractSnapshot={contractSnapshot !== null} />
                             ) : (
                                 <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/10 p-6">
-                                    <h2 className="text-xl font-semibold">Өргөдөл гаргахын тулд нэвтэрнэ үү</h2>
+                                    <h2 className="text-xl font-semibold">{t("Өргөдөл гаргахын тулд нэвтэрнэ үү")}</h2>
                                     <div className="mt-5 flex gap-3">
-                                        <Button asChild><Link href={withReturnPath('/login', returnPath)}>Нэвтрэх</Link></Button>
-                                        <Button asChild variant="outline"><Link href={withReturnPath('/register', returnPath)}>Бүртгүүлэх</Link></Button>
+                                        <Button asChild><Link href={withReturnPath('/login', returnPath)}>{t("Нэвтрэх")}</Link></Button>
+                                        <Button asChild variant="outline"><Link href={withReturnPath('/register', returnPath)}>{t("Бүртгүүлэх")}</Link></Button>
                                     </div>
                                 </div>
                             )}
@@ -290,11 +297,11 @@ function LegacyCohortApplicationPage({
                         </div>
                     </div>
                     <aside className="h-fit rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 lg:sticky lg:top-24">
-                        <p className="text-xs text-zinc-500">Сургалтын төлбөр</p>
-                        <p className="mt-1 text-3xl font-bold text-emerald-400">{cohort.tuition_amount_mnt == null ? 'Тодорхойгүй' : `₮ ${cohort.tuition_amount_mnt.toLocaleString('mn-MN')}`}</p>
+                        <p className="text-xs text-zinc-500">{t("Сургалтын төлбөр")}</p>
+                        <p className="mt-1 text-3xl font-bold text-emerald-400">{cohort.tuition_amount_mnt == null ? t("Тодорхойгүй") : `₮ ${cohort.tuition_amount_mnt.toLocaleString('mn-MN')}`}</p>
                         {cohort.payment_plan && <p className="mt-4 text-sm leading-relaxed text-zinc-400">{cohort.payment_plan}</p>}
                         <div className="mt-6 border-t border-zinc-800 pt-5">
-                            <p className="flex items-center gap-2 text-sm font-medium"><FileText className="h-4 w-4 text-indigo-400" />Гэрээний хувилбар</p>
+                            <p className="flex items-center gap-2 text-sm font-medium"><FileText className="h-4 w-4 text-indigo-400" />{t("Гэрээний хувилбар")}</p>
                             <p className="mt-2 text-sm text-zinc-400">{cohort.contract_title} · v{cohort.contract_version_number}</p>
                         </div>
                     </aside>

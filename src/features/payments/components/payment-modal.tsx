@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from '@/components/language-provider'
 import { useState } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -11,6 +12,8 @@ import { submitPaymentRequest } from '@/features/payments/actions/payment-action
 type PaymentModalProps = { courseId: string; coursePrice: string; paymentInstructions: string; isTestMode: boolean; rejectionReason?: string | null }
 
 export function PaymentModal({ courseId, coursePrice, paymentInstructions, isTestMode, rejectionReason }: PaymentModalProps) {
+    const t = useTranslations()
+
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -40,43 +43,42 @@ export function PaymentModal({ courseId, coursePrice, paymentInstructions, isTes
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button className="h-auto w-full bg-indigo-600 py-3 text-lg font-semibold text-white hover:bg-indigo-700">
-          Хичээлд бүртгүүлэх · {coursePrice}
+        <Button className="h-auto w-full bg-indigo-600 py-3 text-lg font-semibold text-white hover:bg-indigo-700">{t("Хичээлд бүртгүүлэх ·")} {coursePrice}
         </Button>
       </DialogTrigger>
       <DialogContent className="border-zinc-800 bg-zinc-950 text-white sm:max-w-md">
         {success ? (
           <div className="flex flex-col items-center py-8 text-center">
             <CheckCircle2 className="mb-4 h-16 w-16 text-emerald-500" />
-            <DialogTitle className="mb-2 text-2xl">Баримт илгээгдлээ</DialogTitle>
-            <p className="mb-6 text-zinc-400">Админ төлбөрийг шалгасны дараа энэ хичээлд автоматаар элсүүлнэ.</p>
-            <Button onClick={() => setOpen(false)} variant="outline" className="border-zinc-700 bg-transparent text-white hover:bg-zinc-800">Хаах</Button>
+            <DialogTitle className="mb-2 text-2xl">{t("Баримт илгээгдлээ")}</DialogTitle>
+            <p className="mb-6 text-zinc-400">{t("Админ төлбөрийг шалгасны дараа энэ хичээлд автоматаар элсүүлнэ.")}</p>
+            <Button onClick={() => setOpen(false)} variant="outline" className="border-zinc-700 bg-transparent text-white hover:bg-zinc-800">{t("Хаах")}</Button>
           </div>
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle className="text-xl">Төлбөрийн мэдээлэл</DialogTitle>
-              <DialogDescription className="mt-2 text-zinc-400">Төлөх дүн: <strong className="text-white">{coursePrice}</strong></DialogDescription>
+              <DialogTitle className="text-xl">{t("Төлбөрийн мэдээлэл")}</DialogTitle>
+              <DialogDescription className="mt-2 text-zinc-400">{t("Төлөх дүн:")} <strong className="text-white">{coursePrice}</strong></DialogDescription>
             </DialogHeader>
             {isConfigured ? (
               <>
                 {isTestMode && (
-                  <p className="mt-4 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm font-semibold text-amber-200">Туршилтын горим идэвхтэй байна. Бодит мөнгө шилжүүлж болохгүй.</p>
+                  <p className="mt-4 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm font-semibold text-amber-200">{t("Туршилтын горим идэвхтэй байна. Бодит мөнгө шилжүүлж болохгүй.")}</p>
                 )}
                 <div className="mt-4 whitespace-pre-wrap rounded-md border border-zinc-800 bg-zinc-900 p-4 text-sm leading-6 text-zinc-200">{paymentInstructions}</div>
               </>
             ) : (
-              <p className="mt-4 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">Төлбөрийн мэдээлэл хараахан тохируулагдаагүй байна. Академийн админтай холбогдоно уу.</p>
+              <p className="mt-4 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">{t("Төлбөрийн мэдээлэл хараахан тохируулагдаагүй байна. Академийн админтай холбогдоно уу.")}</p>
             )}
             <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-              {rejectionReason && <p className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200"><strong>Өмнөх хүсэлт татгалзсан шалтгаан:</strong> {rejectionReason}</p>}
+              {rejectionReason && <p className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200"><strong>{t("Өмнөх хүсэлт татгалзсан шалтгаан:")}</strong> {rejectionReason}</p>}
               <div className="space-y-2">
-                <Label htmlFor="receipt">Төлбөрийн баримт</Label>
+                <Label htmlFor="receipt">{t("Төлбөрийн баримт")}</Label>
                 <Input id="receipt" name="receipt" type="file" required accept="image/jpeg,image/png,image/webp" className="border-zinc-700 bg-zinc-800 file:text-indigo-400" />
-                <p className="text-xs text-zinc-500">JPG, PNG эсвэл WebP; хамгийн ихдээ 10 MB.</p>
+                <p className="text-xs text-zinc-500">{t("JPG, PNG эсвэл WebP; хамгийн ихдээ 10 MB.")}</p>
               </div>
-              {errorMessage && <p className="text-sm font-medium text-red-400">{errorMessage}</p>}
-              <Button type="submit" className="h-10 w-full bg-indigo-600 text-white hover:bg-indigo-700" disabled={loading || !isConfigured}>{loading ? 'Илгээж байна…' : 'Баримт илгээх'}</Button>
+              {errorMessage && <p className="text-sm font-medium text-red-400">{t(errorMessage)}</p>}
+              <Button type="submit" className="h-10 w-full bg-indigo-600 text-white hover:bg-indigo-700" disabled={loading || !isConfigured}>{loading ? t("Илгээж байна…") : t("Баримт илгээх")}</Button>
             </form>
           </>
         )}

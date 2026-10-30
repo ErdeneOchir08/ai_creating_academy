@@ -1,8 +1,11 @@
+import { getTranslations } from '@/lib/i18n/server'
 import Link from 'next/link'
 import { Clock3, Facebook, Instagram, Mail, MapPin, Phone } from 'lucide-react'
 import { getAcademyProfile } from '@/features/admin/actions/settings-actions.admin'
 
 export async function AcademyFooter() {
+    const t = await getTranslations()
+
     const profile = await getAcademyProfile()
     const hasContactInformation = profile.publicEmail || profile.phone || profile.address || profile.businessHours
 
@@ -28,7 +31,7 @@ export async function AcademyFooter() {
 
                 {hasContactInformation && (
                     <section>
-                        <h2 className="text-sm font-semibold uppercase tracking-wider text-white">Холбоо барих</h2>
+                        <h2 className="text-sm font-semibold uppercase tracking-wider text-white">{t("Холбоо барих")}</h2>
                         <ul className="mt-4 space-y-3 text-sm text-zinc-400">
                             {profile.publicEmail && <li><a className="flex items-start gap-2 hover:text-white" href={`mailto:${profile.publicEmail}`}><Mail className="mt-0.5 h-4 w-4 shrink-0" />{profile.publicEmail}</a></li>}
                             {profile.phone && <li><a className="flex items-start gap-2 hover:text-white" href={`tel:${profile.phone.replace(/[^+\d]/g, '')}`}><Phone className="mt-0.5 h-4 w-4 shrink-0" />{profile.phone}</a></li>}
@@ -38,16 +41,16 @@ export async function AcademyFooter() {
                 )}
 
                 <section>
-                    <h2 className="text-sm font-semibold uppercase tracking-wider text-white">Суралцах</h2>
+                    <h2 className="text-sm font-semibold uppercase tracking-wider text-white">{t("Суралцах")}</h2>
                     <ul className="mt-4 space-y-3 text-sm text-zinc-400">
-                        <li><Link href="/#courses" className="hover:text-white">Хичээлүүд</Link></li>
-                        {profile.websiteUrl && <li><a href={profile.websiteUrl} target="_blank" rel="noreferrer" className="hover:text-white">Албан ёсны вебсайт</a></li>}
+                        <li><Link href="/#courses" className="hover:text-white">{t("Хичээлүүд")}</Link></li>
+                        {profile.websiteUrl && <li><a href={profile.websiteUrl} target="_blank" rel="noreferrer" className="hover:text-white">{t("Албан ёсны вебсайт")}</a></li>}
                         {profile.businessHours && <li className="flex items-start gap-2"><Clock3 className="mt-0.5 h-4 w-4 shrink-0" /><span>{profile.businessHours}</span></li>}
                     </ul>
                 </section>
             </div>
             <div className="border-t border-zinc-900">
-                <div className="container mx-auto px-4 py-5 text-xs text-zinc-500">© {new Date().getFullYear()} {profile.displayName}. Бүх эрх хуулиар хамгаалагдсан.</div>
+                <div className="container mx-auto px-4 py-5 text-xs text-zinc-500">© {new Date().getFullYear()} {profile.displayName}{t(". Бүх эрх хуулиар хамгаалагдсан.")}</div>
             </div>
         </footer>
     )

@@ -1,3 +1,4 @@
+import { getTranslations } from '@/lib/i18n/server'
 import Link from 'next/link'
 import { ArrowRight, CheckCircle2, Clock3, MessageSquareText } from 'lucide-react'
 import { getMyQuestions } from '@/features/qa/actions/qa-actions'
@@ -6,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
 export default async function StudentQuestionsPage() {
+    const t = await getTranslations()
+
     const questions = await getMyQuestions()
 
     return (
@@ -16,8 +19,8 @@ export default async function StudentQuestionsPage() {
                         <MessageSquareText className="h-5 w-5 text-indigo-400" />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-bold text-white">Миний асуултууд</h1>
-                        <p className="mt-1 text-sm text-zinc-400">Хичээл дээр илгээсэн асуулт болон багийн хариултыг нэг дороос харна.</p>
+                        <h1 className="text-3xl font-bold text-white">{t("Миний асуултууд")}</h1>
+                        <p className="mt-1 text-sm text-zinc-400">{t("Хичээл дээр илгээсэн асуулт болон багийн хариултыг нэг дороос харна.")}</p>
                     </div>
                 </div>
             </header>
@@ -26,10 +29,10 @@ export default async function StudentQuestionsPage() {
                 <Card className="border-zinc-800 bg-zinc-900/50 text-center">
                     <CardContent className="p-12">
                         <MessageSquareText className="mx-auto mb-4 h-11 w-11 text-zinc-600" />
-                        <h2 className="text-lg font-semibold text-white">Одоогоор асуулт алга</h2>
-                        <p className="mt-2 text-sm text-zinc-400">Хичээл үзэж байхдаа баруун талын “Асуулт, хариулт” хэсгээс асуултаа илгээнэ үү.</p>
+                        <h2 className="text-lg font-semibold text-white">{t("Одоогоор асуулт алга")}</h2>
+                        <p className="mt-2 text-sm text-zinc-400">{t("Хичээл үзэж байхдаа баруун талын “Асуулт, хариулт” хэсгээс асуултаа илгээнэ үү.")}</p>
                         <Button asChild className="mt-6 bg-indigo-600 text-white hover:bg-indigo-500">
-                            <Link href="/dashboard/courses">Миний хичээлүүд рүү очих</Link>
+                            <Link href="/dashboard/courses">{t("Миний хичээлүүд рүү очих")}</Link>
                         </Button>
                     </CardContent>
                 </Card>
@@ -46,19 +49,18 @@ export default async function StudentQuestionsPage() {
                                             <div className="mb-3 flex flex-wrap items-center gap-2">
                                                 <Badge variant="outline" className={question.isAnswered ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-400' : 'border-amber-500/30 bg-amber-500/5 text-amber-400'}>
                                                     {question.isAnswered ? <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> : <Clock3 className="mr-1 h-3.5 w-3.5" />}
-                                                    {question.isAnswered ? 'Хариулсан' : 'Хариу хүлээж буй'}
+                                                    {question.isAnswered ? t("Хариулсан") : t("Хариу хүлээж буй")}
                                                 </Badge>
                                                 <span className="text-xs text-zinc-500" suppressHydrationWarning>{new Date(question.createdAt).toLocaleString()}</span>
                                             </div>
-                                            <p className="text-sm font-medium text-indigo-300">{question.course?.title ?? 'Хичээл'}</p>
-                                            <p className="mt-1 text-xs text-zinc-500">{question.lesson?.title ?? 'Хичээл'}</p>
+                                            <p className="text-sm font-medium text-indigo-300">{question.course?.title ?? t("Хичээл")}</p>
+                                            <p className="mt-1 text-xs text-zinc-500">{question.lesson?.title ?? t("Хичээл")}</p>
                                             <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-zinc-200">{question.content}</p>
                                         </div>
 
                                         {canOpenLesson && (
                                             <Button asChild variant="outline" className="shrink-0 border-zinc-700 bg-zinc-950 text-zinc-200 hover:bg-zinc-800 hover:text-white">
-                                                <Link href={`/courses/${question.courseId}?lesson=${question.lessonId}`}>
-                                                    Хичээл рүү очих <ArrowRight className="ml-2 h-4 w-4" />
+                                                <Link href={`/courses/${question.courseId}?lesson=${question.lessonId}`}>{t("Хичээл рүү очих")} <ArrowRight className="ml-2 h-4 w-4" />
                                                 </Link>
                                             </Button>
                                         )}

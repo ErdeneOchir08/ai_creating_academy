@@ -1,14 +1,17 @@
+import { getTranslations } from '@/lib/i18n/server'
 import { StudentSidebar } from '@/features/dashboard/components/student-sidebar'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
+    const t = await getTranslations()
+
     return (
         <div className="relative flex min-h-[calc(100vh-64px)] flex-col overflow-x-hidden bg-[#09090b] md:flex-row">
             {/* Ambient Background Glows */}
@@ -19,17 +22,17 @@ export default function DashboardLayout({
 
             {/* Mobile Header / Sidebar Toggle */}
             <div className="md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-zinc-950/80 backdrop-blur-md relative z-10">
-                <span className="font-bold text-white">Суралцагчийн Самбар</span>
+                <span className="font-bold text-white">{t("Суралцагчийн Самбар")}</span>
                 <Sheet>
                     <SheetTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-9 w-9 text-zinc-400" aria-label="Суралцагчийн цэсийг нээх">
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-zinc-400" aria-label={t("Суралцагчийн цэсийг нээх")}>
                             <Menu className="h-5 w-5" />
                         </Button>
                     </SheetTrigger>
                     <SheetContent side="left" className="p-0 w-64 border-zinc-800 bg-zinc-950">
                         <VisuallyHidden.Root>
-                            <SheetTitle>Суралцагчийн Цэс</SheetTitle>
-                            <SheetDescription>Суралцагчийн самбарын хандах холбоосууд.</SheetDescription>
+                            <SheetTitle>{t("Суралцагчийн Цэс")}</SheetTitle>
+                            <SheetDescription>{t("Суралцагчийн самбарын хандах холбоосууд.")}</SheetDescription>
                         </VisuallyHidden.Root>
                         <StudentSidebar isMobile={true} />
                     </SheetContent>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from '@/components/language-provider'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -12,6 +13,8 @@ import { createClient } from '@/lib/supabase/client'
 import { completePasswordRecovery } from '@/features/auth/actions/auth-actions'
 
 export function ResetPasswordForm() {
+    const t = useTranslations()
+
     const router = useRouter()
     const [ready, setReady] = useState(false)
     const [password, setPassword] = useState('')
@@ -97,28 +100,28 @@ export function ResetPasswordForm() {
     return (
         <Card className="mx-auto w-full max-w-md rounded-2xl border-zinc-800/50 bg-zinc-950/40 shadow-2xl backdrop-blur-xl">
             <CardHeader className="space-y-2">
-                <CardTitle className="text-2xl font-bold text-white">Шинэ нууц үг үүсгэх</CardTitle>
-                <CardDescription className="text-zinc-400">Аюулгүй, өмнө нь ашиглаагүй нууц үг сонгоно уу.</CardDescription>
+                <CardTitle className="text-2xl font-bold text-white">{t("Шинэ нууц үг үүсгэх")}</CardTitle>
+                <CardDescription className="text-zinc-400">{t("Аюулгүй, өмнө нь ашиглаагүй нууц үг сонгоно уу.")}</CardDescription>
             </CardHeader>
             {token && !ready && <div className="px-6 pb-5 space-y-3">
-                <p className="text-sm text-zinc-400">Үргэлжлүүлэх товчийг дарж шинэ нууц үгээ оруулна уу. Энэ холбоосыг утас эсвэл компьютер дээрээ ашиглаж болно.</p>
-                <Button type="button" onClick={verifyLink} disabled={verifying} className="w-full">{verifying ? 'Шалгаж байна...' : 'Нууц үг сэргээхийг үргэлжлүүлэх'}</Button>
+                <p className="text-sm text-zinc-400">{t("Үргэлжлүүлэх товчийг дарж шинэ нууц үгээ оруулна уу. Энэ холбоосыг утас эсвэл компьютер дээрээ ашиглаж болно.")}</p>
+                <Button type="button" onClick={verifyLink} disabled={verifying} className="w-full">{verifying ? t("Шалгаж байна...") : t("Нууц үг сэргээхийг үргэлжлүүлэх")}</Button>
             </div>}
             <form onSubmit={handleSubmit}>
                 <CardContent className="space-y-5">
                     <div className="space-y-2">
-                        <Label htmlFor="password" className="text-zinc-300">Шинэ нууц үг</Label>
+                        <Label htmlFor="password" className="text-zinc-300">{t("Шинэ нууц үг")}</Label>
                         <Input id="password" type="password" autoComplete="new-password" minLength={8} required disabled={!ready || saving} value={password} onChange={(event) => setPassword(event.target.value)} className="h-11 rounded-xl border-zinc-800 bg-zinc-900/50 text-white" />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="confirmation" className="text-zinc-300">Шинэ нууц үг давтах</Label>
+                        <Label htmlFor="confirmation" className="text-zinc-300">{t("Шинэ нууц үг давтах")}</Label>
                         <Input id="confirmation" type="password" autoComplete="new-password" minLength={8} required disabled={!ready || saving} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} className="h-11 rounded-xl border-zinc-800 bg-zinc-900/50 text-white" />
                     </div>
-                    {error && <p className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm font-medium text-red-400">{error}</p>}
-                    {!ready && <Link href="/forgot-password" className="block text-sm text-indigo-400 underline">Шинэ сэргээх холбоос авах</Link>}
+                    {error && <p className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm font-medium text-red-400">{t(error)}</p>}
+                    {!ready && <Link href="/forgot-password" className="block text-sm text-indigo-400 underline">{t("Шинэ сэргээх холбоос авах")}</Link>}
                 </CardContent>
                 <CardFooter>
-                    <Button type="submit" className="h-11 w-full rounded-xl bg-white font-semibold text-black hover:bg-zinc-200" disabled={!ready || saving}>{saving ? 'Хадгалж байна...' : 'Нууц үг шинэчлэх'}</Button>
+                    <Button type="submit" className="h-11 w-full rounded-xl bg-white font-semibold text-black hover:bg-zinc-200" disabled={!ready || saving}>{saving ? t("Хадгалж байна...") : t("Нууц үг шинэчлэх")}</Button>
                 </CardFooter>
             </form>
         </Card>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from '@/components/language-provider'
 import Image from 'next/image'
 import { useCallback, useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
@@ -56,6 +57,8 @@ export function QpayPaymentPanel({
     initialInvoice?: QpayInvoicePresentation | null
     directPurchase?: boolean
 }) {
+    const t = useTranslations()
+
     const router = useRouter()
     const [pending, startTransition] = useTransition()
     const [invoice, setInvoice] = useState<QpayInvoicePresentation | null>(initialInvoice)
@@ -125,9 +128,9 @@ export function QpayPaymentPanel({
                 <div className="flex gap-3">
                     <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-emerald-400" />
                     <div>
-                        <h3 className="font-semibold text-white">QPay төлбөр баталгаажсан</h3>
-                        <p className="mt-1 text-sm text-emerald-100/80">{directPurchase ? 'Таны хичээл үзэх эрх нээгдсэн.' : 'Таны элсэлт болон хичээл үзэх эрх автоматаар нээгдсэн.'}</p>
-                        {directPurchase && <a href="/dashboard/courses" className="mt-3 inline-block underline">Хичээлээ үзэх</a>}
+                        <h3 className="font-semibold text-white">{t("QPay төлбөр баталгаажсан")}</h3>
+                        <p className="mt-1 text-sm text-emerald-100/80">{directPurchase ? t("Таны хичээл үзэх эрх нээгдсэн.") : t("Таны элсэлт болон хичээл үзэх эрх автоматаар нээгдсэн.")}</p>
+                        {directPurchase && <a href="/dashboard/courses" className="mt-3 inline-block underline">{t("Хичээлээ үзэх")}</a>}
                     </div>
                 </div>
             </div>
@@ -140,18 +143,18 @@ export function QpayPaymentPanel({
                 <QrCode className="mt-0.5 h-6 w-6 shrink-0 text-blue-300" />
                 <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-semibold text-white">QPay-аар төлөх</h3>
+                        <h3 className="font-semibold text-white">{t("QPay-аар төлөх")}</h3>
                         {environment === 'sandbox' && (
                             <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-xs font-medium text-amber-200">Sandbox</span>
                         )}
                     </div>
-                    <p className="mt-1 text-sm text-blue-100/75">QR код уншуулах эсвэл банкны апп сонгон төлбөрөө баталгаажуулна.</p>
+                    <p className="mt-1 text-sm text-blue-100/75">{t("QR код уншуулах эсвэл банкны апп сонгон төлбөрөө баталгаажуулна.")}</p>
                 </div>
             </div>
 
             {!invoice && allowNewInvoices ? (
                 <Button type="button" onClick={createInvoice} disabled={pending} className="mt-5 w-full bg-blue-600 text-white hover:bg-blue-700">
-                    {pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Үүсгэж байна…</> : <>₮ {amountMnt.toLocaleString('mn-MN')} · QPay нэхэмжлэл үүсгэх</>}
+                    {pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t("Үүсгэж байна…")}</> : <>₮ {amountMnt.toLocaleString('mn-MN')} {t("· QPay нэхэмжлэл үүсгэх")}</>}
                 </Button>
             ) : invoice ? (
                 <div className="mt-5 space-y-4">
@@ -160,7 +163,7 @@ export function QpayPaymentPanel({
                             <div className="overflow-hidden rounded-xl bg-white p-3">
                                 <Image
                                     src={`data:image/png;base64,${invoice.qrImage}`}
-                                    alt="QPay төлбөрийн QR код"
+                                    alt={t("QPay төлбөрийн QR код")}
                                     width={220}
                                     height={220}
                                     unoptimized
@@ -174,17 +177,16 @@ export function QpayPaymentPanel({
                         )}
                         <div className="space-y-3 text-sm">
                             <div>
-                                <p className="text-xs uppercase tracking-wide text-blue-200/60">Төлөх дүн</p>
+                                <p className="text-xs uppercase tracking-wide text-blue-200/60">{t("Төлөх дүн")}</p>
                                 <p className="mt-1 text-2xl font-bold text-white">₮ {invoice.amountMnt.toLocaleString('mn-MN')}</p>
                             </div>
                             <div>
-                                <p className="text-xs uppercase tracking-wide text-blue-200/60">Нэхэмжлэлийн дугаар</p>
+                                <p className="text-xs uppercase tracking-wide text-blue-200/60">{t("Нэхэмжлэлийн дугаар")}</p>
                                 <code className="mt-1 block break-all text-blue-100">{invoice.senderInvoiceNo}</code>
                             </div>
                             {invoice.shortUrl && (
                                 <Button asChild variant="outline" className="w-full border-blue-300/30 bg-transparent text-white hover:bg-blue-500/20 hover:text-white">
-                                    <a href={invoice.shortUrl} target="_blank" rel="noreferrer">
-                                        QPay холбоос нээх <ExternalLink className="ml-2 h-4 w-4" />
+                                    <a href={invoice.shortUrl} target="_blank" rel="noreferrer">{t("QPay холбоос нээх")} <ExternalLink className="ml-2 h-4 w-4" />
                                     </a>
                                 </Button>
                             )}
@@ -207,21 +209,17 @@ export function QpayPaymentPanel({
 
                     <div className="flex items-start gap-2 rounded-lg border border-blue-300/20 bg-zinc-950/60 p-3 text-sm text-blue-100/80">
                         <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-blue-300" />
-                        <p>Банкны апп амжилттай төлсөн ч дэлгэц шинэчлэгдэхгүй бол доорх товчоор нэг удаа шалгана уу.</p>
+                        <p>{t("Банкны апп амжилттай төлсөн ч дэлгэц шинэчлэгдэхгүй бол доорх товчоор нэг удаа шалгана уу.")}</p>
                     </div>
                     <Button type="button" variant="outline" onClick={reconcile} disabled={pending} className="w-full border-blue-300/30 bg-transparent text-white hover:bg-blue-500/20 hover:text-white">
-                        {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-                        Төлбөрөө шалгах
-                    </Button>
+                        {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}{t("Төлбөрөө шалгах")}</Button>
                 </div>
             ) : (
-                <p className="mt-5 rounded-lg border border-amber-400/20 bg-amber-400/10 p-3 text-sm text-amber-100">
-                    Энэ элсэлтэд шинэ QPay нэхэмжлэл үүсгэхийг түр зогсоосон байна.
-                </p>
+                <p className="mt-5 rounded-lg border border-amber-400/20 bg-amber-400/10 p-3 text-sm text-amber-100">{t("Энэ элсэлтэд шинэ QPay нэхэмжлэл үүсгэхийг түр зогсоосон байна.")}</p>
             )}
 
-            {error && <p role="alert" className="mt-4 text-sm font-medium text-red-300">{error}</p>}
-            {message && <p role="status" className="mt-4 text-sm font-medium text-emerald-300">{message}</p>}
+            {error && <p role="alert" className="mt-4 text-sm font-medium text-red-300">{t(error)}</p>}
+            {message && <p role="status" className="mt-4 text-sm font-medium text-emerald-300">{t(message)}</p>}
         </section>
     )
 }

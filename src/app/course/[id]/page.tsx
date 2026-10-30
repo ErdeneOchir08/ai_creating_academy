@@ -1,3 +1,4 @@
+import { getTranslations } from '@/lib/i18n/server'
 import { getCourseBonusCourses, getCourseById, getCourseLessons } from '@/features/courses/actions/course-actions'
 import { checkPaymentStatus, getRejectedPaymentReason } from '@/features/payments/actions/payment-actions'
 import { CourseCurriculumList } from '@/components/course-curriculum-list'
@@ -13,6 +14,8 @@ import { CourseOfferingOptions } from '@/features/courses/components/course-offe
 import { CourseDescription } from '@/features/courses/components/course-description'
 
 export default async function CourseSalesPage(props: { params: Promise<{ id: string }> }) {
+    const t = await getTranslations()
+
     const { id } = await props.params
     const course = await getCourseById(id)
 
@@ -53,18 +56,14 @@ export default async function CourseSalesPage(props: { params: Promise<{ id: str
             <div className="container mx-auto px-4 py-8 relative z-10">
                 {/* Back Button */}
                 <Link href="/" className="inline-flex items-center text-zinc-400 hover:text-white transition-colors mb-8">
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Бүх хичээл рүү буцах
-                </Link>
+                    <ArrowLeft className="w-4 h-4 mr-2" />{t("Бүх хичээл рүү буцах")}</Link>
 
                 <div className="grid lg:grid-cols-12 gap-12 items-start">
                     {/* Left Column: Course Details */}
                     <div className="lg:col-span-7 space-y-8">
                         <div>
                             <div className="mb-6">
-                                <span className="inline-flex items-center rounded-full bg-indigo-500/10 px-3 py-1 text-sm font-medium text-indigo-400 border border-indigo-500/20">
-                                    Мастеркласс
-                                </span>
+                                <span className="inline-flex items-center rounded-full bg-indigo-500/10 px-3 py-1 text-sm font-medium text-indigo-400 border border-indigo-500/20">{t("Мастеркласс")}</span>
                             </div>
 
                             <h1 className="text-4xl md:text-6xl font-black tracking-tight">
@@ -79,23 +78,23 @@ export default async function CourseSalesPage(props: { params: Promise<{ id: str
                             <div className="flex items-center gap-3">
                                 <MonitorPlay className="w-8 h-8 text-indigo-400" />
                                 <div>
-                                    <p className="font-bold">{lessons.length} Хичээл</p>
-                                    <p className="text-sm text-zinc-500">Видео хичээл</p>
+                                    <p className="font-bold">{lessons.length} {t("Хичээл")}</p>
+                                    <p className="text-sm text-zinc-500">{t("Видео хичээл")}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
                                 <MessageCircleQuestion className="w-8 h-8 text-purple-400" />
                                 <div>
-                                    <p className="font-bold">Асуулт, хариулт</p>
-                                    <p className="text-sm text-zinc-500">Хичээлийн хэсэг бүрт</p>
+                                    <p className="font-bold">{t("Асуулт, хариулт")}</p>
+                                    <p className="text-sm text-zinc-500">{t("Хичээлийн хэсэг бүрт")}</p>
                                 </div>
                             </div>
                             {bonusCourses.length > 0 && (
                                 <div className="flex items-center gap-3">
                                     <Gift className="w-8 h-8 text-emerald-400" />
                                     <div>
-                                        <p className="font-bold">{bonusCourses.length} дагалдах үнэгүй хичээл</p>
-                                        <p className="text-sm text-zinc-500">Төлбөр баталгаажмагц нээгдэнэ</p>
+                                        <p className="font-bold">{bonusCourses.length} {t("дагалдах үнэгүй хичээл")}</p>
+                                        <p className="text-sm text-zinc-500">{t("Төлбөр баталгаажмагц нээгдэнэ")}</p>
                                     </div>
                                 </div>
                             )}
@@ -104,8 +103,7 @@ export default async function CourseSalesPage(props: { params: Promise<{ id: str
                         {bonusCourses.length > 0 && (
                             <section className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
                                 <h2 className="mb-3 flex items-center gap-2 text-lg font-bold text-emerald-300">
-                                    <Gift className="h-5 w-5" /> Дагалдах үнэгүй хичээлүүд
-                                </h2>
+                                    <Gift className="h-5 w-5" /> {t("Дагалдах үнэгүй хичээлүүд")}</h2>
                                 <ul className="space-y-2 text-zinc-300">
                                     {bonusCourses.map((bonusCourse) => (
                                         <li key={bonusCourse.id} className="flex items-center gap-2">
@@ -119,7 +117,7 @@ export default async function CourseSalesPage(props: { params: Promise<{ id: str
 
                         {/* Curriculum List */}
                         <div>
-                            <h2 className="text-2xl font-bold mb-6">Хичээлийн хөтөлбөр</h2>
+                            <h2 className="text-2xl font-bold mb-6">{t("Хичээлийн хөтөлбөр")}</h2>
                             <CourseCurriculumList lessons={lessons} courseId={course.id} />
                         </div>
                     </div>
@@ -159,22 +157,18 @@ export default async function CourseSalesPage(props: { params: Promise<{ id: str
                                 )}
 
                                 {paymentStatus === 'pending' ? (
-                                    <div className="w-full rounded-xl border border-yellow-500/20 bg-yellow-500/10 p-4 text-center text-yellow-500">
-                                        Таны өмнөх төлбөрийн баримтыг шалгаж байна. Дахин төлөх шаардлагагүй.
-                                    </div>
+                                    <div className="w-full rounded-xl border border-yellow-500/20 bg-yellow-500/10 p-4 text-center text-yellow-500">{t("Таны өмнөх төлбөрийн баримтыг шалгаж байна. Дахин төлөх шаардлагагүй.")}</div>
                                 ) : offeringCheckout.usesOfferingCheckout ? (
                                     <CourseOfferingOptions
                                         offerings={offeringCheckout.offerings}
                                         lookupFailed={offeringCheckout.lookupFailed}
                                     />
                                 ) : !isPurchasable ? (
-                                    <div className="w-full rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-center text-sm font-medium text-amber-200">
-                                        Энэ хичээлийн хөтөлбөр бэлэн болоогүй байна. Удахгүй дахин шалгана уу.
-                                    </div>
+                                    <div className="w-full rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-center text-sm font-medium text-amber-200">{t("Энэ хичээлийн хөтөлбөр бэлэн болоогүй байна. Удахгүй дахин шалгана уу.")}</div>
                                 ) : !user ? (
                                     <Link href="/login" className="block w-full">
                                         <Button className="w-full h-14 text-lg font-bold bg-white text-black hover:bg-zinc-200 shadow-[0_0_20px_rgba(255,255,255,0.2)] rounded-xl relative overflow-hidden group">
-                                            <span className="relative z-10">Нэвтэрч элсэх</span>
+                                            <span className="relative z-10">{t("Нэвтэрч элсэх")}</span>
                                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
                                         </Button>
                                     </Link>
@@ -184,9 +178,9 @@ export default async function CourseSalesPage(props: { params: Promise<{ id: str
 
                                 <div className="mt-6 space-y-3 shrink-0">
                                     {[
-                                        'Төлбөрөө баталгаажуулсны дараа хичээлд нэвтэрнэ',
-                                        'Хичээлийн хэсэг бүрт асуулт үлдээж болно',
-                                        'Сургалтын агуулга таны суралцах самбарт хадгалагдана'
+                                        t("Төлбөрөө баталгаажуулсны дараа хичээлд нэвтэрнэ"),
+                                        t("Хичээлийн хэсэг бүрт асуулт үлдээж болно"),
+                                        t("Сургалтын агуулга таны суралцах самбарт хадгалагдана")
                                     ].map((feature, i) => (
                                         <div key={i} className="flex items-center text-zinc-300 text-sm">
                                             <CheckCircle2 className="w-4 h-4 mr-3 text-emerald-400 shrink-0" />

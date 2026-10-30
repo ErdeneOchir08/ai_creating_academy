@@ -4,8 +4,10 @@ import * as React from "react"
 import { Eye, EyeOff } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { useTranslations } from "@/components/language-provider"
 
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+  const t = useTranslations()
   const [visible, setVisible] = React.useState(false)
   const isPassword = type === "password"
   const generatedId = React.useId()
@@ -33,10 +35,10 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
       {input}
       <button
         type="button"
-        aria-label={visible ? "Нууц үг нуух" : "Нууц үг харуулах"}
+        aria-label={visible ? t("Нууц үг нуух") : t("Нууц үг харуулах")}
         aria-controls={inputId}
         aria-pressed={visible}
-        title={visible ? "Нууц үг нуух" : "Нууц үг харуулах"}
+        title={visible ? t("Нууц үг нуух") : t("Нууц үг харуулах")}
         disabled={props.disabled}
         onClick={() => setVisible((current) => !current)}
         className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-md text-zinc-400 hover:text-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"

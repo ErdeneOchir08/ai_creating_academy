@@ -1,3 +1,4 @@
+import { getTranslations } from '@/lib/i18n/server'
 import { LoginForm } from '@/features/auth/components/login-form'
 import { Sparkles } from 'lucide-react'
 import Link from 'next/link'
@@ -8,6 +9,8 @@ export default async function LoginPage({
 }: {
     searchParams: Promise<{ next?: string | string[] }>
 }) {
+    const t = await getTranslations()
+
     const returnPath = getSafeReturnPath((await searchParams).next)
 
     return (
@@ -30,16 +33,11 @@ export default async function LoginPage({
                         </span>
                     </Link>
 
-                    <h1 className="text-4xl lg:text-5xl font-extrabold text-white mb-6 leading-tight">
-                        Тавтай морилно уу! <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
-                            Бүтээгчийн Аялал
-                        </span>
+                    <h1 className="text-4xl lg:text-5xl font-extrabold text-white mb-6 leading-tight">{t("Тавтай морилно уу!")} <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">{t("Бүтээгчийн Аялал")}</span>
                     </h1>
 
-                    <p className="text-lg text-zinc-400 mb-8 leading-relaxed">
-                        Нэвтэрч ороод хичээлүүдээ үргэлжлүүлж, асуулт асууж, AI аппликейшн бүтээх урлагт суралцаарай.
-                    </p>
+                    <p className="text-lg text-zinc-400 mb-8 leading-relaxed">{t("Нэвтэрч ороод хичээлүүдээ үргэлжлүүлж, асуулт асууж, AI аппликейшн бүтээх урлагт суралцаарай.")}</p>
 
                     <div className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800/50 backdrop-blur-sm relative overflow-hidden">
                         <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 pointer-events-none" />
@@ -48,8 +46,8 @@ export default async function LoginPage({
                                 🚀
                             </div>
                             <div>
-                                <h4 className="text-white font-semibold">Бүтээхэд бэлэн үү?</h4>
-                                <p className="text-zinc-400 text-sm">AI апп бүтээж буй мянга мянган суралцагчидтай нэгд.</p>
+                                <h4 className="text-white font-semibold">{t("Бүтээхэд бэлэн үү?")}</h4>
+                                <p className="text-zinc-400 text-sm">{t("AI апп бүтээж буй мянга мянган суралцагчидтай нэгд.")}</p>
                             </div>
                         </div>
                     </div>
@@ -68,9 +66,7 @@ export default async function LoginPage({
                     <div className="lg:hidden flex justify-center mb-8">
                         <Link href="/" className="inline-flex items-center gap-2">
                             <Sparkles className="h-6 w-6 text-indigo-400" />
-                            <span className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-                                Академи
-                            </span>
+                            <span className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">{t("Академи")}</span>
                         </Link>
                     </div>
 

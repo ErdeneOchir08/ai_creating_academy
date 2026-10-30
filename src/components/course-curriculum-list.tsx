@@ -1,3 +1,6 @@
+'use client'
+
+import { useTranslations } from '@/components/language-provider'
 import { Lock, PlayCircle } from 'lucide-react'
 import Link from 'next/link'
 import { lessonDisplayLabel } from '@/features/courses/domain/lesson-display-code'
@@ -11,10 +14,12 @@ type Lesson = {
 }
 
 export function CourseCurriculumList({ lessons, courseId }: { lessons: Lesson[]; courseId: string }) {
+    const t = useTranslations()
+
     if (!lessons.length) {
         return (
             <div className="text-center py-8 bg-zinc-900/50 rounded-xl border border-zinc-800">
-                <p className="text-zinc-400">Хичээлийн агуулгыг шинэчилж байна. Удахгүй дахин шалгана уу.</p>
+                <p className="text-zinc-400">{t("Хичээлийн агуулгыг шинэчилж байна. Удахгүй дахин шалгана уу.")}</p>
             </div>
         )
     }
@@ -40,7 +45,7 @@ export function CourseCurriculumList({ lessons, courseId }: { lessons: Lesson[];
                         </div>
                         <div className={`flex items-center gap-2 text-sm ${lesson.is_preview ? 'font-semibold text-indigo-300' : 'text-zinc-500'}`}>
                             {lesson.is_preview ? <PlayCircle className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
-                            <span className="hidden sm:inline">{lesson.is_preview ? 'Үнэгүй үзэх' : 'Төлбөрийн дараа'}</span>
+                            <span className="hidden sm:inline">{lesson.is_preview ? t("Үнэгүй үзэх") : t("Төлбөрийн дараа")}</span>
                         </div>
                     </div>
                 )

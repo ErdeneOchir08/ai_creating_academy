@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from '@/components/language-provider'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { BookOpen, PieChart, LogOut, Compass, Settings, MessageSquareText } from 'lucide-react'
@@ -30,6 +31,8 @@ const studentLinks = [
 ]
 
 export function StudentSidebar({ isMobile = false }: { isMobile?: boolean }) {
+    const t = useTranslations()
+
     const pathname = usePathname()
 
     return (
@@ -39,7 +42,7 @@ export function StudentSidebar({ isMobile = false }: { isMobile?: boolean }) {
         )}>
             <div className="p-6 border-b border-zinc-800">
                 <Link href="/dashboard" className="flex flex-col gap-1 transition-transform hover:scale-105 active:scale-95 origin-left">
-                    <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">Суралцагчийн Самбар</span>
+                    <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">{t("Суралцагчийн Самбар")}</span>
                     <span className="text-xs text-zinc-500 font-medium">Mind Academy</span>
                 </Link>
             </div>
@@ -61,7 +64,7 @@ export function StudentSidebar({ isMobile = false }: { isMobile?: boolean }) {
                             )}
                         >
                             <Icon className="h-4 w-4" />
-                            {link.name}
+                            {t(link.name)}
                         </Link>
                     )
                 })}
@@ -70,15 +73,11 @@ export function StudentSidebar({ isMobile = false }: { isMobile?: boolean }) {
             <div className="p-4 border-t border-white/5 space-y-3">
                 <Button variant="outline" className="w-full justify-start border-white/10 bg-white/5 text-zinc-300 hover:text-white hover:bg-white/10 transition-all" asChild>
                     <Link href="/">
-                        <Compass className="h-4 w-4 mr-2" />
-                        Хичээл үзэх
-                    </Link>
+                        <Compass className="h-4 w-4 mr-2" />{t("Хичээл үзэх")}</Link>
                 </Button>
                 <form action="/api/auth/signout" method="post">
                     <Button type="submit" variant="ghost" className="w-full justify-start text-zinc-400 hover:text-white hover:bg-red-950/30 hover:text-red-400">
-                        <LogOut className="h-4 w-4 mr-2" />
-                        Гарах
-                    </Button>
+                        <LogOut className="h-4 w-4 mr-2" />{t("Гарах")}</Button>
                 </form>
             </div>
         </aside>

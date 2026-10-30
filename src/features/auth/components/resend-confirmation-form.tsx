@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from '@/components/language-provider'
 import { useEffect, useRef, useState } from 'react'
 import { resendConfirmation } from '@/features/auth/actions/auth-actions'
 import { Button } from '@/components/ui/button'
@@ -10,6 +11,8 @@ import { EmailDeliveryHelp } from './email-delivery-help'
 export function ResendConfirmationForm({ email, returnPath, requestedAt }: {
     email: string; returnPath: string | null; requestedAt: number
 }) {
+    const t = useTranslations()
+
     const [remaining, setRemaining] = useState(60)
     const [pending, setPending] = useState(false)
     const [result, setResult] = useState<{ error?: string; success?: string }>({})
@@ -42,14 +45,14 @@ export function ResendConfirmationForm({ email, returnPath, requestedAt }: {
     return (
         <form action={submit} className="space-y-3 border-t border-zinc-800 p-6">
             <EmailDeliveryHelp />
-            <Label htmlFor="confirmation-email">Баталгаажуулах и-мэйл хаяг</Label>
+            <Label htmlFor="confirmation-email">{t("Баталгаажуулах и-мэйл хаяг")}</Label>
             <Input id="confirmation-email" name="email" type="email" autoComplete="email" defaultValue={email} required maxLength={254} />
             {returnPath && <input type="hidden" name="next" value={returnPath} />}
             <Button type="submit" variant="outline" className="h-auto min-h-11 w-full whitespace-normal" disabled={pending || remaining > 0}>
-                {pending ? 'Илгээж байна…' : remaining > 0 ? `Дахин илгээх хүртэл ${remaining} секунд` : 'Баталгаажуулах и-мэйл дахин илгээх'}
+                {pending ? t("Илгээж байна…") : remaining > 0 ? t("Дахин илгээх хүртэл {value0} секунд", { value0: remaining }) : t("Баталгаажуулах и-мэйл дахин илгээх")}
             </Button>
-            {result.error && <p role="alert" className="text-sm text-red-400">{result.error}</p>}
-            {result.success && <p role="status" className="text-sm text-emerald-300">{result.success}</p>}
+            {result.error && <p role="alert" className="text-sm text-red-400">{t(result.error)}</p>}
+            {result.success && <p role="status" className="text-sm text-emerald-300">{t(result.success)}</p>}
         </form>
     )
 }

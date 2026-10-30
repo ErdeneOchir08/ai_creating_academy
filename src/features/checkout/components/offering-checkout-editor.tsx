@@ -1,5 +1,7 @@
 'use client'
 
+import { useLocale, useTranslations } from '@/components/language-provider'
+import { formatAcademyDateTime } from '@/lib/i18n/format'
 import { useMemo, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, CheckCircle2, CircleAlert, Clock3, Copy, FileCheck2, MailCheck, Plus, ShieldCheck, Upload } from 'lucide-react'
@@ -82,6 +84,8 @@ export function OfferingCheckoutEditor({
     initialApplicationId?: string
     newClientRequestId: string
 }) {
+    const t = useTranslations()
+
     const router = useRouter()
     const detailsFormRef = useRef<HTMLFormElement>(null)
     const [pending, startTransition] = useTransition()
@@ -273,7 +277,7 @@ export function OfferingCheckoutEditor({
                 <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 sm:p-5">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                         <label className="min-w-0 flex-1 space-y-2 text-sm text-zinc-300">
-                            <span className="font-medium">Элсэлтийн хүсэлт</span>
+                            <span className="font-medium">{t("Элсэлтийн хүсэлт")}</span>
                             <select
                                 value={selectedApplicationId ?? ''}
                                 onChange={(event) => {
@@ -282,17 +286,16 @@ export function OfferingCheckoutEditor({
                                 }}
                                 className="h-11 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-white"
                             >
-                                {!selectedApplicationId && <option value="">Шинэ суралцагч</option>}
+                                {!selectedApplicationId && <option value="">{t("Шинэ суралцагч")}</option>}
                                 {checkout.my_applications.map((application) => (
                                     <option key={application.application_id} value={application.application_id}>
-                                        {application.learner.full_name} · {statusLabels[application.application_status]}
+                                        {application.learner.full_name} · {t(statusLabels[application.application_status])}
                                     </option>
                                 ))}
                             </select>
                         </label>
                         <Button type="button" variant="outline" onClick={newLearner}>
-                            <Plus className="mr-2 h-4 w-4" />Өөр суралцагч элсүүлэх
-                        </Button>
+                            <Plus className="mr-2 h-4 w-4" />{t("Өөр суралцагч элсүүлэх")}</Button>
                     </div>
                 </section>
             )}
@@ -306,18 +309,16 @@ export function OfferingCheckoutEditor({
                     <form ref={detailsFormRef} className="space-y-7 rounded-2xl border border-zinc-800 bg-zinc-950 p-5 sm:p-7">
                         <input type="hidden" name="client_request_id" value={clientRequestId} />
                         <header>
-                            <p className="text-sm font-medium text-indigo-400">1-р алхам</p>
-                            <h2 className="mt-1 text-xl font-semibold">Суралцагчийн мэдээлэл</h2>
-                            <p className="mt-2 text-sm leading-relaxed text-zinc-400">
-                                Суралцагч болон нэвтэрсэн бүртгэл тусдаа хадгалагдана. Хичээл үзэх эрх эхний ээлжид {userEmail} бүртгэлд нээгдэнэ.
-                            </p>
+                            <p className="text-sm font-medium text-indigo-400">{t("1-р алхам")}</p>
+                            <h2 className="mt-1 text-xl font-semibold">{t("Суралцагчийн мэдээлэл")}</h2>
+                            <p className="mt-2 text-sm leading-relaxed text-zinc-400">{t("Суралцагч болон нэвтэрсэн бүртгэл тусдаа хадгалагдана. Хичээл үзэх эрх эхний ээлжид")} {userEmail} {t("бүртгэлд нээгдэнэ.")}</p>
                         </header>
 
                         <div className="grid gap-5 sm:grid-cols-2">
-                            <Field label="Суралцагчийн овог нэр" required>
+                            <Field label={t("Суралцагчийн овог нэр")} required>
                                 <Input name="learner_full_name" required maxLength={240} value={learnerFullName} onChange={(event) => setLearnerFullName(event.target.value)} disabled={detailsLocked} />
                             </Field>
-                            <Field label="Суралцагчтай ямар холбоотой вэ?" required>
+                            <Field label={t("Суралцагчтай ямар холбоотой вэ?")} required>
                                 <select
                                     name="applicant_relationship"
                                     required
@@ -326,20 +327,20 @@ export function OfferingCheckoutEditor({
                                     disabled={detailsLocked || signerRole === 'self'}
                                     className="h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-100 disabled:opacity-60"
                                 >
-                                    {signerRole !== 'guardian' && <option value="self">Өөрөө</option>}
-                                    <option value="parent">Эцэг, эх</option>
-                                    <option value="guardian">Хууль ёсны асран хамгаалагч</option>
-                                    {checkout.contract_policy === 'none' && <option value="other">Бусад</option>}
+                                    {signerRole !== 'guardian' && <option value="self">{t("Өөрөө")}</option>}
+                                    <option value="parent">{t("Эцэг, эх")}</option>
+                                    <option value="guardian">{t("Хууль ёсны асран хамгаалагч")}</option>
+                                    {checkout.contract_policy === 'none' && <option value="other">{t("Бусад")}</option>}
                                 </select>
                             </Field>
                             <Field
-                                label="Төрсөн огноо"
+                                label={t("Төрсөн огноо")}
                                 required={checkout.contract_policy === 'required'}
-                                hint={checkout.contract_policy === 'none' ? 'Заавал биш' : 'Хэн гэрээ зөвшөөрөхийг автоматаар тодорхойлно.'}
+                                hint={checkout.contract_policy === 'none' ? t("Заавал биш") : t("Хэн гэрээ зөвшөөрөхийг автоматаар тодорхойлно.")}
                             >
                                 <Input type="date" name="learner_birth_date" required={checkout.contract_policy === 'required'} max={currentDate} value={learnerBirthDate} onChange={(event) => setLearnerBirthDate(event.target.value)} disabled={detailsLocked} className="[color-scheme:dark]" />
                             </Field>
-                            <Field label="Регистрийн дугаар" required={checkout.contract_policy === 'required'} hint={checkout.contract_policy === 'none' ? 'Заавал биш' : undefined}>
+                            <Field label={t("Регистрийн дугаар")} required={checkout.contract_policy === 'required'} hint={checkout.contract_policy === 'none' ? t("Заавал биш") : undefined}>
                                 <Input name="learner_registration_number" required={checkout.contract_policy === 'required'} maxLength={50} value={learnerRegistrationNumber} onChange={(event) => setLearnerRegistrationNumber(event.target.value)} disabled={detailsLocked} />
                             </Field>
                         </div>
@@ -347,33 +348,33 @@ export function OfferingCheckoutEditor({
                         {checkout.contract_policy === 'required' && signerRole && (
                             <section className="space-y-5 border-t border-zinc-800 pt-6">
                                 <div>
-                                    <h3 className="font-semibold">Гэрээ зөвшөөрөх хүн</h3>
+                                    <h3 className="font-semibold">{t("Гэрээ зөвшөөрөх хүн")}</h3>
                                     <p className="mt-2 rounded-xl border border-indigo-500/20 bg-indigo-500/10 p-3 text-sm text-indigo-100">
                                         {signerRole === 'self'
-                                            ? 'Суралцагч 18 нас хүрсэн тул гэрээг өөрөө зөвшөөрнө.'
-                                            : 'Суралцагч 18 нас хүрээгүй тул эцэг, эх эсвэл хууль ёсны асран хамгаалагч гэрээг зөвшөөрнө.'}
+                                            ? t("Суралцагч 18 нас хүрсэн тул гэрээг өөрөө зөвшөөрнө.")
+                                            : t("Суралцагч 18 нас хүрээгүй тул эцэг, эх эсвэл хууль ёсны асран хамгаалагч гэрээг зөвшөөрнө.")}
                                     </p>
                                 </div>
                                 {signerRole === 'self' ? (
                                     <div className="grid gap-4 rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 text-sm sm:grid-cols-2">
-                                        <Summary label="Овог нэр" value={learnerFullName} />
-                                        <Summary label="И-мэйл" value={userEmail} />
-                                        <Field label="Утасны дугаар" required>
+                                        <Summary label={t("Овог нэр")} value={learnerFullName} />
+                                        <Summary label={t("И-мэйл")} value={userEmail} />
+                                        <Field label={t("Утасны дугаар")} required>
                                             <Input name="signer_phone" required maxLength={50} value={signerPhone} onChange={(event) => setSignerPhone(event.target.value)} disabled={detailsLocked} autoComplete="tel" />
                                         </Field>
                                     </div>
                                 ) : (
                                     <div className="grid gap-5 sm:grid-cols-2">
-                                        <Field label="Овог нэр" required>
+                                        <Field label={t("Овог нэр")} required>
                                             <Input name="signer_full_name" required maxLength={240} value={signerFullName} onChange={(event) => setSignerFullName(event.target.value)} disabled={detailsLocked} autoComplete="name" />
                                         </Field>
-                                        <Field label="И-мэйл" required hint="Шаардлагатай үед 6 оронтой код энэ хаягт очно.">
+                                        <Field label={t("И-мэйл")} required hint={t("Шаардлагатай үед 6 оронтой код энэ хаягт очно.")}>
                                             <Input type="email" name="signer_email" required maxLength={320} value={signerEmail} onChange={(event) => setSignerEmail(event.target.value)} disabled={detailsLocked} autoComplete="email" />
                                         </Field>
-                                        <Field label="Утасны дугаар" required>
+                                        <Field label={t("Утасны дугаар")} required>
                                             <Input name="signer_phone" required maxLength={50} value={signerPhone} onChange={(event) => setSignerPhone(event.target.value)} disabled={detailsLocked} autoComplete="tel" />
                                         </Field>
-                                        <Field label="Регистрийн дугаар" required>
+                                        <Field label={t("Регистрийн дугаар")} required>
                                             <Input name="signer_registration_number" required maxLength={50} value={signerRegistrationNumber} onChange={(event) => setSignerRegistrationNumber(event.target.value)} disabled={detailsLocked} />
                                         </Field>
                                     </div>
@@ -401,11 +402,11 @@ export function OfferingCheckoutEditor({
                         {checkout.contract_policy === 'required' && signerRole && !contractFinalized && (
                             <section className="space-y-4 border-t border-zinc-800 pt-6">
                                 <div>
-                                    <p className="text-sm font-medium text-indigo-400">2-р алхам</p>
-                                    <h3 className="mt-1 font-semibold">Гэрээг хянаж зөвшөөрөх</h3>
+                                    <p className="text-sm font-medium text-indigo-400">{t("2-р алхам")}</p>
+                                    <h3 className="mt-1 font-semibold">{t("Гэрээг хянаж зөвшөөрөх")}</h3>
                                 </div>
                                 <details className="rounded-xl border border-zinc-800 bg-zinc-900/40">
-                                    <summary className="cursor-pointer px-5 py-4 text-sm font-medium">Гэрээг бүтнээр нь харах</summary>
+                                    <summary className="cursor-pointer px-5 py-4 text-sm font-medium">{t("Гэрээг бүтнээр нь харах")}</summary>
                                     <pre className="max-h-[32rem] overflow-auto whitespace-pre-wrap break-words border-t border-zinc-800 p-5 font-sans text-sm leading-7 text-zinc-300">
                                         {contractPreview}
                                     </pre>
@@ -422,10 +423,8 @@ export function OfferingCheckoutEditor({
                                 <div className="flex gap-3">
                                     <FileCheck2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
                                     <div>
-                                        <h3 className="font-semibold text-emerald-100">Гэрээ баталгаажсан</h3>
-                                        <p className="mt-1 text-sm text-emerald-100/70">
-                                            Гэрээний мэдээлэл өөрчлөгдөхгүй хадгалагдсан. Одоо төлбөрийн баримтаа илгээнэ үү.
-                                        </p>
+                                        <h3 className="font-semibold text-emerald-100">{t("Гэрээ баталгаажсан")}</h3>
+                                        <p className="mt-1 text-sm text-emerald-100/70">{t("Гэрээний мэдээлэл өөрчлөгдөхгүй хадгалагдсан. Одоо төлбөрийн баримтаа илгээнэ үү.")}</p>
                                     </div>
                                 </div>
                             </section>
@@ -437,15 +436,14 @@ export function OfferingCheckoutEditor({
                                 <div className="flex gap-3">
                                     <MailCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
                                     <div>
-                                        <h3 className="font-semibold">И-мэйл кодоо оруулна уу</h3>
-                                        <p className="mt-1 text-sm text-emerald-100/70">{verification.maskedEmail} хаягт илгээсэн код {verification.expiresInMinutes} минут хүчинтэй.</p>
+                                        <h3 className="font-semibold">{t("И-мэйл кодоо оруулна уу")}</h3>
+                                        <p className="mt-1 text-sm text-emerald-100/70">{verification.maskedEmail} {t("хаягт илгээсэн код")} {verification.expiresInMinutes} {t("минут хүчинтэй.")}</p>
                                     </div>
                                 </div>
                                 <div className="flex flex-col gap-3 sm:flex-row">
                                     <Input name="verification_code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required className="text-center tracking-[0.3em] sm:max-w-52" />
                                     <Button type="button" disabled={pending} onClick={() => detailsFormRef.current?.reportValidity() && acceptContract()} className="bg-emerald-600 hover:bg-emerald-700">
-                                        <ShieldCheck className="mr-2 h-4 w-4" />Код баталгаажуулах
-                                    </Button>
+                                        <ShieldCheck className="mr-2 h-4 w-4" />{t("Код баталгаажуулах")}</Button>
                                 </div>
                             </section>
                         )}
@@ -453,18 +451,18 @@ export function OfferingCheckoutEditor({
                         <div className="flex flex-wrap gap-3 border-t border-zinc-800 pt-5">
                             {checkout.contract_policy === 'none' ? (
                                 <Button type="button" disabled={pending || detailsLocked} onClick={() => detailsFormRef.current?.reportValidity() && saveDetails()}>
-                                    {pending ? 'Хадгалж байна…' : 'Төлбөр рүү үргэлжлүүлэх'}
+                                    {pending ? t("Хадгалж байна…") : t("Төлбөр рүү үргэлжлүүлэх")}
                                 </Button>
                             ) : contractFinalized ? null : !verification ? (
                                 <Button type="button" disabled={pending || detailsLocked || !signerRole} onClick={() => detailsFormRef.current?.reportValidity() && acceptContract()}>
-                                    <FileCheck2 className="mr-2 h-4 w-4" />{pending ? 'Баталгаажуулж байна…' : 'Гэрээг зөвшөөрөх'}
+                                    <FileCheck2 className="mr-2 h-4 w-4" />{pending ? t("Баталгаажуулж байна…") : t("Гэрээг зөвшөөрөх")}
                                 </Button>
                             ) : (
-                                <Button type="button" variant="outline" disabled={pending} onClick={acceptContract}>Код дахин илгээх</Button>
+                                <Button type="button" variant="outline" disabled={pending} onClick={acceptContract}>{t("Код дахин илгээх")}</Button>
                             )}
                         </div>
-                        {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
-                        {message && <p role="status" className="text-sm text-emerald-400">{message}</p>}
+                        {error && <p role="alert" className="text-sm text-red-400">{t(error)}</p>}
+                        {message && <p role="status" className="text-sm text-emerald-400">{t(message)}</p>}
                     </form>
 
                     {paymentReady && (
@@ -492,6 +490,9 @@ function PaymentPanel({
     configuration: PaymentConfiguration
     serverNow: string
 }) {
+    const t = useTranslations()
+    const locale = useLocale()
+
     const router = useRouter()
     const [pending, startTransition] = useTransition()
     const [error, setError] = useState<string | null>(null)
@@ -540,34 +541,31 @@ function PaymentPanel({
 
     return (
         <section className={`rounded-2xl border p-5 sm:p-7 ${overdue ? 'border-red-500/30 bg-red-500/5' : 'border-emerald-500/20 bg-emerald-500/5'}`}>
-            <p className="text-sm font-medium text-emerald-400">{checkout.contract_policy === 'none' ? '2-р алхам' : '3-р алхам'}</p>
-            <h2 className="mt-1 text-xl font-semibold">Төлбөр төлөх</h2>
+            <p className="text-sm font-medium text-emerald-400">{checkout.contract_policy === 'none' ? t("2-р алхам") : t("3-р алхам")}</p>
+            <h2 className="mt-1 text-xl font-semibold">{t("Төлбөр төлөх")}</h2>
             <p className="mt-2 text-3xl font-bold text-emerald-400">₮ {amountMnt.toLocaleString('mn-MN')}</p>
-            {amountMnt !== checkout.tuition_amount_mnt && <p className="mt-2 text-sm text-zinc-400">Таны хүсэлт үүсгэх үеийн үнэ хадгалагдсан.</p>}
+            {amountMnt !== checkout.tuition_amount_mnt && <p className="mt-2 text-sm text-zinc-400">{t("Таны хүсэлт үүсгэх үеийн үнэ хадгалагдсан.")}</p>}
             {checkout.payment_plan && <p className="mt-2 text-sm text-zinc-400">{checkout.payment_plan}</p>}
             {application.payment_due_at && (
-                <p className={`mt-3 text-sm ${overdue ? 'text-red-300' : 'text-zinc-400'}`}>
-                    Эцсийн хугацаа: {new Intl.DateTimeFormat('mn-MN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Ulaanbaatar' }).format(new Date(application.payment_due_at))}
+                <p className={`mt-3 text-sm ${overdue ? 'text-red-300' : 'text-zinc-400'}`}>{t("Эцсийн хугацаа:")} {formatAcademyDateTime(application.payment_due_at, locale)}
                 </p>
             )}
             {overdue && (
                 <div role="alert" className="mt-4 flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-100">
                     <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-red-300" />
                     <div>
-                        <p className="font-semibold">Төлбөрийн хугацаа дууссан</p>
-                        <p className="mt-1 leading-relaxed text-red-100/80">
-                            Төлбөрийн баримт илгээх боломжгүй байна. Хугацааг дахин нээлгэх бол Mind Academy-тай холбогдоно уу.
-                        </p>
+                        <p className="font-semibold">{t("Төлбөрийн хугацаа дууссан")}</p>
+                        <p className="mt-1 leading-relaxed text-red-100/80">{t("Төлбөрийн баримт илгээх боломжгүй байна. Хугацааг дахин нээлгэх бол Mind Academy-тай холбогдоно уу.")}</p>
                     </div>
                 </div>
             )}
             {application.payment?.status === 'correction_required' && application.payment.rejection_reason && (
                 <p className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
-                    <strong>Баримтыг дахин илгээх шалтгаан:</strong> {application.payment.rejection_reason}
+                    <strong>{t("Баримтыг дахин илгээх шалтгаан:")}</strong> {application.payment.rejection_reason}
                 </p>
             )}
             {!overdue && configuration.isTestMode && (
-                <p className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm font-medium text-amber-200">Туршилтын горим идэвхтэй байна. Бодит мөнгө шилжүүлэхгүй.</p>
+                <p className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm font-medium text-amber-200">{t("Туршилтын горим идэвхтэй байна. Бодит мөнгө шилжүүлэхгүй.")}</p>
             )}
             {!overdue && (
                 <>
@@ -584,13 +582,11 @@ function PaymentPanel({
                     )}
                     {configuration.qpayEnabled && configuration.manualTransferEnabled && configured && (
                         <div className="my-5 flex items-center gap-3 text-xs uppercase tracking-wide text-zinc-500">
-                            <span className="h-px flex-1 bg-zinc-800" />
-                            Эсвэл банкны шилжүүлэг
-                            <span className="h-px flex-1 bg-zinc-800" />
+                            <span className="h-px flex-1 bg-zinc-800" />{t("Эсвэл банкны шилжүүлэг")}<span className="h-px flex-1 bg-zinc-800" />
                         </div>
                     )}
                     {configuration.manualTransferEnabled && <div className="mt-5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-4">
-                        <p className="text-xs font-medium uppercase tracking-wide text-indigo-300">Гүйлгээний утга</p>
+                        <p className="text-xs font-medium uppercase tracking-wide text-indigo-300">{t("Гүйлгээний утга")}</p>
                         <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <code className="select-all break-all text-xl font-bold tracking-wider text-white">
                                 {application.payment_reference}
@@ -603,33 +599,29 @@ function PaymentPanel({
                                 className="shrink-0 border-indigo-400/40 bg-transparent text-white hover:bg-indigo-500/20 hover:text-white"
                             >
                                 {copiedReference === application.payment_reference
-                                    ? <><Check className="mr-2 h-4 w-4" />Хуулсан</>
-                                    : <><Copy className="mr-2 h-4 w-4" />Хуулах</>}
+                                    ? <><Check className="mr-2 h-4 w-4" />{t("Хуулсан")}</>
+                                    : <><Copy className="mr-2 h-4 w-4" />{t("Хуулах")}</>}
                             </Button>
                         </div>
-                        <p className="mt-2 text-sm leading-relaxed text-indigo-100/80">
-                            Банкны шилжүүлгийн утга хэсэгт дээрх кодыг өөрчлөлгүй оруулна уу. Ингэснээр админ таны төлбөрийг зөв хүсэлттэй тулгана.
-                        </p>
+                        <p className="mt-2 text-sm leading-relaxed text-indigo-100/80">{t("Банкны шилжүүлгийн утга хэсэгт дээрх кодыг өөрчлөлгүй оруулна уу. Ингэснээр админ таны төлбөрийг зөв хүсэлттэй тулгана.")}</p>
                     </div>}
                     {configuration.manualTransferEnabled && (configured ? (
                         <div className="mt-4 whitespace-pre-wrap rounded-xl border border-zinc-800 bg-zinc-950 p-4 text-sm leading-6 text-zinc-200">{configuration.instructions}</div>
                     ) : (
-                        <p className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">Төлбөрийн мэдээлэл тохируулагдаагүй байна. Академийн админтай холбогдоно уу.</p>
+                        <p className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">{t("Төлбөрийн мэдээлэл тохируулагдаагүй байна. Академийн админтай холбогдоно уу.")}</p>
                     ))}
                     {configuration.manualTransferEnabled && <form onSubmit={submit} className="mt-5 space-y-4">
-                        <Field label="Төлбөрийн баримтын зураг" required hint="JPG, PNG эсвэл WebP; хамгийн ихдээ 10 MB.">
+                        <Field label={t("Төлбөрийн баримтын зураг")} required hint={t("JPG, PNG эсвэл WebP; хамгийн ихдээ 10 MB.")}>
                             <Input name="receipt" type="file" required accept="image/jpeg,image/png,image/webp" />
                         </Field>
                         <Button type="submit" disabled={pending || !configured} className="bg-emerald-600 hover:bg-emerald-700">
-                            <Upload className="mr-2 h-4 w-4" />{pending ? 'Илгээж байна…' : 'Баримт илгээх'}
+                            <Upload className="mr-2 h-4 w-4" />{pending ? t("Илгээж байна…") : t("Баримт илгээх")}
                         </Button>
-                        {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
-                        {message && <p role="status" className="text-sm text-emerald-400">{message}</p>}
+                        {error && <p role="alert" className="text-sm text-red-400">{t(error)}</p>}
+                        {message && <p role="status" className="text-sm text-emerald-400">{t(message)}</p>}
                     </form>}
                     {!configuration.qpayEnabled && !configuration.manualTransferEnabled && (
-                        <p className="mt-5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
-                            Төлбөрийн шинэ хүсэлтийг түр зогсоосон байна. Mind Academy-тай холбогдоно уу.
-                        </p>
+                        <p className="mt-5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">{t("Төлбөрийн шинэ хүсэлтийг түр зогсоосон байна. Mind Academy-тай холбогдоно уу.")}</p>
                     )}
                 </>
             )}
@@ -638,22 +630,26 @@ function PaymentPanel({
 }
 
 function PendingReviewPanel({ application }: { application: SavedOfferingApplication }) {
+    const t = useTranslations()
+
     return (
         <section className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-7 text-center">
             <Clock3 className="mx-auto h-10 w-10 text-amber-400" />
-            <h2 className="mt-4 text-xl font-semibold">Төлбөрийн баримтыг шалгаж байна</h2>
-            <p className="mt-2 text-sm text-zinc-400">{application.learner.full_name}-ийн баримтыг админ шалгасны дараа и-мэйлээр мэдэгдэнэ. Дахин баримт илгээх шаардлагагүй.</p>
+            <h2 className="mt-4 text-xl font-semibold">{t("Төлбөрийн баримтыг шалгаж байна")}</h2>
+            <p className="mt-2 text-sm text-zinc-400">{t("{name}-ийн баримтыг админ шалгасны дараа и-мэйлээр мэдэгдэнэ. Дахин баримт илгээх шаардлагагүй.", { name: application.learner.full_name })}</p>
         </section>
     )
 }
 
 function CompletionPanel({ application, courseTitle }: { application: SavedOfferingApplication; courseTitle: string }) {
+    const t = useTranslations()
+
     return (
         <section className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-7 text-center">
             <CheckCircle2 className="mx-auto h-11 w-11 text-emerald-400" />
-            <h2 className="mt-4 text-2xl font-semibold">Элсэлт баталгаажлаа</h2>
-            <p className="mt-2 text-zinc-300">{application.learner.full_name}-ийн “{courseTitle}” хичээл үзэх эрх нээгдсэн.</p>
-            <Button asChild className="mt-5"><a href="/dashboard/courses">Миний хичээлүүд рүү очих</a></Button>
+            <h2 className="mt-4 text-2xl font-semibold">{t("Элсэлт баталгаажлаа")}</h2>
+            <p className="mt-2 text-zinc-300">{t("{name}-ийн “{course}” хичээл үзэх эрх нээгдсэн.", { name: application.learner.full_name, course: courseTitle })}</p>
+            <Button asChild className="mt-5"><a href="/dashboard/courses">{t("Миний хичээлүүд рүү очих")}</a></Button>
         </section>
     )
 }

@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from '@/components/language-provider'
 import { useEffect, useRef } from 'react'
 
 type StudentProject = {
@@ -10,6 +11,8 @@ type StudentProject = {
 }
 
 export function ProjectShowcaseSlider({ projects }: { projects: StudentProject[] }) {
+    const t = useTranslations()
+
     const scrollerRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
@@ -35,12 +38,9 @@ export function ProjectShowcaseSlider({ projects }: { projects: StudentProject[]
             <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-zinc-950 to-transparent z-10 hidden md:block" />
 
             <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 mb-12 text-center relative z-20">
-                <h2 className="text-3xl md:text-5xl font-bold tracking-tighter text-white mb-4">
-                    Манай <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">суралцагчдын бүтээл</span>
+                <h2 className="text-3xl md:text-5xl font-bold tracking-tighter text-white mb-4">{t("Манай")} <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">{t("суралцагчдын бүтээл")}</span>
                 </h2>
-                <p className="text-zinc-400 max-w-2xl mx-auto text-lg">
-                    Манай академид заасан арга барилыг ашиглан санаагаа бодит болгож чадсан олон зуун бүтээгчидтэй нэгдээрэй.
-                </p>
+                <p className="text-zinc-400 max-w-2xl mx-auto text-lg">{t("Манай академид заасан арга барилыг ашиглан санаагаа бодит болгож чадсан олон зуун бүтээгчидтэй нэгдээрэй.")}</p>
             </div>
 
             <div className="flex w-full mt-10">
@@ -74,7 +74,7 @@ export function ProjectShowcaseSlider({ projects }: { projects: StudentProject[]
                                         <div className="h-6 w-6 rounded-full bg-indigo-500/20 flex items-center justify-center shrink-0 border border-indigo-500/30">
                                             <span className="text-indigo-400 font-bold text-[10px]">{project.student_name.charAt(0).toUpperCase()}</span>
                                         </div>
-                                        <span className="text-sm font-medium">Бүтээсэн: {project.student_name}</span>
+                                        <span className="text-sm font-medium">{t("Бүтээсэн:")} {project.student_name}</span>
                                     </div>
                                 </div>
                             </div>

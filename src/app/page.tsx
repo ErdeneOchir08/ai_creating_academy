@@ -1,3 +1,4 @@
+import { getTranslations } from '@/lib/i18n/server'
 import Link from 'next/link'
 import { getPublishedCourses } from '@/features/courses/actions/course-actions'
 import { CourseCatalog } from '@/features/courses/components/course-catalog'
@@ -11,12 +12,17 @@ import { MorphingBlobs } from '@/components/morphing-blobs'
 import { ScrollSVG } from '@/components/scroll-svg'
 import { getAppSettings } from '@/features/admin/actions/settings-actions.admin'
 
-export const metadata = {
-  title: 'Mind Academy',
-  description: 'AI болон кодчиллын онлайн сургалтын платформ.',
+export async function generateMetadata() {
+  const t = await getTranslations()
+  return {
+    title: 'Mind Academy',
+    description: t('AI болон кодчиллын онлайн сургалтын платформ.'),
+  }
 }
 
 export default async function LandingPage() {
+    const t = await getTranslations()
+
   const courses = await getPublishedCourses()
   const featuredCourses = latestCourses(courses)
   const settings = await getAppSettings() || {}
@@ -41,8 +47,8 @@ export default async function LandingPage() {
       {/* Netflix-style Course Grid */}
       <section id="courses" className="py-20 container mx-auto px-4">
         <div className="mb-10">
-          <h2 className="text-3xl font-bold text-white mb-2">{settings.landing_course_title || 'Онцлох хичээлүүд'}</h2>
-          <p className="text-zinc-400">{settings.landing_course_subtitle || 'Анхан шатнаас AI мэргэжилтэн хүртэлх цогц хөтөлбөр.'}</p>
+          <h2 className="text-3xl font-bold text-white mb-2">{settings.landing_course_title || t("Онцлох хичээлүүд")}</h2>
+          <p className="text-zinc-400">{settings.landing_course_subtitle || t("Анхан шатнаас AI мэргэжилтэн хүртэлх цогц хөтөлбөр.")}</p>
         </div>
 
         {featuredCourses.length > 0 ? (
@@ -50,18 +56,19 @@ export default async function LandingPage() {
             <CourseCatalog courses={featuredCourses} showFilters={false} />
             <div className="mt-10 flex justify-center">
               <Button asChild variant="outline" className="border-indigo-500/40 bg-zinc-950 text-white hover:bg-indigo-600 hover:text-white">
-                <Link href="/programs">Бүх сургалтыг харах</Link>
+                <Link href="/programs">{t("Бүх сургалтыг харах")}</Link>
               </Button>
             </div>
           </>
         ) : (
           <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/50 p-12 text-center flex flex-col items-center">
             <Sparkles className="h-12 w-12 text-zinc-600 mb-4" />
-            <h3 className="text-xl font-semibold text-white mb-2">{settings.landing_empty_title || 'Одоогоор хичээл ороогүй байна'}</h3>
+            <h3 className="text-xl font-semibold text-white mb-2">{settings.landing_empty_title || t("Одоогоор хичээл ороогүй байна")}</h3>
             <p className="text-zinc-500 max-w-md mx-auto whitespace-pre-wrap">
-              {settings.landing_empty_subtitle || "Мэдээллийн санд хичээл нэмэгдээгүй байна. Админ эрхээр нэвтэрч хичээл нэмнэ үү!"}
+              {settings.landing_empty_subtitle || t("Мэдээллийн санд хичээл нэмэгдээгүй байна. Админ эрхээр нэвтэрч хичээл нэмнэ үү!")}
             </p>
           </div>
+          
         )}
       </section>
 

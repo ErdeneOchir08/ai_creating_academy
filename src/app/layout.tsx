@@ -7,27 +7,34 @@ import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import type { Metadata } from 'next'
 import { getConfiguredSiteUrl } from '@/lib/site-url'
+import { getLocale, getTranslations } from '@/lib/i18n/server'
+import { LanguageProvider } from '@/components/language-provider'
 
 const siteUrl = getConfiguredSiteUrl()
 
-export const metadata: Metadata = {
-  metadataBase: siteUrl ? new URL(siteUrl) : undefined,
-  title: {
-    default: 'Mind Academy',
-    template: '%s | Mind Academy',
-  },
-  description: 'AI болон кодчиллын онлайн сургалтын платформ.',
-  robots: siteUrl ? { index: true, follow: true } : { index: false, follow: false },
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations()
+  return {
+    metadataBase: siteUrl ? new URL(siteUrl) : undefined,
+    title: {
+      default: 'Mind Academy',
+      template: '%s | Mind Academy',
+    },
+    description: t('AI болон кодчиллын онлайн сургалтын платформ.'),
+    robots: siteUrl ? { index: true, follow: true } : { index: false, follow: false },
+  }
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const locale = await getLocale()
   return (
-    <html lang="mn" className="dark scroll-smooth">
+    <html lang={locale} className="dark scroll-smooth">
       <body className="min-h-screen bg-background text-foreground antialiased selection:bg-indigo-500/30 selection:text-white" suppressHydrationWarning>
+        <LanguageProvider locale={locale}>
         <NextTopLoader
           color="#6366f1"
           initialPosition={0.08}
@@ -48,6 +55,7 @@ export default function RootLayout({
         </RouteFooter>
         <Analytics />
         <SpeedInsights />
+        </LanguageProvider>
       </body>
     </html>
   )

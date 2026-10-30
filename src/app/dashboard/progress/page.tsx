@@ -1,3 +1,4 @@
+import { getTranslations } from '@/lib/i18n/server'
 import { getUserProgressDashboard } from '@/features/dashboard/actions/progress-dashboard-actions'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -6,17 +7,19 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 export default async function ProgressDashboardPage() {
+    const t = await getTranslations()
+
     const result = await getUserProgressDashboard()
 
     if (result.status === 'unauthenticated') return (
         <div className="p-8 max-w-6xl mx-auto flex items-center justify-center min-h-[60vh]">
-            <p className="text-zinc-500">Та ахицаа харахын тулд нэвтэрч орно уу.</p>
+            <p className="text-zinc-500">{t("Та ахицаа харахын тулд нэвтэрч орно уу.")}</p>
         </div>
     )
 
     if (result.status === 'error') return (
         <div className="p-8 max-w-6xl mx-auto flex items-center justify-center min-h-[60vh]">
-            <p className="text-zinc-500">Ахицын мэдээллийг ачаалж чадсангүй. Түр хүлээгээд дахин оролдоно уу.</p>
+            <p className="text-zinc-500">{t("Ахицын мэдээллийг ачаалж чадсангүй. Түр хүлээгээд дахин оролдоно уу.")}</p>
         </div>
     )
 
@@ -28,13 +31,10 @@ export default async function ProgressDashboardPage() {
         <div className="p-8 max-w-6xl mx-auto space-y-10">
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
-                    <h1 className="mb-2 flex flex-col items-start gap-2 text-2xl font-bold leading-tight text-white sm:flex-row sm:items-center sm:gap-3 sm:text-3xl">
-                        Бүтээгчийн Профайл
-                        <Badge className="shrink-0 whitespace-nowrap border-0 bg-gradient-to-r from-indigo-500 to-purple-500 px-3 py-1 text-sm font-black text-white sm:text-base">
-                            Түвшин {gamification.currentLevel}
+                    <h1 className="mb-2 flex flex-col items-start gap-2 text-2xl font-bold leading-tight text-white sm:flex-row sm:items-center sm:gap-3 sm:text-3xl">{t("Бүтээгчийн Профайл")}<Badge className="shrink-0 whitespace-nowrap border-0 bg-gradient-to-r from-indigo-500 to-purple-500 px-3 py-1 text-sm font-black text-white sm:text-base">{t("Түвшин")} {gamification.currentLevel}
                         </Badge>
                     </h1>
-                    <p className="text-zinc-400">Хичээлүүдээ дуусгаж, шинэ түвшинд хүрээрэй.</p>
+                    <p className="text-zinc-400">{t("Хичээлүүдээ дуусгаж, шинэ түвшинд хүрээрэй.")}</p>
                 </div>
             </header>
 
@@ -48,13 +48,12 @@ export default async function ProgressDashboardPage() {
 
                     <CardHeader className="p-5 pb-2 sm:p-6 sm:pb-2">
                         <div className="mb-2 flex flex-col items-start gap-2 sm:flex-row sm:items-end sm:justify-between">
-                            <CardTitle className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-pink-500 sm:text-2xl">
-                                Нийт {gamification.totalXP.toLocaleString()} XP
+                            <CardTitle className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-pink-500 sm:text-2xl">{t("Нийт")} {gamification.totalXP.toLocaleString()} XP
                             </CardTitle>
                             <span className="text-xs font-medium text-zinc-500 sm:text-sm sm:uppercase sm:tracking-widest">
                                 {courses.length === 0
-                                    ? 'XP цуглуулж эхлээрэй'
-                                    : `${gamification.currentLevel + 1}-р түвшинд хүрэхэд ${gamification.xpForNextLevel - gamification.xpIntoCurrentLevel} XP дутуу`}
+                                    ? t("XP цуглуулж эхлээрэй")
+                                    : t("{value0}-р түвшинд хүрэхэд {value1} XP дутуу", { value0: gamification.currentLevel + 1, value1: gamification.xpForNextLevel - gamification.xpIntoCurrentLevel })}
                             </span>
                         </div>
                     </CardHeader>
@@ -71,7 +70,7 @@ export default async function ProgressDashboardPage() {
                         <Trophy className="h-8 w-8 text-indigo-400" />
                     </div>
                     <CardTitle className="text-4xl mb-1">{gamification.totalCompletedLessons}</CardTitle>
-                    <CardDescription className="text-zinc-400 font-medium">Эзэмшсэн хичээлүүд</CardDescription>
+                    <CardDescription className="text-zinc-400 font-medium">{t("Эзэмшсэн хичээлүүд")}</CardDescription>
                 </Card>
             </div>
 
@@ -79,8 +78,7 @@ export default async function ProgressDashboardPage() {
             {focalCourse && (
                 <div className="mt-12">
                     <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                        <PlayCircle className="h-5 w-5 text-indigo-400" /> Үргэлжлүүлэн суралцах
-                    </h2>
+                        <PlayCircle className="h-5 w-5 text-indigo-400" /> {t("Үргэлжлүүлэн суралцах")}</h2>
 
                     <div className="group relative rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden hover:border-indigo-500/50 transition-colors shadow-none hover:shadow-2xl hover:shadow-indigo-500/10 block cursor-pointer">
                         <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -99,12 +97,12 @@ export default async function ProgressDashboardPage() {
                             <div className="flex-1 w-full space-y-4">
                                 <div>
                                     <Badge variant="outline" className="text-indigo-400 border-indigo-500/30 bg-indigo-500/5 mb-3">{focalCourse.title}</Badge>
-                                    <h3 className="text-2xl font-bold text-white leading-tight">Дараагийн: {focalCourse.nextLessonTitle || 'Үргэлжлүүлэн суралцах'}</h3>
+                                    <h3 className="text-2xl font-bold text-white leading-tight">{t("Дараагийн:")} {focalCourse.nextLessonTitle || t("Үргэлжлүүлэн суралцах")}</h3>
                                 </div>
 
                                 <div className="max-w-md">
                                     <div className="flex justify-between items-center mb-2 text-sm text-zinc-400 font-medium tracking-wide">
-                                        <span>Хичээлийн ахиц</span>
+                                        <span>{t("Хичээлийн ахиц")}</span>
                                         <span>{focalCourse.percentage}%</span>
                                     </div>
                                     <Progress value={focalCourse.percentage} className="h-2 bg-zinc-950" />
@@ -112,8 +110,7 @@ export default async function ProgressDashboardPage() {
 
                                 <div className="pt-2">
                                     <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold px-8 shadow-lg shadow-indigo-500/20 group-hover:translate-x-1 transition-transform">
-                                        <Link href={`/courses/${focalCourse.courseId}`}>
-                                            Үргэлжлүүлэх <ChevronRight className="ml-2 h-4 w-4" />
+                                        <Link href={`/courses/${focalCourse.courseId}`}>{t("Үргэлжлүүлэх")} <ChevronRight className="ml-2 h-4 w-4" />
                                         </Link>
                                     </Button>
                                 </div>
@@ -126,17 +123,17 @@ export default async function ProgressDashboardPage() {
             {/* Individual Course Mastery Badges */}
             <div className="mt-16">
                 <div className="flex items-center justify-between mb-8">
-                    <h2 className="text-xl font-bold text-white">Хичээл эзэмшилт</h2>
-                    <span className="text-sm font-medium text-zinc-500">{courses.length} Идэвхтэй хичээл</span>
+                    <h2 className="text-xl font-bold text-white">{t("Хичээл эзэмшилт")}</h2>
+                    <span className="text-sm font-medium text-zinc-500">{courses.length} {t("Идэвхтэй хичээл")}</span>
                 </div>
 
                 {courses.length === 0 ? (
                     <div className="text-center p-12 bg-zinc-900/50 rounded-xl border border-zinc-800 border-dashed">
                         <Flame className="h-12 w-12 text-zinc-600 mx-auto mb-4 opacity-50" />
-                        <h3 className="text-lg font-medium text-white mb-2">Таны аялал эндээс эхэлнэ</h3>
-                        <p className="text-zinc-400 mb-6">Мастеркласст элсэн орж эхний XP-ээ цуглуулаарай!</p>
+                        <h3 className="text-lg font-medium text-white mb-2">{t("Таны аялал эндээс эхэлнэ")}</h3>
+                        <p className="text-zinc-400 mb-6">{t("Мастеркласст элсэн орж эхний XP-ээ цуглуулаарай!")}</p>
                         <Button asChild className="bg-indigo-600 text-white hover:bg-indigo-700">
-                            <Link href="/#courses">Каталог үзэх</Link>
+                            <Link href="/#courses">{t("Каталог үзэх")}</Link>
                         </Button>
                     </div>
                 ) : (
@@ -144,7 +141,7 @@ export default async function ProgressDashboardPage() {
                         {courses.map((course) => (
                             <Card key={course.courseId} className={`bg-zinc-900 border-zinc-800 text-white overflow-hidden hover:border-zinc-600 transition-colors h-full flex flex-col relative ${course.percentage === 100 ? 'border-amber-500/30' : ''}`}>
                                 <Link href={`/courses/${course.courseId}`} className="absolute inset-0 z-10">
-                                    <span className="sr-only">Хичээл рүү очих</span>
+                                    <span className="sr-only">{t("Хичээл рүү очих")}</span>
                                 </Link>
                                 {course.percentage === 100 && (
                                     <div className="absolute top-0 right-0 bg-gradient-to-bl from-amber-500/20 to-transparent p-6 rounded-bl-3xl pointer-events-none">
@@ -154,8 +151,7 @@ export default async function ProgressDashboardPage() {
                                 <div className="p-6 flex-1">
                                     <h3 className="font-bold text-lg mb-2 pr-8 leading-tight line-clamp-2">{course.title}</h3>
                                     <p className="text-sm text-zinc-400">
-                                        {course.completedLessons} / {course.totalLessons} Хичээл
-                                    </p>
+                                        {course.completedLessons} / {course.totalLessons} {t("Хичээл")}</p>
                                 </div>
                                 <div className="px-6 pb-6 mt-auto flex flex-col gap-4">
                                     <div className="flex items-center gap-4">
@@ -163,7 +159,7 @@ export default async function ProgressDashboardPage() {
                                         <span className={`text-sm font-bold w-12 text-right ${course.percentage === 100 ? 'text-amber-500' : 'text-zinc-300'}`}>{course.percentage}%</span>
                                     </div>
                                     <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white transition-all duration-300 rounded-xl font-bold h-12 text-md">
-                                        {course.percentage === 100 ? 'Хичээл давтах' : 'Хичээл үзэх'}
+                                        {course.percentage === 100 ? t("Хичээл давтах") : t("Хичээл үзэх")}
                                     </Button>
                                 </div>
                             </Card>

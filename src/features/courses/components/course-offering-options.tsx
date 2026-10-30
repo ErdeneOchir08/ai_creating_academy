@@ -1,3 +1,6 @@
+'use client'
+
+import { useTranslations } from '@/components/language-provider'
 import Link from 'next/link'
 import { CalendarDays, FileText, MapPin, Monitor, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -25,19 +28,17 @@ export function CourseOfferingOptions({
     lookupFailed?: boolean
     compact?: boolean
 }) {
+    const t = useTranslations()
+
     if (lookupFailed) {
         return (
-            <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-4 text-center text-sm leading-relaxed text-amber-100">
-                Элсэлтийн мэдээллийг одоогоор ачаалж чадсангүй. Түр хүлээгээд дахин оролдоно уу.
-            </div>
+            <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-4 text-center text-sm leading-relaxed text-amber-100">{t("Элсэлтийн мэдээллийг одоогоор ачаалж чадсангүй. Түр хүлээгээд дахин оролдоно уу.")}</div>
         )
     }
 
     if (offerings.length === 0) {
         return (
-            <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-4 text-center text-sm leading-relaxed text-amber-100">
-                Одоогоор энэ хичээлийн нээлттэй элсэлт алга. Дараагийн элсэлтийн мэдээллийг удахгүй нийтэлнэ.
-            </div>
+            <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-4 text-center text-sm leading-relaxed text-amber-100">{t("Одоогоор энэ хичээлийн нээлттэй элсэлт алга. Дараагийн элсэлтийн мэдээллийг удахгүй нийтэлнэ.")}</div>
         )
     }
 
@@ -45,16 +46,16 @@ export function CourseOfferingOptions({
         <div className={compact ? 'space-y-3' : 'space-y-4'}>
             {!compact && offerings.some((offering) => !offering.direct_purchase) && (
                 <div>
-                    <h3 className="text-lg font-bold text-white">Элсэлтийн сонголт</h3>
-                    <p className="mt-1 text-sm text-zinc-400">Танд тохирох хэлбэр, хуваарьтай элсэлтийг сонгоно уу.</p>
+                    <h3 className="text-lg font-bold text-white">{t("Элсэлтийн сонголт")}</h3>
+                    <p className="mt-1 text-sm text-zinc-400">{t("Танд тохирох хэлбэр, хуваарьтай элсэлтийг сонгоно уу.")}</p>
                 </div>
             )}
             {offerings.map((offering) => (
                 offering.direct_purchase ? (
                     <div key={offering.offering_id} className="space-y-3">
-                        <p className="text-sm text-zinc-400">QPay-аар төлөөд шууд хичээлээ үзээрэй.</p>
+                        <p className="text-sm text-zinc-400">{t("QPay-аар төлөөд шууд хичээлээ үзээрэй.")}</p>
                         <Button asChild className="w-full bg-indigo-600 font-bold text-white hover:bg-indigo-700">
-                            <Link href={`/programs/${offering.offering_id}`}>Худалдаж авах · {formatMnt(offering.tuition_amount_mnt)}</Link>
+                            <Link href={`/programs/${offering.offering_id}`}>{t("Худалдаж авах ·")} {formatMnt(offering.tuition_amount_mnt)}</Link>
                         </Button>
                     </div>
                 ) : (
@@ -65,7 +66,7 @@ export function CourseOfferingOptions({
                                 <h4 className="mt-1 font-semibold text-white">{offering.offering_name}</h4>
                             </div>
                             <span className="rounded-full border border-indigo-500/30 bg-indigo-500/10 px-2.5 py-1 text-xs text-indigo-200">
-                                {deliveryLabels[offering.delivery_mode]}
+                                {t(deliveryLabels[offering.delivery_mode])}
                             </span>
                         </div>
 
@@ -74,15 +75,15 @@ export function CourseOfferingOptions({
                             {offering.delivery_mode === 'offline' && offering.location && <OfferingDetail icon={MapPin} value={offering.location} />}
                             <OfferingDetail
                                 icon={FileText}
-                                value={offering.contract_policy === 'required' ? 'Гэрээ байгуулна' : 'Гэрээ шаардахгүй'}
+                                value={offering.contract_policy === 'required' ? t("Гэрээ байгуулна") : t("Гэрээ шаардахгүй")}
                             />
                             {offering.capacity !== null && (
                                 <OfferingDetail
                                     icon={Users}
-                                    value={`${offering.capacity} суралцагчийн анги`}
+                                    value={t("{value0} суралцагчийн анги", { value0: offering.capacity })}
                                 />
                             )}
-                            {!offering.schedule_summary && <OfferingDetail icon={Monitor} value={deliveryLabels[offering.delivery_mode]} />}
+                            {!offering.schedule_summary && <OfferingDetail icon={Monitor} value={t(deliveryLabels[offering.delivery_mode])} />}
                         </dl>
 
                         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -91,7 +92,7 @@ export function CourseOfferingOptions({
                                 {offering.payment_plan && <p className="mt-0.5 text-xs text-zinc-500">{offering.payment_plan}</p>}
                             </div>
                             <Button asChild className="shrink-0 bg-indigo-600 font-bold text-white hover:bg-indigo-700">
-                                <Link href={`/programs/${offering.offering_id}`}>Бүртгүүлэх</Link>
+                                <Link href={`/programs/${offering.offering_id}`}>{t("Бүртгүүлэх")}</Link>
                             </Button>
                         </div>
                     </article>

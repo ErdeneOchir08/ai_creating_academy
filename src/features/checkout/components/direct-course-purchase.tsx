@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from '@/components/language-provider'
 import Link from 'next/link'
 import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
@@ -18,6 +19,8 @@ export function DirectCoursePurchase({ checkout, owned, qpayEnabled, environment
     environment: 'sandbox' | 'production'
     serverNow: string
 }) {
+    const t = useTranslations()
+
     const [application, setApplication] = useState(() => directCourseApplication(checkout.my_applications))
     const [hasAccess, setHasAccess] = useState(owned)
     const [invoice, setInvoice] = useState<QpayInvoicePresentation | null>(null)
@@ -46,35 +49,35 @@ export function DirectCoursePurchase({ checkout, owned, qpayEnabled, environment
 
     if (owned || hasAccess) return (
         <section className="space-y-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-6">
-            <h2 className="text-xl font-semibold">Таны хичээл үзэх эрх нээгдсэн</h2>
-            <Button asChild><Link href={`/courses/${checkout.course_id}`}>Хичээлээ үзэх</Link></Button>
+            <h2 className="text-xl font-semibold">{t("Таны хичээл үзэх эрх нээгдсэн")}</h2>
+            <Button asChild><Link href={`/courses/${checkout.course_id}`}>{t("Хичээлээ үзэх")}</Link></Button>
         </section>
     )
 
     if (current?.application_status === 'pending_review') return (
         <section className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6">
-            <h2 className="text-xl font-semibold">Таны өмнөх төлбөрийг шалгаж байна</h2>
-            <p className="mt-3 text-zinc-300">Дахин төлөх шаардлагагүй. Шалгаж дуусмагц хичээл үзэх эрх нээгдэнэ.</p>
+            <h2 className="text-xl font-semibold">{t("Таны өмнөх төлбөрийг шалгаж байна")}</h2>
+            <p className="mt-3 text-zinc-300">{t("Дахин төлөх шаардлагагүй. Шалгаж дуусмагц хичээл үзэх эрх нээгдэнэ.")}</p>
         </section>
     )
 
     const expired = current?.payment_due_at && new Date(current.payment_due_at).getTime() < new Date(serverNow).getTime()
     if (current && (expired || ['approved', 'withdrawn', 'contract_required', 'draft'].includes(current.application_status))) return (
         <section className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6">
-            <p>Өмнөх худалдан авалтаа шалгуулахын тулд Mind Academy-тай холбогдоно уу. Дахин төлбөр бүү хийгээрэй.</p>
+            <p>{t("Өмнөх худалдан авалтаа шалгуулахын тулд Mind Academy-тай холбогдоно уу. Дахин төлбөр бүү хийгээрэй.")}</p>
         </section>
     )
 
     return (
         <section className="space-y-5 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
             <div>
-                <h2 className="text-xl font-semibold">Хичээл худалдаж авах</h2>
-                <p className="mt-2 text-sm text-zinc-400">QPay-аар төлсний дараа энэ бүртгэлээрээ шууд хичээлээ үзнэ.</p>
+                <h2 className="text-xl font-semibold">{t("Хичээл худалдаж авах")}</h2>
+                <p className="mt-2 text-sm text-zinc-400">{t("QPay-аар төлсний дараа энэ бүртгэлээрээ шууд хичээлээ үзнэ.")}</p>
             </div>
             {current && applicationPaymentAmount(current) !== checkout.tuition_amount_mnt && (
-                <p className="text-sm text-zinc-400">Таны худалдан авалт эхлэх үеийн үнэ хадгалагдсан: ₮ {applicationPaymentAmount(current).toLocaleString('mn-MN')}</p>
+                <p className="text-sm text-zinc-400">{t("Таны худалдан авалт эхлэх үеийн үнэ хадгалагдсан: ₮")} {applicationPaymentAmount(current).toLocaleString('mn-MN')}</p>
             )}
-            {pending ? <p role="status">QPay бэлдэж байна…</p> : !qpayEnabled ? <p>QPay төлбөр түр зогссон байна. Дараа дахин оролдоно уу.</p>
+            {pending ? <p role="status">{t("QPay бэлдэж байна…")}</p> : !qpayEnabled ? <p>{t("QPay төлбөр түр зогссон байна. Дараа дахин оролдоно уу.")}</p>
                 : current ? <QpayPaymentPanel
                     key={current.application_id}
                     applicationId={current.application_id}
@@ -86,10 +89,10 @@ export function DirectCoursePurchase({ checkout, owned, qpayEnabled, environment
                     directPurchase
                 /> : checkout.is_accepting_applications && checkout.qpay_enabled ? (
                     <Button onClick={purchase} disabled={pending} className="w-full bg-blue-600 hover:bg-blue-700">
-                        {pending ? 'QPay бэлдэж байна…' : `₮ ${checkout.tuition_amount_mnt.toLocaleString('mn-MN')} · QPay-аар төлөх`}
+                        {pending ? t("QPay бэлдэж байна…") : t("₮ {value0} · QPay-аар төлөх", { value0: checkout.tuition_amount_mnt.toLocaleString('mn-MN') })}
                     </Button>
-                ) : <p>Энэ хичээлийн худалдаа түр хаагдсан байна.</p>}
-            {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
+                ) : <p>{t("Энэ хичээлийн худалдаа түр хаагдсан байна.")}</p>}
+            {error && <p role="alert" className="text-sm text-red-400">{t(error)}</p>}
         </section>
     )
 }

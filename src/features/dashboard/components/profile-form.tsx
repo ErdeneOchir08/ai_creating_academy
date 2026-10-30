@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from '@/components/language-provider'
 import { useState } from 'react'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
@@ -8,15 +9,19 @@ import { updateProfileName } from '@/features/auth/actions/auth-actions'
 import { useFormStatus } from 'react-dom'
 
 function SubmitProfileButton() {
+    const t = useTranslations()
+
     const { pending } = useFormStatus()
     return (
         <Button type="submit" disabled={pending} className="bg-indigo-600 hover:bg-indigo-700 text-white mt-2 font-semibold">
-            {pending ? 'Хадгалж байна...' : 'Профайл хадгалах'}
+            {pending ? t("Хадгалж байна...") : t("Профайл хадгалах")}
         </Button>
     )
 }
 
 export function ProfileForm({ userId, email, defaultName }: { userId: string; email: string; defaultName: string }) {
+    const t = useTranslations()
+
     const [message, setMessage] = useState<{ type: 'error' | 'success', text: string } | null>(null)
 
     async function handleAction(formData: FormData) {
@@ -35,7 +40,7 @@ export function ProfileForm({ userId, email, defaultName }: { userId: string; em
             <input type="hidden" name="userId" value={userId} />
 
             <div className="space-y-2">
-                <Label htmlFor="email" className="text-zinc-300">И-мэйл хаяг (Зөвхөн харах)</Label>
+                <Label htmlFor="email" className="text-zinc-300">{t("И-мэйл хаяг (Зөвхөн харах)")}</Label>
                 <Input
                     id="email"
                     type="email"
@@ -43,11 +48,11 @@ export function ProfileForm({ userId, email, defaultName }: { userId: string; em
                     defaultValue={email}
                     className="bg-zinc-900/50 border-zinc-800 text-zinc-500 cursor-not-allowed"
                 />
-                <p className="text-xs text-zinc-500">Одоогоор и-мэйл хаяг өөрчлөх боломжгүй байна.</p>
+                <p className="text-xs text-zinc-500">{t("Одоогоор и-мэйл хаяг өөрчлөх боломжгүй байна.")}</p>
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="full_name" className="text-zinc-300">Дэлгэцийн нэр</Label>
+                <Label htmlFor="full_name" className="text-zinc-300">{t("Дэлгэцийн нэр")}</Label>
                 <Input
                     id="full_name"
                     name="full_name"
@@ -60,7 +65,7 @@ export function ProfileForm({ userId, email, defaultName }: { userId: string; em
 
             {message && (
                 <div className={`p-3 rounded-lg border text-sm font-medium ${message.type === 'error' ? 'bg-red-500/10 border-red-500/20 text-red-500' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'}`}>
-                    {message.text}
+                    {t(message.text)}
                 </div>
             )}
 

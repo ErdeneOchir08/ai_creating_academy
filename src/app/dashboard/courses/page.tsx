@@ -1,3 +1,4 @@
+import { getTranslations } from '@/lib/i18n/server'
 import { getEnrolledCourses, getMyClassSchedules, getPendingCourses, getStudentProfile } from '@/features/dashboard/actions/dashboard-actions'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -9,6 +10,8 @@ import { selectNonApprovedOfferingCheckoutStatuses } from '@/features/dashboard/
 import { MyClassScheduleList } from '@/features/dashboard/components/my-class-schedule-list'
 
 export default async function DashboardCoursesPage() {
+    const t = await getTranslations()
+
     const [profile, enrollments, pendingCourses, offeringCheckoutStatuses, classSchedules] = await Promise.all([
         getStudentProfile(),
         getEnrolledCourses(),
@@ -22,8 +25,8 @@ export default async function DashboardCoursesPage() {
     return (
         <div className="mx-auto max-w-6xl p-5 sm:p-8">
             <header className="mb-8 sm:mb-10">
-                <h1 className="mb-2 text-2xl font-bold sm:text-3xl">Миний хичээлүүд</h1>
-                <p className="text-zinc-400">Тавтай морилно уу, {profile?.display_name || 'Суралцагч'}. Хичээлээ үргэлжлүүлээрэй!</p>
+                <h1 className="mb-2 text-2xl font-bold sm:text-3xl">{t("Миний хичээлүүд")}</h1>
+                <p className="text-zinc-400">{t("Тавтай морилно уу,")} {profile?.display_name || t("Суралцагч")}{t(". Хичээлээ үргэлжлүүлээрэй!")}</p>
             </header>
 
             <MyClassScheduleList schedules={classSchedules} serverNow={serverNow} />
@@ -31,8 +34,7 @@ export default async function DashboardCoursesPage() {
             {/* Enrolled Courses */}
             {enrollments && enrollments.length > 0 && (
                 <div className="mb-12">
-                    <h2 className="text-xl font-bold mb-6 text-white flex items-center gap-2">
-                        Идэвхтэй хичээлүүд <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-2 py-1 rounded-full">{enrollments.length}</span>
+                    <h2 className="text-xl font-bold mb-6 text-white flex items-center gap-2">{t("Идэвхтэй хичээлүүд")} <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-2 py-1 rounded-full">{enrollments.length}</span>
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {enrollments.map((enrollment) => {
@@ -52,25 +54,21 @@ export default async function DashboardCoursesPage() {
                                         )}
                                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                                             <Link href={`/courses/${course.id}`}>
-                                                <Button className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white">
-                                                    Үргэлжлүүлэх
-                                                </Button>
+                                                <Button className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white">{t("Үргэлжлүүлэх")}</Button>
                                             </Link>
                                         </div>
                                     </div>
                                     <CardContent className="p-4 flex flex-col flex-1">
                                         <h3 className="font-semibold text-lg line-clamp-1">{course.title}</h3>
                                         <div className="mt-1 mb-4 flex-1 space-y-2">
-                                            {enrollment.grant_source === 'bonus' && <span className="inline-flex rounded-full border border-violet-500/30 bg-violet-500/10 px-2 py-1 text-xs font-semibold text-violet-300">Дагалдах үнэгүй хичээл</span>}
+                                            {enrollment.grant_source === 'bonus' && <span className="inline-flex rounded-full border border-violet-500/30 bg-violet-500/10 px-2 py-1 text-xs font-semibold text-violet-300">{t("Дагалдах үнэгүй хичээл")}</span>}
                                             {enrollment.granted_at && (
-                                                <p className="text-zinc-400 text-sm">Элссэн огноо: {new Date(enrollment.granted_at).toLocaleDateString()}</p>
+                                                <p className="text-zinc-400 text-sm">{t("Элссэн огноо:")} {new Date(enrollment.granted_at).toLocaleDateString()}</p>
                                             )}
                                         </div>
                                         <div className="mt-auto pt-4 border-t border-zinc-800/50">
                                             <Link href={`/courses/${course.id}`} className="w-full">
-                                                <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/20 rounded-xl font-bold h-12 text-md">
-                                                    Хичээл үзэх
-                                                </Button>
+                                                <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/20 rounded-xl font-bold h-12 text-md">{t("Хичээл үзэх")}</Button>
                                             </Link>
                                         </div>
                                     </CardContent>
@@ -88,8 +86,7 @@ export default async function DashboardCoursesPage() {
             {/* Pending Courses */}
             {pendingCourses && pendingCourses.length > 0 && (
                 <div className="mb-12">
-                    <h2 className="text-xl font-bold mb-6 text-white flex items-center gap-2">
-                        Зөвшөөрөл хүлээгдэж буй <span className="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 text-xs px-2 py-1 rounded-full">{pendingCourses.length}</span>
+                    <h2 className="text-xl font-bold mb-6 text-white flex items-center gap-2">{t("Зөвшөөрөл хүлээгдэж буй")} <span className="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 text-xs px-2 py-1 rounded-full">{pendingCourses.length}</span>
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {pendingCourses.map((request) => {
@@ -108,17 +105,14 @@ export default async function DashboardCoursesPage() {
                                             </div>
                                         )}
                                         <div className="absolute top-2 right-2 bg-yellow-500/20 backdrop-blur-md border border-yellow-500/50 text-yellow-500 text-xs font-bold px-2 py-1 rounded-md flex items-center gap-1">
-                                            <Clock className="w-3 h-3" /> Хянагдаж байна
-                                        </div>
+                                            <Clock className="w-3 h-3" /> {t("Хянагдаж байна")}</div>
                                     </div>
                                     <CardContent className="p-4 flex flex-col flex-1">
                                         <h3 className="font-semibold text-lg line-clamp-1">{course.title}</h3>
-                                        <p className="text-zinc-400 text-sm mt-1 mb-4 flex-1">Хүсэлт илгээсэн: {new Date(request.created_at).toLocaleDateString()}</p>
+                                        <p className="text-zinc-400 text-sm mt-1 mb-4 flex-1">{t("Хүсэлт илгээсэн:")} {new Date(request.created_at).toLocaleDateString()}</p>
                                         <div className="mt-auto pt-4 border-t border-zinc-800/50">
                                             <Link href={`/course/${course.id}`} className="w-full">
-                                                <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/20 rounded-xl font-bold h-12 text-md">
-                                                    Төлөв харах
-                                                </Button>
+                                                <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/20 rounded-xl font-bold h-12 text-md">{t("Төлөв харах")}</Button>
                                             </Link>
                                         </div>
                                     </CardContent>
@@ -133,10 +127,10 @@ export default async function DashboardCoursesPage() {
                 && (!pendingCourses || pendingCourses.length === 0)
                 && nonApprovedOfferingStatuses.length === 0 && (
                 <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 text-center sm:p-12">
-                    <h3 className="text-xl font-semibold mb-2">Одоогоор хичээл алга</h3>
-                    <p className="text-zinc-400 mb-6">Та ямар нэг хичээлд элсээгүй байна.</p>
+                    <h3 className="text-xl font-semibold mb-2">{t("Одоогоор хичээл алга")}</h3>
+                    <p className="text-zinc-400 mb-6">{t("Та ямар нэг хичээлд элсээгүй байна.")}</p>
                     <Link href="/#courses">
-                        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">Хичээл үзэх</Button>
+                        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">{t("Хичээл үзэх")}</Button>
                     </Link>
                 </div>
             )}
