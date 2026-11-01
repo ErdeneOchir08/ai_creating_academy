@@ -8,6 +8,7 @@ import { getMyOfferingCheckoutStatuses } from '@/features/checkout/actions/offer
 import { OfferingCheckoutStatusList } from '@/features/dashboard/components/offering-checkout-status-list'
 import { selectNonApprovedOfferingCheckoutStatuses } from '@/features/dashboard/domain/offering-checkout-status-presentation'
 import { MyClassScheduleList } from '@/features/dashboard/components/my-class-schedule-list'
+import { CourseCoverImage } from '@/components/course-cover-image'
 
 export default async function DashboardCoursesPage() {
     const t = await getTranslations()
@@ -44,9 +45,7 @@ export default async function DashboardCoursesPage() {
                                 <Card key={enrollment.id} className="bg-zinc-900 border-zinc-800 text-white overflow-hidden group flex flex-col">
                                     <div className="aspect-video relative bg-zinc-800">
                                         {course.thumbnail_url ? (
-                                            // Dynamic Supabase Storage URL.
-                                            // eslint-disable-next-line @next/next/no-img-element
-                                            <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover" />
+                                            <CourseCoverImage src={course.thumbnail_url} alt={course.title} sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 384px" />
                                         ) : (
                                             <div className="w-full h-full bg-gradient-to-br from-indigo-900 to-purple-900 flex items-center justify-center">
                                                 <Play className="h-10 w-10 text-white/30" />
@@ -96,9 +95,7 @@ export default async function DashboardCoursesPage() {
                                 <Card key={request.id} className="bg-zinc-950 border-zinc-800 text-white overflow-hidden opacity-75 flex flex-col">
                                     <div className="aspect-video relative bg-zinc-800">
                                         {course.thumbnail_url ? (
-                                            // Dynamic Supabase Storage URL.
-                                            // eslint-disable-next-line @next/next/no-img-element
-                                            <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover grayscale" />
+                                            <CourseCoverImage src={course.thumbnail_url} alt={course.title} sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 384px" className="grayscale" />
                                         ) : (
                                             <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center">
                                                 <Clock className="h-10 w-10 text-white/20" />

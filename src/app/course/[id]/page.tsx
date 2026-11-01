@@ -12,6 +12,7 @@ import { getPaymentConfiguration } from '@/features/admin/actions/settings-actio
 import { getPublicCourseOfferingCheckout } from '@/features/courses/actions/public-course-offering-actions'
 import { CourseOfferingOptions } from '@/features/courses/components/course-offering-options'
 import { CourseDescription } from '@/features/courses/components/course-description'
+import { CourseCoverImage } from '@/components/course-cover-image'
 
 export default async function CourseSalesPage(props: { params: Promise<{ id: string }> }) {
     const t = await getTranslations()
@@ -128,10 +129,10 @@ export default async function CourseSalesPage(props: { params: Promise<{ id: str
                             {/* Course Image */}
                             <div className="aspect-video w-full bg-zinc-800 relative">
                                 {course.thumbnail_url ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img
+                                    <CourseCoverImage
                                         src={course.thumbnail_url}
                                         alt={course.title}
+                                        sizes="(max-width: 1023px) 100vw, (max-width: 1535px) 42vw, 640px"
                                         className="w-full h-full object-cover"
                                     />
                                 ) : (

@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
+import { courseCoverRemotePatterns } from './src/lib/images/course-cover'
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: courseCoverRemotePatterns(),
+    // Covers use new UUID filenames when replaced, so old variants can remain
+    // cached without showing an outdated image after an administrator edits it.
+    minimumCacheTTL: 60 * 60 * 24 * 7,
+    maximumRedirects: 0,
+  },
   experimental: {
     serverActions: {
       // Receipt validation allows a 10 MiB image. Leave room for multipart
@@ -10,6 +18,12 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      {
+        source: '/course-covers/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
       {
         source: '/:path*',
         headers: [

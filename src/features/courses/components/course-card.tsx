@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Play } from 'lucide-react'
+import { CourseCoverImage } from '@/components/course-cover-image'
 
 // Basic course type representation
 type Course = {
@@ -31,11 +32,10 @@ export function CourseCard({ course }: { course: Course }) {
             <Card className="relative h-full flex flex-col overflow-hidden border border-zinc-800/50 bg-zinc-950/80 backdrop-blur-sm transition-all duration-500 transform group-hover/card:-translate-y-1 rounded-2xl">
                 <div className="relative aspect-video w-full overflow-hidden bg-zinc-900 border-b border-zinc-800/50">
                     {hasThumbnail ? (
-                        // Dynamic Supabase Storage URL.
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
+                        <CourseCoverImage
                             src={course.thumbnail_url}
                             alt={course.title}
+                            sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, (max-width: 1279px) 33vw, 25vw"
                             className="h-full w-full object-cover transition-transform duration-700 group-hover/card:scale-105"
                         />
                     ) : (

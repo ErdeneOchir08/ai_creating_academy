@@ -6,6 +6,7 @@ import { PlayCircle, Trophy, Flame, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { CourseCoverImage } from '@/components/course-cover-image'
 export default async function ProgressDashboardPage() {
     const t = await getTranslations()
 
@@ -84,11 +85,9 @@ export default async function ProgressDashboardPage() {
                         <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
                         <div className="flex flex-col sm:flex-row relative z-10 p-6 sm:p-8 gap-8 items-center">
-                            <div className="w-full sm:w-64 aspect-video rounded-xl bg-zinc-950 overflow-hidden shrink-0 border border-zinc-800">
+                            <div className="relative w-full sm:w-64 aspect-video rounded-xl bg-zinc-950 overflow-hidden shrink-0 border border-zinc-800">
                                 {focalCourse.thumbnailUrl ? (
-                                    // Dynamic Supabase Storage URL.
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img src={focalCourse.thumbnailUrl} alt={focalCourse.title} className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700" />
+                                    <CourseCoverImage src={focalCourse.thumbnailUrl} alt={focalCourse.title} sizes="(max-width: 639px) 100vw, 256px" className="opacity-80 group-hover:scale-105 transition-transform duration-700" />
                                 ) : (
                                     <div className="w-full h-full bg-indigo-900/20 flex items-center justify-center" />
                                 )}

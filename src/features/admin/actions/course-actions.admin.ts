@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { validateImageFile } from '@/lib/uploads/image-validation'
+import { prepareCourseCover } from '@/lib/uploads/course-cover'
 import { getCloudflareStreamVideoReadiness } from '@/lib/cloudflare-stream/playback'
 import { normalizeLessonDisplayCode } from '@/features/courses/domain/lesson-display-code'
 import { parseCourseCheckoutMode } from '@/features/courses/domain/course-checkout-mode'
@@ -127,12 +127,12 @@ async function lessonVideoSourceFromForm(formData: FormData): Promise<LessonVide
 async function uploadCourseImage(supabase: Awaited<ReturnType<typeof createClient>>, file: File | null) {
     if (!file || file.size === 0 || file.name === 'undefined') return null
 
-    const extension = await validateImageFile(file, 5 * 1024 * 1024)
+    const image = await prepareCourseCover(file)
 
-    const path = `${crypto.randomUUID()}.${extension}`
+    const path = `${crypto.randomUUID()}.${image.extension}`
     const { error } = await supabase.storage
         .from('course-media')
-        .upload(path, file, { contentType: file.type, upsert: false })
+        .upload(path, image.data, { contentType: image.contentType, cacheControl: image.cacheControl, upsert: false })
 
     if (error) {
         console.error('Course image upload failed:', error.message)
