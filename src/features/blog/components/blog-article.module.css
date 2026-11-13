@@ -1,0 +1,32 @@
+.code :global(.hljs-comment),
+.code :global(.hljs-quote) {
+    color: #a1a1aa;
+}
+
+.code :global(.hljs-keyword),
+.code :global(.hljs-selector-tag),
+.code :global(.hljs-tag),
+.code :global(.hljs-literal) {
+    color: #c4b5fd;
+}
+
+.code :global(.hljs-string),
+.code :global(.hljs-regexp),
+.code :global(.hljs-addition) {
+    color: #86efac;
+}
+
+.code :global(.hljs-number),
+.code :global(.hljs-attr),
+.code :global(.hljs-built_in),
+.code :global(.hljs-deletion) {
+    color: #fdba74;
+}
+
+.code :global(.hljs-title),
+.code :global(.hljs-name),
+.code :global(.hljs-property),
+.code :global(.hljs-variable),
+.code :global(.hljs-symbol) {
+    color: #93c5fd;
+}

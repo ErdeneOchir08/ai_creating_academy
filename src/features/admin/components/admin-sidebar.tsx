@@ -13,12 +13,14 @@ import {
     LayoutDashboard,
     LogOut,
     MessageSquareText,
+    Newspaper,
     Settings,
     Tags,
     Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { useTranslations } from '@/components/language-provider'
 
 const adminLinkSections = [
     {
@@ -36,6 +38,7 @@ const adminLinkSections = [
         links: [
             { name: 'Сургалтын загвар', href: '/admin/programs', icon: Layers3 },
             { name: 'Хичээлийн контент', href: '/admin/courses', icon: BookOpen },
+            { name: 'Блог', href: '/admin/blog', icon: Newspaper },
             { name: 'Ангиллууд', href: '/admin/categories', icon: Tags },
             { name: 'Гэрээнүүд', href: '/admin/contracts', icon: FileSignature },
             { name: 'Хэрэглэгчид', href: '/admin/users', icon: Users },
@@ -52,6 +55,7 @@ const adminLinkSections = [
 
 export function AdminSidebar({ isMobile = false }: { isMobile?: boolean }) {
     const pathname = usePathname()
+    const t = useTranslations()
 
     return (
         <aside className={cn(
@@ -86,7 +90,7 @@ export function AdminSidebar({ isMobile = false }: { isMobile?: boolean }) {
                                         )}
                                     >
                                         <Icon className="h-4 w-4" />
-                                        {link.name}
+                                        {link.href === '/admin/blog' ? t(link.name) : link.name}
                                     </Link>
                                 )
                             })}

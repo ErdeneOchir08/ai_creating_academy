@@ -1,7 +1,7 @@
 import { getTranslations } from '@/lib/i18n/server'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
+import { Sheet, SheetClose, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import { Facebook, Instagram, Menu } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { logout } from '@/features/auth/actions/auth-actions'
@@ -37,6 +37,7 @@ export async function Navbar() {
                         {profile.instagramUrl && <a href={profile.instagramUrl} target="_blank" rel="noreferrer" aria-label={`${profile.displayName} Instagram`} className="rounded-md p-2 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-white"><Instagram className="h-4 w-4" /></a>}
                     </div>
                     <Link href="/programs" className="text-sm font-medium hover:text-primary transition-colors">{t("Сургалтууд")}</Link>
+                    <Link href="/blog" className="text-sm font-medium hover:text-primary transition-colors">{t("Блог")}</Link>
                     {user ? (
                         <>
                             <Link href="/dashboard" className="text-sm font-medium hover:text-primary transition-colors">{t("Миний хичээлүүд")}</Link>
@@ -82,6 +83,9 @@ export async function Navbar() {
                                         <div className="flex flex-col gap-4">
                                             <p className="text-sm text-zinc-400 border-b border-zinc-800 pb-2">{t("Үндсэн цэс")}</p>
                                             <Link href="/programs" className="text-lg font-medium hover:text-indigo-400 transition-colors w-full">{t("Сургалтууд")}</Link>
+                                            <SheetClose asChild>
+                                                <Link href="/blog" className="text-lg font-medium hover:text-indigo-400 transition-colors w-full">{t("Блог")}</Link>
+                                            </SheetClose>
                                             <Link href="/dashboard" className="text-lg font-medium hover:text-indigo-400 transition-colors w-full">{t("Миний хичээлүүд")}</Link>
                                             {isAdmin && (
                                                 <Link href="/admin" className="text-lg font-medium hover:text-indigo-400 transition-colors w-full">{t("Админ самбар")}</Link>
@@ -98,6 +102,11 @@ export async function Navbar() {
                                         <Link href="/programs" className="w-full">
                                             <Button variant="ghost" className="w-full justify-start">{t("Сургалтууд")}</Button>
                                         </Link>
+                                        <SheetClose asChild>
+                                            <Button variant="ghost" className="w-full justify-start" asChild>
+                                                <Link href="/blog">{t("Блог")}</Link>
+                                            </Button>
+                                        </SheetClose>
                                         <Link href="/login" className="w-full">
                                             <Button variant="outline" className="w-full border-zinc-800 text-foreground hover:bg-zinc-900 hover:text-white">{t("Нэвтрэх")}</Button>
                                         </Link>
