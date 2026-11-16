@@ -191,7 +191,7 @@ export async function verifyQpayInvoicePayment(invoiceId: string, expectedAmount
 }
 
 function isExplicitZero(value: unknown) {
-    return value === 0 || (typeof value === 'string' && /^0(?:\.0+)?$/u.test(value))
+    return value === 0 || (typeof value === 'string' && /^0+(?:\.0+)?$/u.test(value.trim()))
 }
 
 export type QpayInvoicePaymentCheck = { status: 'paid'; payment: VerifiedQpayPayment }
@@ -208,10 +208,20 @@ export async function checkQpayInvoicePayment(
     const payment = await verifyQpayPaidRow(rows, expectedAmountMnt, merchant)
     if (payment) return { status: 'paid', payment }
 
-    // Use the original fields. Callback parsing allows absent rows and defaults a missing total.
+    // Require a real zero count and corroborate it with an empty list or zero total.
     const check = rawCheck as { count: unknown; paid_amount?: unknown; rows?: unknown; error?: unknown }
-    if (check.error === undefined && isExplicitZero(check.count) && isExplicitZero(check.paid_amount)
-        && Array.isArray(check.rows) && check.rows.length === 0) return { status: 'unpaid' }
+    const countIsZero = isExplicitZero(check.count)
+    const totalIsZero = isExplicitZero(check.paid_amount)
+    const rowsAreEmpty = Array.isArray(check.rows) && check.rows.length === 0
+    const hasError = check.error !== undefined && check.error !== null
+    if (!hasError && countIsZero && rows.length === 0
+        && (totalIsZero || (check.paid_amount === undefined && rowsAreEmpty))) return { status: 'unpaid' }
 
+    console.warn('Unexpected QPay invoice payment check:', {
+        countIsZero,
+        total: check.paid_amount === undefined ? 'absent' : totalIsZero ? 'zero' : 'nonzero or invalid',
+        rows: check.rows === undefined ? 'absent' : rows.length,
+        hasError,
+    })
     return { status: 'uncertain' }
 }

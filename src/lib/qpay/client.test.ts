@@ -92,15 +92,20 @@ describe('merchant-specific QPay requests', () => {
         await expect(cancelQpayInvoice('old-invoice', 'legacy')).rejects.toThrow('timed out')
     })
 
-    it('requires explicit empty totals and rows to classify an invoice as unpaid', async () => {
-        mocks.fetch.mockResolvedValueOnce(Response.json({ count: 0, paid_amount: '0.00', rows: [] }))
+    it.each([
+        { count: 0, paid_amount: '0.00', rows: [] },
+        { count: 0, rows: [] },
+        { count: 0, paid_amount: 0 },
+        { count: ' 0 ', paid_amount: '0.00', rows: [], error: null },
+    ])('recognizes a verified zero-payment result (%j)', async (check) => {
+        mocks.fetch.mockResolvedValueOnce(Response.json(check))
         await expect(checkQpayInvoicePayment('old-invoice', 69000, 'legacy')).resolves.toEqual({ status: 'unpaid' })
     })
 
     it.each([
-        { count: 0, rows: [] },
-        { count: 0, paid_amount: 0 },
+        { count: 0 },
         { count: ' ', paid_amount: 0, rows: [] },
+        { count: 0, paid_amount: '', rows: [] },
         { count: 1, paid_amount: 0, rows: [] },
         { count: 0, paid_amount: 100, rows: [] },
         { count: 0, paid_amount: 0, rows: [], error: 'INVOICE_NOTFOUND' },
