@@ -64,12 +64,25 @@ describe('merchant-specific QPay requests', () => {
         }))
     })
 
-    it.each([400, 409])('treats an explicit already-cancelled response (HTTP %i) as idempotent', async (status) => {
+    it.each([200, 400, 409])('treats an explicit already-cancelled response (HTTP %i) as idempotent', async (status) => {
         mocks.fetch.mockResolvedValueOnce(Response.json({ error: 'INVOICE_ALREADY_CANCELED' }, { status }))
         await expect(cancelQpayInvoice('old-invoice', 'legacy')).resolves.toBeUndefined()
     })
 
+    it('recognizes QPay’s current already-cancelled error envelope', async () => {
+        mocks.fetch.mockResolvedValueOnce(Response.json({
+            status_code: 400, error: 'ValidationError', message: 'INVOICE_ALREADY_CANCELED',
+        }, { status: 400 }))
+        await expect(cancelQpayInvoice('old-invoice', 'legacy')).resolves.toBeUndefined()
+    })
+
+    it('accepts a successful JSON cancellation response', async () => {
+        mocks.fetch.mockResolvedValueOnce(Response.json({ status: 'SUCCESS', error: '' }))
+        await expect(cancelQpayInvoice('old-invoice', 'legacy')).resolves.toBeUndefined()
+    })
+
     it.each([
+        [200, 'INVOICE_PAID'],
         [400, 'INVOICE_PAID'],
         [404, 'INVOICE_NOTFOUND'],
         [404, 'INVOICE_ALREADY_CANCELED'],
@@ -79,12 +92,22 @@ describe('merchant-specific QPay requests', () => {
         await expect(cancelQpayInvoice('old-invoice', 'legacy')).rejects.toMatchObject({ status, code })
     })
 
+    it('verifies an unrecognized cancellation acknowledgement with the original invoice', async () => {
+        mocks.fetch.mockResolvedValueOnce(new Response('{}'))
+            .mockResolvedValueOnce(Response.json({ invoice_id: 'old-invoice', invoice_status: 'CANCELLED' }))
+        await expect(cancelQpayInvoice('old-invoice', 'legacy')).resolves.toBeUndefined()
+        expect(mocks.fetch).toHaveBeenLastCalledWith('https://merchant.qpay.mn/v2/invoice/old-invoice', expect.objectContaining({
+            method: 'GET', headers: { Authorization: 'Bearer token-legacy' },
+        }))
+    })
+
     it.each([
-        [200, '{"error":"INVOICE_PAID"}'],
-        [202, null],
-    ])('rejects ambiguous successful HTTP %i responses', async (status, body) => {
-        mocks.fetch.mockResolvedValueOnce(new Response(body, { status }))
-        await expect(cancelQpayInvoice('old-invoice', 'legacy')).rejects.toThrow('did not confirm')
+        { invoice_id: 'old-invoice', invoice_status: 'OPEN' },
+        { invoice_id: 'other-invoice', invoice_status: 'CANCELLED' },
+    ])('requires the original invoice to be confirmed cancelled (%j)', async (invoice) => {
+        mocks.fetch.mockResolvedValueOnce(new Response(null, { status: 202 }))
+            .mockResolvedValueOnce(Response.json(invoice))
+        await expect(cancelQpayInvoice('old-invoice', 'legacy')).rejects.toMatchObject({ status: 202, code: 'unexpected_cancellation_response' })
     })
 
     it('does not treat a timed-out provider cancellation as confirmed', async () => {

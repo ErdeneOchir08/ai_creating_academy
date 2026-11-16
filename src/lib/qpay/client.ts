@@ -32,13 +32,27 @@ async function requestJson(url: string, init: RequestInit, responseType: 'json' 
     try {
         const response = await fetch(url, { ...init, signal: controller.signal, cache: 'no-store' })
         if (responseType === 'cancellation' && response.ok) {
-            if (response.status === 204 || (response.status === 200 && !(await response.text()).trim())) return null
-            throw new QpayApiError('QPay did not confirm invoice cancellation.', response.status)
+            if (response.status === 204) return null
+            if (response.status === 200) {
+                const text = (await response.text()).trim()
+                if (!text) return null
+                let body: { status?: unknown; error?: unknown } | null = null
+                try { body = JSON.parse(text) } catch { /* Check the invoice directly for unfamiliar responses. */ }
+                if (body?.error === 'INVOICE_ALREADY_CANCELED') return null
+                if (body?.error === 'INVOICE_PAID') {
+                    throw new QpayApiError('QPay reports that the invoice was paid.', response.status, body.error)
+                }
+                if (body?.status === 'SUCCESS' && (body.error == null || body.error === '')) return null
+            }
+            throw new QpayApiError(`QPay returned an unrecognized cancellation response (HTTP ${response.status}).`,
+                response.status, 'unexpected_cancellation_response')
         }
 
         const body = await response.json().catch(() => null)
         if (!response.ok) {
-            const code = body && typeof body === 'object' && typeof body.error === 'string' ? body.error : 'request_failed'
+            let code = body && typeof body === 'object' && typeof body.error === 'string' ? body.error : 'request_failed'
+            if (responseType === 'cancellation' && code === 'ValidationError'
+                && (body.message === 'INVOICE_ALREADY_CANCELED' || body.message === 'INVOICE_PAID')) code = body.message
             if (responseType === 'cancellation' && (response.status === 400 || response.status === 409)
                 && code === 'INVOICE_ALREADY_CANCELED') return null
             throw new QpayApiError(`QPay request failed: ${code}`, response.status, code)
@@ -139,7 +153,18 @@ export async function createQpayInvoice(input: {
 
 /** Resolves only after QPay confirms this invoice is cancelled. */
 export async function cancelQpayInvoice(invoiceId: string, merchant: QpayMerchant): Promise<void> {
-    await authorizedRequest(merchant, `/v2/invoice/${encodeURIComponent(invoiceId)}`, undefined, 'DELETE', 'cancellation')
+    const path = `/v2/invoice/${encodeURIComponent(invoiceId)}`
+    try {
+        await authorizedRequest(merchant, path, undefined, 'DELETE', 'cancellation')
+    } catch (error) {
+        if (!(error instanceof QpayApiError) || error.code !== 'unexpected_cancellation_response') throw error
+        const invoice = await authorizedRequest(merchant, path, undefined, 'GET') as {
+            invoice_id?: unknown; invoice_status?: unknown; error?: unknown
+        } | null
+        if (invoice?.invoice_id === invoiceId && invoice.error == null
+            && (invoice.invoice_status === 'CANCELLED' || invoice.invoice_status === 'CANCELED')) return
+        throw error
+    }
 }
 
 export type VerifiedQpayPayment = {
