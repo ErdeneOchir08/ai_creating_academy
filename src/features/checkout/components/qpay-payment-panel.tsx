@@ -2,7 +2,7 @@
 
 import { useTranslations } from '@/components/language-provider'
 import Image from 'next/image'
-import { useCallback, useEffect, useState, useTransition } from 'react'
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle2, ExternalLink, Loader2, QrCode, RefreshCw, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -65,22 +65,34 @@ export function QpayPaymentPanel({
     const [paymentStatus, setPaymentStatus] = useState<string | null>(initialInvoice ? 'pending' : null)
     const [error, setError] = useState<string | null>(null)
     const [message, setMessage] = useState<string | null>(null)
+    const statusRequest = useRef(0)
+    const confirmedPaymentId = directPurchase ? initialInvoice?.paymentId : undefined
 
     const loadStatus = useCallback(async () => {
-        const response = await fetch(`/api/payments/qpay/status?applicationId=${encodeURIComponent(applicationId)}`, {
-            cache: 'no-store',
-        })
-        if (!response.ok) return
-        const body = await response.json() as { payment: StoredQpayPayment | null }
-        if (!body.payment) return
-        setPaymentStatus(body.payment.status)
-        const storedInvoice = presentationFromStored(body.payment)
-        if (storedInvoice) setInvoice(storedInvoice)
-        if (body.payment.status === 'paid') {
-            setMessage('Төлбөр баталгаажлаа. Хичээл үзэх эрх нээгдсэн.')
-            router.refresh()
+        const request = ++statusRequest.current
+        try {
+            const response = await fetch(`/api/payments/qpay/status?applicationId=${encodeURIComponent(applicationId)}`, {
+                cache: 'no-store',
+            })
+            if (!response.ok) return
+            const { payment } = await response.json() as { payment: StoredQpayPayment | null }
+            if (!payment || request !== statusRequest.current) return
+
+            // The server action has returned a verified replacement. A delayed read of the old attempt cannot replace it.
+            if (confirmedPaymentId && payment.id !== confirmedPaymentId && payment.status !== 'paid') return
+
+            setPaymentStatus(payment.status)
+            const storedInvoice = presentationFromStored(payment)
+            if (directPurchase && payment.status !== 'pending' && payment.status !== 'paid') setInvoice(null)
+            else if (storedInvoice) setInvoice(storedInvoice)
+            if (payment.status === 'paid') {
+                setMessage('Төлбөр баталгаажлаа. Хичээл үзэх эрх нээгдсэн.')
+                router.refresh()
+            }
+        } catch {
+            // Leave the current status visible when a background check temporarily fails.
         }
-    }, [applicationId, router])
+    }, [applicationId, confirmedPaymentId, directPurchase, router])
 
     useEffect(() => {
         const timer = window.setTimeout(() => void loadStatus(), 0)
@@ -102,6 +114,7 @@ export function QpayPaymentPanel({
                 setError(result.error ?? 'QPay нэхэмжлэл үүсгэж чадсангүй.')
                 return
             }
+            statusRequest.current++
             setInvoice(result.invoice)
             setPaymentStatus('pending')
             setMessage('QPay нэхэмжлэл үүслээ. Банкны апп-аар төлнө үү.')
@@ -116,6 +129,7 @@ export function QpayPaymentPanel({
             if (result.error) return setError(result.error)
             setMessage(result.message ?? null)
             if (result.success) {
+                statusRequest.current++
                 setPaymentStatus('paid')
                 router.refresh()
             }

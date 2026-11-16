@@ -92,7 +92,7 @@ export function getEffectiveOfferingCheckoutStatusPresentation(
 
     return {
         label: 'Төлбөрийн хугацаа дууссан',
-        description: 'Төлбөрийн баримт илгээх хугацаа дууссан байна. Хугацааг дахин нээлгэх бол Mind Academy-тай холбогдоно уу.',
+        description: 'Төлбөрийн хугацаа дууссан. Төлбөрөө үргэлжлүүлэх боломжтой эсэхийг дэлгэрэнгүй хэсгээс шалгана уу.',
         actionLabel: 'Дэлгэрэнгүй харах',
         tone: 'danger',
         showPaymentDeadline: true,

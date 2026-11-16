@@ -70,6 +70,7 @@ describe('offering checkout status presentation', () => {
             serverNow: '2026-08-14T00:00:00.000Z',
         })).toMatchObject({
             label: 'Төлбөрийн хугацаа дууссан',
+            description: 'Төлбөрийн хугацаа дууссан. Төлбөрөө үргэлжлүүлэх боломжтой эсэхийг дэлгэрэнгүй хэсгээс шалгана уу.',
             actionLabel: 'Дэлгэрэнгүй харах',
             tone: 'danger',
             showPaymentDeadline: true,

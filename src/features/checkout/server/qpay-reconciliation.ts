@@ -3,7 +3,7 @@ import 'server-only'
 import { createHash, timingSafeEqual } from 'node:crypto'
 import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { verifyQpayInvoicePayment } from '@/lib/qpay/client'
+import { checkQpayInvoicePayment, verifyQpayInvoicePayment } from '@/lib/qpay/client'
 import { deliverQpayApprovalNotification } from '@/features/checkout/server/qpay-approval-notification'
 
 const storedQpayPaymentSchema = z.object({
@@ -34,7 +34,7 @@ async function deliverApprovalNotification(paymentId: string) {
 
 export async function reconcileCourseOfferingQpayPayment(
     paymentId: string,
-    options: { callbackToken?: string } = {},
+    options: { callbackToken?: string; requireConfirmedUnpaid?: boolean } = {},
 ) {
     const admin = createAdminClient()
     const { data, error } = await admin
@@ -57,7 +57,13 @@ export async function reconcileCourseOfferingQpayPayment(
         throw new Error('QPay payment is not awaiting verification.')
     }
 
-    const verified = await verifyQpayInvoicePayment(payment.qpay_invoice_id, payment.amount_mnt, payment.merchant_key)
+    const check = options.requireConfirmedUnpaid
+        ? await checkQpayInvoicePayment(payment.qpay_invoice_id, payment.amount_mnt, payment.merchant_key)
+        : null
+    if (check?.status === 'uncertain') throw new Error('QPay did not confirm the invoice is unpaid.')
+    const verified = check
+        ? check.status === 'paid' ? check.payment : null
+        : await verifyQpayInvoicePayment(payment.qpay_invoice_id, payment.amount_mnt, payment.merchant_key)
     if (!verified) return { status: 'pending' as const, paymentId: payment.id }
 
     const { data: finalized, error: finalizeError } = await admin.rpc('finalize_course_offering_qpay_payment', {

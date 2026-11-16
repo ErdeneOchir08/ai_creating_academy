@@ -14,7 +14,7 @@ const TOKEN_EXPIRY_BUFFER_MS = 60_000
 const tokenRequests = new Map<QpayMerchant, Promise<string>>()
 
 export class QpayApiError extends Error {
-    constructor(message: string, readonly status?: number) {
+    constructor(message: string, readonly status?: number, readonly code?: string) {
         super(message)
         this.name = 'QpayApiError'
     }
@@ -26,15 +26,22 @@ function expiryDate(value: number) {
     return new Date(epochSeconds * 1000)
 }
 
-async function requestJson(url: string, init: RequestInit) {
+async function requestJson(url: string, init: RequestInit, responseType: 'json' | 'cancellation' = 'json') {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
     try {
         const response = await fetch(url, { ...init, signal: controller.signal, cache: 'no-store' })
+        if (responseType === 'cancellation' && response.ok) {
+            if (response.status === 204 || (response.status === 200 && !(await response.text()).trim())) return null
+            throw new QpayApiError('QPay did not confirm invoice cancellation.', response.status)
+        }
+
         const body = await response.json().catch(() => null)
         if (!response.ok) {
-            const code = body && typeof body === 'object' && 'error' in body ? String(body.error) : 'request_failed'
-            throw new QpayApiError(`QPay request failed: ${code}`, response.status)
+            const code = body && typeof body === 'object' && typeof body.error === 'string' ? body.error : 'request_failed'
+            if (responseType === 'cancellation' && (response.status === 400 || response.status === 409)
+                && code === 'INVOICE_ALREADY_CANCELED') return null
+            throw new QpayApiError(`QPay request failed: ${code}`, response.status, code)
         }
         return body
     } catch (error) {
@@ -94,7 +101,7 @@ async function getAccessToken(merchant: QpayMerchant) {
     return request
 }
 
-async function authorizedRequest(merchant: QpayMerchant, path: string, body?: unknown, method = 'POST') {
+async function authorizedRequest(merchant: QpayMerchant, path: string, body?: unknown, method = 'POST', responseType: 'json' | 'cancellation' = 'json') {
     const config = getQpayConfig(merchant)
     const token = await getAccessToken(merchant)
     return requestJson(`${config.baseUrl}${path}`, {
@@ -104,7 +111,8 @@ async function authorizedRequest(merchant: QpayMerchant, path: string, body?: un
             ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
         },
         body: body === undefined ? undefined : JSON.stringify(body),
-    })
+        ...(responseType === 'cancellation' ? { redirect: 'error' } : {}),
+    }, responseType)
 }
 
 export async function createQpayInvoice(input: {
@@ -129,6 +137,11 @@ export async function createQpayInvoice(input: {
     return qpayInvoiceResponseSchema.parse(raw)
 }
 
+/** Resolves only after QPay confirms this invoice is cancelled. */
+export async function cancelQpayInvoice(invoiceId: string, merchant: QpayMerchant): Promise<void> {
+    await authorizedRequest(merchant, `/v2/invoice/${encodeURIComponent(invoiceId)}`, undefined, 'DELETE', 'cancellation')
+}
+
 export type VerifiedQpayPayment = {
     paymentId: string
     status: string
@@ -137,20 +150,29 @@ export type VerifiedQpayPayment = {
     paidAt: string
 }
 
-export async function verifyQpayInvoicePayment(invoiceId: string, expectedAmountMnt: number, merchant: QpayMerchant) {
+async function fetchQpayInvoicePaymentCheck(invoiceId: string, merchant: QpayMerchant) {
     const rawCheck = await authorizedRequest(merchant, '/v2/payment/check', {
         object_type: 'INVOICE',
         object_id: invoiceId,
         offset: { page_number: 1, page_limit: 10 },
     })
     const check = qpayPaymentCheckResponseSchema.parse(rawCheck)
-    const paidRows = check.rows.filter((row) => row.payment_status.toUpperCase() === 'PAID')
+    return { rawCheck, rows: check.rows }
+}
+
+async function verifyQpayPaidRow(
+    rows: ReturnType<typeof qpayPaymentCheckResponseSchema.parse>['rows'],
+    expectedAmountMnt: number,
+    merchant: QpayMerchant,
+) {
+    const paidRows = rows.filter((row) => row.payment_status.toUpperCase() === 'PAID')
     if (paidRows.length === 0) return null
     if (paidRows.length !== 1) throw new QpayApiError('QPay returned an ambiguous paid-payment result.')
 
     const rawPayment = await authorizedRequest(merchant, `/v2/payment/${encodeURIComponent(paidRows[0].payment_id)}`, undefined, 'GET')
     const payment = qpayPaymentResponseSchema.parse(rawPayment)
     if (payment.payment_status.toUpperCase() !== 'PAID') return null
+    if (payment.payment_id !== paidRows[0].payment_id) throw new QpayApiError('QPay returned a different payment ID.')
     if (payment.payment_amount !== expectedAmountMnt) throw new QpayApiError('QPay payment amount does not match the order.')
     if (payment.payment_currency.toUpperCase() !== 'MNT') throw new QpayApiError('QPay payment currency does not match the order.')
 
@@ -161,4 +183,35 @@ export async function verifyQpayInvoicePayment(invoiceId: string, expectedAmount
         currency: payment.payment_currency,
         paidAt: payment.payment_date ?? new Date().toISOString(),
     } satisfies VerifiedQpayPayment
+}
+
+export async function verifyQpayInvoicePayment(invoiceId: string, expectedAmountMnt: number, merchant: QpayMerchant) {
+    const { rows } = await fetchQpayInvoicePaymentCheck(invoiceId, merchant)
+    return verifyQpayPaidRow(rows, expectedAmountMnt, merchant)
+}
+
+function isExplicitZero(value: unknown) {
+    return value === 0 || (typeof value === 'string' && /^0(?:\.0+)?$/u.test(value))
+}
+
+export type QpayInvoicePaymentCheck = { status: 'paid'; payment: VerifiedQpayPayment }
+    | { status: 'unpaid' }
+    | { status: 'uncertain' }
+
+/** A missing paid result may still include an unsettled transaction. */
+export async function checkQpayInvoicePayment(
+    invoiceId: string,
+    expectedAmountMnt: number,
+    merchant: QpayMerchant,
+): Promise<QpayInvoicePaymentCheck> {
+    const { rawCheck, rows } = await fetchQpayInvoicePaymentCheck(invoiceId, merchant)
+    const payment = await verifyQpayPaidRow(rows, expectedAmountMnt, merchant)
+    if (payment) return { status: 'paid', payment }
+
+    // Use the original fields. Callback parsing allows absent rows and defaults a missing total.
+    const check = rawCheck as { count: unknown; paid_amount?: unknown; rows?: unknown; error?: unknown }
+    if (check.error === undefined && isExplicitZero(check.count) && isExplicitZero(check.paid_amount)
+        && Array.isArray(check.rows) && check.rows.length === 0) return { status: 'unpaid' }
+
+    return { status: 'uncertain' }
 }

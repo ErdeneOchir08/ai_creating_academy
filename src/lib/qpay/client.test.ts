@@ -6,7 +6,7 @@ vi.mock('@/lib/qpay/config', () => ({ getQpayConfig: (merchant: string) => ({
     merchant, baseUrl: 'https://merchant.qpay.mn', clientId: merchant,
     clientSecret: 'test-only', invoiceCode: `${merchant}-invoice`,
 }) }))
-import { createQpayInvoice, verifyQpayInvoicePayment } from './client'
+import { cancelQpayInvoice, checkQpayInvoicePayment, createQpayInvoice, verifyQpayInvoicePayment } from './client'
 
 describe('merchant-specific QPay requests', () => {
     beforeEach(() => {
@@ -52,6 +52,77 @@ describe('merchant-specific QPay requests', () => {
         mocks.fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ count: 1, rows: [{ payment_id: 'p', payment_status: 'PAID', payment_amount: 69000 }] }) })
             .mockResolvedValueOnce({ ok: true, json: async () => ({ payment_id: 'p', payment_status: 'PAID', payment_amount: 500, payment_currency: 'MNT' }) })
         await expect(verifyQpayInvoicePayment('old-invoice', 69000, 'legacy')).rejects.toThrow('amount')
+        expect(mocks.fetch.mock.calls.every(([, init]) => init.headers.Authorization === 'Bearer token-legacy')).toBe(true)
+    })
+
+    it.each([200, 204])('cancels through the original merchant with an empty HTTP %i response', async (status) => {
+        mocks.fetch.mockResolvedValueOnce(new Response(null, { status }))
+
+        await expect(cancelQpayInvoice('old/invoice', 'legacy')).resolves.toBeUndefined()
+        expect(mocks.fetch).toHaveBeenCalledExactlyOnceWith('https://merchant.qpay.mn/v2/invoice/old%2Finvoice', expect.objectContaining({
+            method: 'DELETE', body: undefined, headers: { Authorization: 'Bearer token-legacy' }, redirect: 'error',
+        }))
+    })
+
+    it.each([400, 409])('treats an explicit already-cancelled response (HTTP %i) as idempotent', async (status) => {
+        mocks.fetch.mockResolvedValueOnce(Response.json({ error: 'INVOICE_ALREADY_CANCELED' }, { status }))
+        await expect(cancelQpayInvoice('old-invoice', 'legacy')).resolves.toBeUndefined()
+    })
+
+    it.each([
+        [400, 'INVOICE_PAID'],
+        [404, 'INVOICE_NOTFOUND'],
+        [404, 'INVOICE_ALREADY_CANCELED'],
+        [500, 'INVOICE_ALREADY_CANCELED'],
+    ])('does not accept HTTP %i %s as cancellation proof', async (status, code) => {
+        mocks.fetch.mockResolvedValueOnce(Response.json({ error: code }, { status }))
+        await expect(cancelQpayInvoice('old-invoice', 'legacy')).rejects.toMatchObject({ status, code })
+    })
+
+    it.each([
+        [200, '{"error":"INVOICE_PAID"}'],
+        [202, null],
+    ])('rejects ambiguous successful HTTP %i responses', async (status, body) => {
+        mocks.fetch.mockResolvedValueOnce(new Response(body, { status }))
+        await expect(cancelQpayInvoice('old-invoice', 'legacy')).rejects.toThrow('did not confirm')
+    })
+
+    it('does not treat a timed-out provider cancellation as confirmed', async () => {
+        mocks.fetch.mockRejectedValueOnce(new DOMException('Request aborted', 'AbortError'))
+        await expect(cancelQpayInvoice('old-invoice', 'legacy')).rejects.toThrow('timed out')
+    })
+
+    it('requires explicit empty totals and rows to classify an invoice as unpaid', async () => {
+        mocks.fetch.mockResolvedValueOnce(Response.json({ count: 0, paid_amount: '0.00', rows: [] }))
+        await expect(checkQpayInvoicePayment('old-invoice', 69000, 'legacy')).resolves.toEqual({ status: 'unpaid' })
+    })
+
+    it.each([
+        { count: 0, rows: [] },
+        { count: 0, paid_amount: 0 },
+        { count: ' ', paid_amount: 0, rows: [] },
+        { count: 1, paid_amount: 0, rows: [] },
+        { count: 0, paid_amount: 100, rows: [] },
+        { count: 0, paid_amount: 0, rows: [], error: 'INVOICE_NOTFOUND' },
+        { count: 1, paid_amount: 0, rows: [{ payment_id: 'p', payment_status: 'PENDING', payment_amount: 69000 }] },
+    ])('classifies incomplete or unsettled check data as uncertain (%j)', async (check) => {
+        mocks.fetch.mockResolvedValueOnce(Response.json(check))
+        await expect(checkQpayInvoicePayment('old-invoice', 69000, 'legacy')).resolves.toEqual({ status: 'uncertain' })
+        expect(mocks.fetch).toHaveBeenCalledTimes(1)
+    })
+
+    it('keeps a reported payment uncertain until its details are verified', async () => {
+        const check = { count: 1, paid_amount: 69000, rows: [{ payment_id: 'p', payment_status: 'PAID', payment_amount: 69000 }] }
+        const payment = { payment_id: 'p', payment_status: 'PAID', payment_amount: 69000, payment_currency: 'MNT' }
+        mocks.fetch.mockResolvedValueOnce(Response.json(check))
+            .mockResolvedValueOnce(Response.json({ ...payment, payment_status: 'PENDING' }))
+            .mockResolvedValueOnce(Response.json(check))
+            .mockResolvedValueOnce(Response.json(payment))
+
+        await expect(checkQpayInvoicePayment('old-invoice', 69000, 'legacy')).resolves.toEqual({ status: 'uncertain' })
+        await expect(checkQpayInvoicePayment('old-invoice', 69000, 'legacy')).resolves.toMatchObject({
+            status: 'paid', payment: { paymentId: 'p', amountMnt: 69000, currency: 'MNT' },
+        })
         expect(mocks.fetch.mock.calls.every(([, init]) => init.headers.Authorization === 'Bearer token-legacy')).toBe(true)
     })
 })

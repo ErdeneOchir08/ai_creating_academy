@@ -5,10 +5,13 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { createQpayInvoice, QpayApiError } from '@/lib/qpay/client'
+import { cancelQpayInvoice, createQpayInvoice, QpayApiError } from '@/lib/qpay/client'
 import { getQpayConfig, isQpayEnabled, type QpayConfig } from '@/lib/qpay/config'
 import { reservedQpayPaymentSchema, type QpayInvoicePresentation } from '@/lib/qpay/schemas'
+import { directCourseApplication } from '@/features/checkout/domain/direct-course-checkout'
 import { reconcileCourseOfferingQpayPayment } from '@/features/checkout/server/qpay-reconciliation'
+import { hasEffectiveCourseAccess } from '@/features/courses/actions/effective-course-access'
+import { getOfferingCheckoutForm, getOfferingPaymentConfiguration } from './offering-checkout-actions'
 
 const uuidSchema = z.string().uuid()
 
@@ -103,6 +106,7 @@ export async function createOfferingQpayInvoice(applicationId: string, offeringI
     callbackUrl.searchParams.set('token', callbackToken)
 
     const admin = createAdminClient()
+    let invoiceRequestStarted = false
     try {
         // Persist the owner before contacting QPay. Reused pending invoices above
         // retain their original merchant, regardless of the active configuration.
@@ -115,6 +119,7 @@ export async function createOfferingQpayInvoice(applicationId: string, offeringI
             .select('id')
             .single()
         if (assignError || !assigned) throw new Error('QPay merchant assignment failed before invoice creation.')
+        invoiceRequestStarted = true
         const invoice = await createQpayInvoice({
             merchant: config.merchant,
             senderInvoiceNo: reservation.sender_invoice_no,
@@ -149,11 +154,104 @@ export async function createOfferingQpayInvoice(applicationId: string, offeringI
         } satisfies QpayInvoicePresentation }
     } catch (error) {
         console.error('QPay invoice creation failed:', error instanceof Error ? error.message : 'unknown error')
+        if (invoiceRequestStarted && !(error instanceof QpayApiError && (error.status === 401 || error.status === 403))) {
+            // A lost or malformed response can leave an invoice at QPay. Keep its reservation locked.
+            return { error: 'QPay нэхэмжлэл үүссэн эсэхийг баталгаажуулж чадсангүй. Mind Academy-тай холбогдоно уу.' }
+        }
         await admin.rpc('fail_course_offering_qpay_payment', {
             p_payment_id: reservation.payment_id,
             p_reason: error instanceof Error ? error.message : 'QPay invoice creation failed.',
         })
         return { error: safeQpayError(error) }
+    }
+}
+
+const previousPaymentSchema = z.object({
+    id: uuidSchema,
+    status: z.enum(['created', 'pending', 'paid']),
+    merchant_key: z.enum(['legacy', 'zurkhai']),
+    qpay_invoice_id: z.string().min(1).nullable(),
+})
+
+export async function retryExpiredDirectQpayInvoice(applicationId: string, offeringId: string): Promise<
+    { error: string } | { paid: true } | { invoice: QpayInvoicePresentation }
+> {
+    if (!uuidSchema.safeParse(applicationId).success || !uuidSchema.safeParse(offeringId).success) {
+        return { error: 'Төлбөрийн хүсэлтийн дугаар буруу байна.' }
+    }
+    if (!isQpayEnabled()) return { error: 'QPay төлбөр одоогоор идэвхгүй байна.' }
+
+    const unavailable = 'Өмнөх QPay нэхэмжлэлийн төлөвийг баталгаажуулж чадсангүй. Mind Academy-тай холбогдоно уу.'
+    try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return { error: 'QPay-аар төлөхийн тулд нэвтэрнэ үү.' }
+
+        const checkout = await getOfferingCheckoutForm(offeringId)
+        if (!checkout?.direct_purchase) return { error: unavailable }
+        const courseId = checkout.course_id
+        if (await hasEffectiveCourseAccess(supabase, courseId)) return { paid: true }
+        async function refreshPaidCheckout() {
+            refreshOffering(offeringId)
+            return await hasEffectiveCourseAccess(supabase, courseId)
+                ? { paid: true as const }
+                : { error: 'Таны өмнөх төлбөр баталгаажсан байна. Хичээл үзэх эрхээ шалгуулахаар Mind Academy-тай холбогдоно уу.' }
+        }
+        const application = directCourseApplication(checkout.my_applications)
+        if (application?.application_id !== applicationId || application.application_status !== 'ready_for_payment'
+            || !checkout.is_accepting_applications || !checkout.qpay_enabled || !application.payment_due_at) {
+            return { error: unavailable }
+        }
+
+        if (getQpayConfig().environment === 'production' && (await getOfferingPaymentConfiguration()).isTestMode) {
+            return { error: 'Төлбөрийн туршилтын горим идэвхтэй тул бодит QPay нэхэмжлэл үүсгэхгүй.' }
+        }
+
+        const deadline = Date.parse(application.payment_due_at)
+        if (!Number.isFinite(deadline)) return { error: unavailable }
+        if (deadline < Date.now()) {
+            const { data, error } = await supabase.from('course_offering_payments')
+                .select('id, status, merchant_key, qpay_invoice_id')
+                .eq('application_id', applicationId).eq('offering_id', offeringId)
+                .eq('applicant_user_id', user.id).eq('provider', 'qpay')
+                .in('status', ['created', 'pending', 'paid']).order('attempt_number', { ascending: false }).limit(1).maybeSingle()
+            const previous = previousPaymentSchema.safeParse(data)
+            if (error || !previous.success || !previous.data.qpay_invoice_id || previous.data.status === 'created') {
+                return { error: unavailable }
+            }
+
+            const payment = previous.data
+            const checked = await reconcileCourseOfferingQpayPayment(payment.id, { requireConfirmedUnpaid: true })
+            if (checked.status === 'paid') return await refreshPaidCheckout()
+
+            try {
+                await cancelQpayInvoice(previous.data.qpay_invoice_id, payment.merchant_key)
+            } catch (cancelError) {
+                // A bank payment may have settled between the check and the cancellation request.
+                const checkedAgain = await reconcileCourseOfferingQpayPayment(payment.id)
+                if (checkedAgain.status !== 'paid') throw cancelError
+                return await refreshPaidCheckout()
+            }
+
+            const { data: reopened, error: reopenError } = await createAdminClient().rpc('reopen_expired_direct_qpay_checkout', {
+                p_application_id: applicationId,
+                p_offering_id: offeringId,
+                p_applicant_user_id: user.id,
+                p_previous_payment_id: payment.id,
+                p_previous_invoice_id: payment.qpay_invoice_id,
+            })
+            if (reopenError) throw reopenError
+            if (reopened?.status === 'already_paid') return await refreshPaidCheckout()
+            refreshOffering(offeringId)
+            if (reopened?.status !== 'ready') return { error: unavailable }
+        }
+
+        const result = await createOfferingQpayInvoice(applicationId, offeringId)
+        if (result.invoice) return { invoice: result.invoice }
+        return { error: result.error ?? unavailable }
+    } catch (error) {
+        console.error('Unable to retry expired direct QPay checkout:', error instanceof Error ? error.message : error)
+        return { error: unavailable }
     }
 }
 
